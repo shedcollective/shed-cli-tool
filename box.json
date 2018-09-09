@@ -1,0 +1,7 @@
+{
+  "directories": ["src"],
+  "chmod": "0755",
+  "main": "bin/main",
+  "output": "dist/shed.phar",
+  "stub": true
+}
