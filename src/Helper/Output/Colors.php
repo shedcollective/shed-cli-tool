@@ -4,8 +4,8 @@ namespace App\Helper\Output;
 
 class Colors
 {
-    private $foreground_colors = array();
-    private $background_colors = array();
+    private $foreground_colors = [];
+    private $background_colors = [];
 
     public function __construct()
     {
@@ -17,7 +17,7 @@ class Colors
         $this->foreground_colors['green']        = '0;32';
         $this->foreground_colors['light_green']  = '1;32';
         $this->foreground_colors['cyan']         = '0;36';
-        $this->foreground_colors['light_c`yan']   = '1;36';
+        $this->foreground_colors['light_c`yan']  = '1;36';
         $this->foreground_colors['red']          = '0;31';
         $this->foreground_colors['light_red']    = '1;31';
         $this->foreground_colors['purple']       = '0;35';
@@ -25,7 +25,7 @@ class Colors
         $this->foreground_colors['brown']        = '0;33';
         $this->foreground_colors['yellow']       = '1;33';
         $this->foreground_colors['light_gray']   = '0;37';
-        $this->foreground_colors['white']        = '1;37';
+        $this->foreground_colors['white']        = '0;37';
 
         $this->background_colors['black']      = '40';
         $this->background_colors['red']        = '41';

@@ -4,7 +4,8 @@ namespace App\Helper;
 
 use App\Helper\Output\Colors;
 
-class Output {
+class Output
+{
 
     private $oColors;
 
@@ -20,7 +21,7 @@ class Output {
     /**
      * Dumps a line to stdout
      *
-     * @param string $sLine The line to write
+     * @param string $sLine    The line to write
      * @param bool   $bNewLine Whether to include a trailing slash
      */
     public static function line($sLine = '', $bNewLine = true)
@@ -29,11 +30,11 @@ class Output {
 
         //  Add a spot of Color()
         $oColors = new Colors();
-        $aTags = [
+        $aTags   = [
             'comment' => ['green', null],
             'info'    => ['blue', null],
             'warning' => ['yellow', null],
-            'error'   => ['black', 'red']
+            'error'   => ['white', 'red'],
         ];
 
         foreach ($aTags as $sTag => $aColors) {

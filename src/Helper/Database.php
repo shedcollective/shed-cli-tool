@@ -35,6 +35,7 @@ class Database
      * Short for queries
      *
      * @param string $sSql The query to execute
+     *
      * @return \PDOStatement
      */
     public function query($sSql)

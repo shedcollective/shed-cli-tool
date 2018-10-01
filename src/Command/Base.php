@@ -1,7 +1,11 @@
 <?php
 
 namespace App\Command;
-abstract class Base {
+
+use App\Helper\Output;
+
+abstract class Base
+{
 
     /**
      * Describes what the command does
@@ -19,6 +23,11 @@ abstract class Base {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Base constructor.
+     *
+     * @param $oApp
+     */
     public function __construct($oApp)
     {
         $this->oApp = $oApp;

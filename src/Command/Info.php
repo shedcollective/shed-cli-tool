@@ -4,7 +4,8 @@ namespace App\Command;
 
 use App\Helper\Output;
 
-final class Info extends Base {
+final class Info extends Base
+{
 
     /**
      * Describes what the command does
@@ -26,14 +27,14 @@ final class Info extends Base {
         Output::line();
         Output::line('<comment>Available commands</comment>');
 
-        $aClasses  = scandir(__DIR__ );
+        $aClasses  = scandir(__DIR__);
         $aCommands = [];
 
         foreach ($aClasses as $sClass) {
 
-            $sClass = basename($sClass, '.php');
+            $sClass     = basename($sClass, '.php');
             $sClassName = 'App\\Command\\' . $sClass;
-            $sClass = strtolower($sClass);
+            $sClass     = strtolower($sClass);
 
             if ($sClass != 'base') {
                 $aCommands[$sClass] = $sClassName::INFO;

@@ -13,9 +13,9 @@ final class App
     // --------------------------------------------------------------------------
 
     //  Properties
-    private $aConfig    = [];
+    private $aConfig = [];
     private $aArguments = [];
-    private $aCommands  = [];
+    private $sCommand = '';
 
     // --------------------------------------------------------------------------
 
@@ -58,8 +58,10 @@ final class App
 
     /**
      * Loads a config file and, if valid, merges in with the main config array
+     *
      * @param string $sPath               The file to load
      * @param bool   $bAllowNewProperties Whether the config file can define new properties
+     *
      * @return $this
      */
     private function loadConfig($sPath, $bAllowNewProperties = false)
@@ -92,6 +94,7 @@ final class App
      * Parse and extract valid arguments
      *
      * @param array $aArgs The arguments to parse
+     *
      * @return $this
      */
     private function parseArgs($aArgs)
@@ -102,8 +105,10 @@ final class App
         foreach ($aArgs as $sArg) {
             if (preg_match('/^--(.*)(="?(.*)"?)?$/', $sArg, $aMatches)) {
                 $this->aArguments[$aMatches[1]] = !empty($aMatches[3]) ? $aMatches[3] : true;
+            } elseif (!empty($this->sCommand)) {
+                $this->aArguments[$sArg] = null;
             } else {
-                $this->aCommands[] = $sArg;
+                $this->sCommand = $sArg;
             }
         }
 
@@ -117,6 +122,7 @@ final class App
      * Returns the value for a given config
      *
      * @param string $sKey The config to get
+     *
      * @return mixed|null
      */
     public function config($sKey = null)
@@ -134,6 +140,7 @@ final class App
      * Tests whether a config has been specified.
      *
      * @param string $sKey The config to test
+     *
      * @return bool
      */
     public function hasConfig($sKey = '')
@@ -147,6 +154,7 @@ final class App
      * Returns the value for a given argument
      *
      * @param string $sKey The argument to get
+     *
      * @return mixed|null
      */
     public function getArg($sKey = null)
@@ -164,6 +172,7 @@ final class App
      * Tests whether an argument has been specified.
      *
      * @param string $sKey The argument to test
+     *
      * @return bool
      */
     public function hasArg($sKey = '')
@@ -174,14 +183,13 @@ final class App
     // --------------------------------------------------------------------------
 
     /**
-     * Returns a command at a given index
+     * Returns the command
      *
-     * @param integer $iIndex The index of the command to get
      * @return mixed|null
      */
-    public function command($iIndex = 0)
+    public function command()
     {
-        return array_key_exists($iIndex, $this->aCommands) ? strtolower($this->aCommands[$iIndex]) : null;
+        return $this->sCommand;
     }
 
     // --------------------------------------------------------------------------
@@ -199,16 +207,37 @@ final class App
 
         // --------------------------------------------------------------------------
 
-        $sCommand = ucfirst($this->command()) ?: 'Info';
-        $sClass   = 'App\\Command\\' . $sCommand;
+        $this->execute(ucfirst($this->command()) ?: 'Info');
 
-        try {
-            $oCommand = new $sClass($this);
-        } catch (\Exception $e) {
-            $oCommand = new Command\Info($this);
-        }
-
-        $oCommand->execute();
         Output::line();
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Execute a command
+     *
+     * @param string $sCommand The command to execute
+     */
+    public function execute($sCommand)
+    {
+        try {
+            $sCommand = 'App\\Command\\' . $sCommand;
+            $oCommand = new $sCommand($this);
+            $oCommand->execute();
+        } catch (\Exception $e) {
+            $aLines     = [
+                'Uncaught Exception: ' . get_class($e),
+                'Message: ' . $e->getMessage(),
+                'File: ' . $e->getFile(),
+                'Line: ' . $e->getLine(),
+            ];
+            $aLengths   = array_map('strlen', $aLines);
+            $iMaxLength = max($aLengths);
+
+            foreach ($aLines as $sLine) {
+                Output::line('<error> ' . str_pad($sLine, $iMaxLength, ' ') . ' </error>');
+            }
+        }
     }
 }

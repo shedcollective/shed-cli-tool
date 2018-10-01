@@ -2,14 +2,14 @@
 
 namespace App\Helper;
 
-class Debug {
-
+class Debug
+{
     /**
      * Dumps the value to the screen
      *
      * @param mixed $mValue The value to dump
      */
-    public static function dump($mValue)
+    public static function d($mValue)
     {
         echo "\n";
         print_r($mValue);
@@ -23,9 +23,9 @@ class Debug {
      *
      * @param mixed $mValue The value to dump
      */
-    public static function dumpanddie($mValue)
+    public static function dd($mValue)
     {
-        self::dump($mValue);
+        self::d($mValue);
         die();
     }
 }
