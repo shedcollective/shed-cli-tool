@@ -2,7 +2,7 @@
 
 namespace App\Helper;
 
-class Database
+final class Database
 {
     /**
      * @var \PDO

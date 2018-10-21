@@ -2,7 +2,7 @@
 
 namespace App\Helper;
 
-class Input
+final class Input
 {
     /**
      * Requests input from the user
@@ -22,8 +22,8 @@ class Input
         Output::line();
         $sResponse = readline($sQuestion . ': ');
 
-        if ($cValidation && !call_user_func($cValidation, $sResponse)) {
-            Output::line('<error>Invalid response</error>');
+        if ($cValidation && !call_user_func($cValidation, $sResponse ?: $sDefault)) {
+            Output::error(['Invalid response']);
             return static::ask($sQuestion, $sDefault, $cValidation);
         }
 
@@ -45,7 +45,7 @@ class Input
     {
         $aResponse = static::chooseMany($sQuestion, $aOptions, $cValidation);
         if (count($aResponse) > 1) {
-            Output::line('<error>Please select only one option</error>');
+            Output::error(['Please select only one option']);
             return static::choose($sQuestion, $aOptions, $cValidation);
         }
         return reset($aResponse);
@@ -77,21 +77,19 @@ class Input
             Output::line('<comment>' . $iIndex . '</comment>: ' . $oOption->label);
         }
 
-        $sResponse = static::ask($sQuestion . ' (separate multiple options with a comma)', null, $cValidation);
+        $sResponse = static::ask($sQuestion, null, $cValidation);
         $aResponse = array_map('trim', explode(',', $sResponse));
         $aErrors   = [];
         foreach ($aResponse as &$sResponse) {
             if (!array_key_exists($sResponse, $aNumericOptions)) {
-                $aErrors[] = $sResponse . ' is not a valid option';
+                $aErrors[] = '"' . $sResponse . '" is not a valid option';
             } else {
                 $sResponse = $aNumericOptions[$sResponse]->value;
             }
         }
 
         if (!empty($aErrors)) {
-            foreach ($aErrors as $sError) {
-                Output::line('<error>' . $sError . '</error>');
-            }
+            Output::error($aErrors);
             return static::chooseMany($sQuestion, $aOptions, $cValidation);
         }
 

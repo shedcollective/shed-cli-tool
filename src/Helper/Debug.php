@@ -2,7 +2,7 @@
 
 namespace App\Helper;
 
-class Debug
+final class Debug
 {
     /**
      * Dumps the value to the screen

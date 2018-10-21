@@ -4,7 +4,7 @@ namespace App\Helper;
 
 use App\Helper\Output\Colors;
 
-class Output
+final class Output
 {
 
     private $oColors;
@@ -54,5 +54,21 @@ class Output
         $sLine = $bNewLine ? $sLine . "\n" : $sLine;
 
         fwrite(STDOUT, $sLine);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Renders an error block
+     *
+     * @param array $aLines The lines to render
+     */
+    public static function error(array $aLines)
+    {
+        $aLengths   = array_map('strlen', $aLines);
+        $iMaxLength = max($aLengths);
+        foreach ($aLines as $sLine) {
+            static::line('<error> ' . str_pad($sLine, $iMaxLength, ' ') . ' </error>');
+        }
     }
 }

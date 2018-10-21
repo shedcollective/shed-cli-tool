@@ -2,6 +2,7 @@
 <?php
 
 require __DIR__ . '/../src/config.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 //  Autoloader
 spl_autoload_register(function ($sClassName) {

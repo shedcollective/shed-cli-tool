@@ -2,7 +2,7 @@
 
 namespace App\Helper;
 
-class Timer
+final class Timer
 {
     private $fStart;
     private $fStop;

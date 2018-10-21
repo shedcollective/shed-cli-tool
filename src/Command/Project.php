@@ -18,7 +18,7 @@ final class Project extends Base
      */
     public function execute()
     {
-        //  @todo (Pablo - 2018-09-30) - Find a nicer way of checking the argument (currently could pass two, e.g. `shed project deploy new`)
+        //  @todo (Pablo - 2018-09-30) - Find a nicer way of checking the argument (currently could pass two, e.g. `shed project deploy create`)
         if ($this->oApp->hasArg('create')) {
             $this->oApp->execute('Project\\Create');
         } elseif ($this->oApp->hasArg('deploy')) {

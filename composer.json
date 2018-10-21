@@ -1,0 +1,14 @@
+{
+    "name": "shedcollective/cli-tool",
+    "description": "A CLI tool to make dev life at Shed easier",
+    "type": "project",
+    "require": {
+        "symfony/yaml": "^4.1"
+    },
+    "authors": [
+        {
+            "name": "Pablo de la Peña",
+            "email": "p@shedcollective.org"
+        }
+    ]
+}

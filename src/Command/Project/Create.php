@@ -3,9 +3,7 @@
 namespace App\Command\Project;
 
 use App\Command\Base;
-use App\DigitalOcean\Auth;
-use App\DigitalOcean\Compute;
-use App\Helper\Debug;
+use App\Helper\Directory;
 use App\Helper\Input;
 use App\Helper\Output;
 
@@ -17,14 +15,9 @@ final class Create extends Base
     const INFO = 'Creates a new project';
 
     /**
-     * The supported environments
-     *
-     * @var array
+     * The URL for the docker repository
      */
-    const ENVIRONMENTS = [
-        'PRODUCTION' => 'Production',
-        'STAGING'    => 'Staging',
-    ];
+    const DOCKER_URL = 'https://github.com/nails/skeleton-docker-lamp/archive/master.zip';
 
     /**
      * The supported frontend frameworks
@@ -53,16 +46,10 @@ final class Create extends Base
     /**
      * The various configurable options
      */
-    private $sHostname = null;
+    private $sDir = null;
+    private $sRepo = null;
     private $sBackendFramework = null;
     private $sFrontendFramework = null;
-    private $sContext = null;
-    private $sEnvironment = null;
-    private $sRegion = null;
-    private $sImage = null;
-    private $sSize = null;
-    private $aTags = [];
-    private $aKeys = [];
 
     // --------------------------------------------------------------------------
 
@@ -71,13 +58,10 @@ final class Create extends Base
      */
     public function execute()
     {
+        Output::line('Setting up a new project');
         $this->setVariables();
         if ($this->confirmVariables()) {
-            $this
-                ->createProject()
-                ->createDroplet()
-                ->configureDroplet()
-                ->createDeployment();
+            $this->createProject();
         }
     }
 
@@ -90,33 +74,52 @@ final class Create extends Base
      */
     private function setVariables()
     {
-        $this->sHostname = Input::ask(
-            'Project name (a-z and dashes only)',
+        $this->sDir = Input::ask(
+            'Project Directory (Leave blank for current directory)',
             null,
-            function ($sResponse) {
-                return preg_match('/[^a-z\-]/', $sResponse) === 0;
+            function ($sInput) {
+                $sInput = static::prepDirectory($sInput);
+                if (!Directory::isEmpty($sInput)) {
+                    Output::error([
+                        'Directory is not empty',
+                        $sInput,
+                    ]);
+                    return false;
+                }
+
+                return true;
             }
         );
 
+        $this->sDir = static::prepDirectory($this->sDir);
+
+        $this->sRepo              = Input::ask('Git repository (leave blank to initiate new repo)');
         $this->sBackendFramework  = Input::choose('Backend Framework', static::BACKEND_FRAMEWORKS);
         $this->sFrontendFramework = Input::choose('Frontend Framework', static::FRONTEND_FRAMEWORKS);
 
-        $this->sContext = Input::choose('Droplet Context', Auth::contextsAsStrings());
-        Auth::switchTo($this->sContext);
-
-        $this->sEnvironment = Input::choose('Droplet Environment', static::ENVIRONMENTS);
-        $this->sRegion      = Input::choose('Droplet Region', Compute::regionsAsStrings(true));
-        $this->sImage       = Input::choose('Droplet Image', Compute::imagesAsStrings());
-        $this->sSize        = Input::choose('Droplet Size', Compute::sizesAsStrings());
-        $this->aKeys        = Input::chooseMany('Droplet Keys', Compute::sshKeysAsStrings());
-        $this->aTags        = [
-            $this->sEnvironment,
-            $this->sBackendFramework,
-            $this->sFrontendFramework,
-            Input::ask('Droplet Tags (comma separated)'),
-        ];
-
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Takes a directory path, and if not absolute make it absolute relative to current working directory
+     *
+     * @param string $sPath The path to inspect
+     *
+     * @return string
+     */
+    private static function prepDirectory($sPath)
+    {
+        if (!preg_match('/^' . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $sPath)) {
+            $sPath = getcwd() . DIRECTORY_SEPARATOR . $sPath;
+        }
+
+        if (!preg_match('/' . preg_quote(DIRECTORY_SEPARATOR, '/') . '$/', $sPath)) {
+            $sPath = $sPath . DIRECTORY_SEPARATOR;
+        }
+
+        return $sPath;
     }
 
     // --------------------------------------------------------------------------
@@ -131,15 +134,10 @@ final class Create extends Base
         Output::line();
         Output::line('Does this all look OK?');
         Output::line();
-        Output::line('<comment>Project name</comment>:       ' . $this->sHostname);
+        Output::line('<comment>Directory</comment>:  ' . $this->sDir);
+        Output::line('<comment>Git repository</comment>:  ' . ($this->sRepo ?: '<none>'));
         Output::line('<comment>Backend Framework</comment>:  ' . $this->sBackendFramework);
         Output::line('<comment>Frontend Framework</comment>: ' . $this->sFrontendFramework);
-        Output::line('<comment>Environment</comment>:        ' . $this->sEnvironment);
-        Output::line('<comment>Droplet Region</comment>:     ' . $this->sRegion);
-        Output::line('<comment>Droplet Image</comment>:      ' . $this->sImage);
-        Output::line('<comment>Droplet Size</comment>:       ' . $this->sSize);
-        Output::line('<comment>Droplet Keys</comment>:       ' . implode(', ', $this->aKeys));
-        Output::line('<comment>Droplet Tags</comment>:       ' . implode(', ', $this->aTags));
         Output::line();
 
         return Input::confirm('Continue?');
@@ -155,11 +153,12 @@ final class Create extends Base
     private function createProject()
     {
         Output::line('Creating project...');
-        //  @todo (Pablo - 2018-09-30) - create folder
-        //  @todo (Pablo - 2018-09-30) - pull down docker skeleton
-        //  @todo (Pablo - 2018-09-30) - configure backend framework
-        //  @todo (Pablo - 2018-09-30) - configure frontend framework
-        //  @todo (Pablo - 2018-09-30) - set up git
+        $this
+            ->createProjectDir()
+            ->configureGit()
+            ->installSkeleton()
+            ->configureBackend()
+            ->configurefrontend();
         Output::line('Done!');
         return $this;
     }
@@ -167,59 +166,63 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Creates a new droplet
+     * Creates the project directory if it does not exist
      *
      * @return $this
      */
-    private function createDroplet()
+    private function createProjectDir()
     {
-        Output::line('Creating droplet...');
-        $aResult = Compute\Droplet::create(implode(
-            ' ',
-            [
-                $this->sHostname,
-                '--region ' . $this->sRegion,
-                '--image ' . $this->sImage,
-                '--size ' . $this->sSize,
-                '--ssh-keys ' . implode(',', $this->aKeys),
-                '--tag-names ' . strtolower(implode(',', $this->aTags)),
-                '--wait',
-            ]
-        ));
-        Debug::d($aResult);
-        Output::line('Done!');
+        //  @todo (Pablo - 2018-10-06) - create directory if it does not exist
+        return $this;
+    }
+
+    /**
+     * Ensures git is configured properly for the project
+     *
+     * @return $this
+     */
+    private function configureGit()
+    {
+        //  @todo (Pablo - 2018-10-06) - pull down repository, check if bare
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * SSH into the droplet and configure it
+     * Installs the Docker skeleton
      *
      * @return $this
      */
-    private function configureDroplet()
+    private function installSkeleton()
     {
-        Output::line('Creating droplet...');
-        //  https://stackoverflow.com/a/4412324/789224
-        //  @todo (Pablo - 2018-09-30) - Configure firewall
-        //  @todo (Pablo - 2018-09-30) - Set up user
-        //  @todo (Pablo - 2018-09-30) - Harden
-        Output::line('Done!');
-
+        //  @todo (Pablo - 2018-10-06) - Download Docker skeleton
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Creates a new deployment
+     * Configures the appropriate Docker file and framework
      *
      * @return $this
      */
-    private function createDeployment()
+    private function configureBackend()
     {
-        //  @todo (Pablo - 2018-09-30) - Create the project
+        //  @todo (Pablo - 2018-10-06) - configure backend framework
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Configures the appropriate front-end framework
+     *
+     * @return $this
+     */
+    private function configureFrontend()
+    {
+        //  @todo (Pablo - 2018-10-06) - configure frontend framework
         return $this;
     }
 }

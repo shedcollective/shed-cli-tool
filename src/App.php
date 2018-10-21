@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Helper\Output;
+use App\Helper\Updates;
 
 final class App
 {
@@ -222,22 +223,19 @@ final class App
     public function execute($sCommand)
     {
         try {
+
+            Updates::check();
+
             $sCommand = 'App\\Command\\' . $sCommand;
             $oCommand = new $sCommand($this);
             $oCommand->execute();
         } catch (\Exception $e) {
-            $aLines     = [
+            Output::error([
                 'Uncaught Exception: ' . get_class($e),
                 'Message: ' . $e->getMessage(),
                 'File: ' . $e->getFile(),
                 'Line: ' . $e->getLine(),
-            ];
-            $aLengths   = array_map('strlen', $aLines);
-            $iMaxLength = max($aLengths);
-
-            foreach ($aLines as $sLine) {
-                Output::line('<error> ' . str_pad($sLine, $iMaxLength, ' ') . ' </error>');
-            }
+            ]);
         }
     }
 }

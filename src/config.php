@@ -11,7 +11,7 @@ define('APP_VERSION', '0.0.0');
 define('APP_NAME', 'Shed CLI Tool');
 
 //  A short, human friendly description of the tool and what it does.
-define('APP_DESCRIPTION', 'A tool which makes life at Shed easier.');
+define('APP_DESCRIPTION', 'A CLI tool to make dev life at Shed easier');
 
 //  The App's homepage
 define('APP_HOME', 'https://github.com/shedcollective/shed-cli-tool');

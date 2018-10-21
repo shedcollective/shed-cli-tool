@@ -134,6 +134,7 @@ final class Compute
 
     public static function images()
     {
+        //  @todo (Pablo - 2018-10-06) - Filter by custom images only
         $aImages             = static::call('image list-application --public');
         $sColumns            = array_shift($aImages);
         $iColumnId           = strpos($sColumns, 'ID');
