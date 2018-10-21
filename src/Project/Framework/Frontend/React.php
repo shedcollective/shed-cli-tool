@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Project\Create\Frontend;
+namespace App\Project\Framework\Frontend;
 
 use App\Interfaces\Framework;
 

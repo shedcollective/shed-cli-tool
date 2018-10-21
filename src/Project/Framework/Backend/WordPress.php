@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Project\Create\Backend;
+namespace App\Project\Framework\Backend;
 
 use App\Interfaces\Framework;
 
-final class Laravel implements Framework
+final class WordPress implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +13,7 @@ final class Laravel implements Framework
      */
     public function getName()
     {
-        return 'Laravel';
+        return 'WordPress';
     }
 
     // --------------------------------------------------------------------------
@@ -27,6 +27,6 @@ final class Laravel implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install Laravel
+        //  @todo (Pablo - 2018-10-21) - Install WordPress
     }
 }

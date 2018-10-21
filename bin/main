@@ -3,6 +3,8 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+define('BASEPATH', __DIR__ . '/../');
+
 use App\Helper\Updates;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Finder\Finder;
@@ -17,13 +19,13 @@ if (Updates::check()) {
     $oFinder = new Finder();
 
     //  Auto-load commands
-    $sBasePath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'src';
-    $oFinder->files()->in($sBasePath . DIRECTORY_SEPARATOR . 'Command');
+    $sBasePath = BASEPATH . 'src';
+    $oFinder->files()->in($sBasePath . '/Command');
 
     foreach ($oFinder as $oFile) {
-        $sCommand = $oFile->getPath() . DIRECTORY_SEPARATOR . $oFile->getBasename('.php');
+        $sCommand = $oFile->getPath() . '/' . $oFile->getBasename('.php');
         $sCommand = str_replace($sBasePath, 'App', $sCommand);
-        $sCommand = str_replace(DIRECTORY_SEPARATOR, '\\', $sCommand);
+        $sCommand = str_replace('/', '\\', $sCommand);
 
         if ($sCommand !== 'App\\Command\\Base') {
             $oApp->add(new $sCommand());

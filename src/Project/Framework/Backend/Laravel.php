@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Project\Create\Backend;
+namespace App\Project\Framework\Backend;
 
 use App\Interfaces\Framework;
 
-final class Nails implements Framework
+final class Laravel implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +13,7 @@ final class Nails implements Framework
      */
     public function getName()
     {
-        return 'Nails';
+        return 'Laravel';
     }
 
     // --------------------------------------------------------------------------
@@ -27,6 +27,6 @@ final class Nails implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install Nails
+        //  @todo (Pablo - 2018-10-21) - Install Laravel
     }
 }

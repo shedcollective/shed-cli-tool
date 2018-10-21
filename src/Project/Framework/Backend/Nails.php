@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Project\Create\Frontend;
+namespace App\Project\Framework\Backend;
 
 use App\Interfaces\Framework;
 
-final class Vue implements Framework
+final class Nails implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +13,7 @@ final class Vue implements Framework
      */
     public function getName()
     {
-        return 'Vue';
+        return 'Nails';
     }
 
     // --------------------------------------------------------------------------
@@ -27,6 +27,6 @@ final class Vue implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install Vue
+        //  @todo (Pablo - 2018-10-21) - Install Nails
     }
 }

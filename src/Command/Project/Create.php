@@ -4,16 +4,32 @@ namespace App\Command\Project;
 
 use App\Command\Base;
 use App\Helper\Directory;
+use App\Interfaces\Framework;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Finder\Finder;
 
 final class Create extends Base
 {
     /**
-     * The various configurable options
+     * Where to create the project
+     *
+     * @var string
      */
     private $sDir = null;
-    private $sBackendFramework = null;
-    private $sFrontendFramework = null;
+
+    /**
+     * The backend framework to use
+     *
+     * @var Framework
+     */
+    private $oBackendFramework = null;
+
+    /**
+     * The frontend framework to use
+     *
+     * @var Framework
+     */
+    private $oFrontendFramework = null;
 
     // --------------------------------------------------------------------------
 
@@ -118,18 +134,7 @@ final class Create extends Base
      */
     private function setBackend()
     {
-        $aFrameworks = [
-            'No framework',
-        ];
-
-        //  @todo (Pablo - 2018-10-21) - Look for frameworks
-
-        $this->sBackendFramework = $this->choose(
-            'Backend Framework',
-            $aFrameworks
-        );
-
-        return $this;
+        return $this->setFramework('Backend', $this->oBackendFramework);
     }
 
     // --------------------------------------------------------------------------
@@ -141,16 +146,45 @@ final class Create extends Base
      */
     private function setFrontend()
     {
-        $aFrameworks = [
-            'No framework',
-        ];
+        return $this->setFramework('Frontend', $this->oFrontendFramework);
+    }
 
-        //  @todo (Pablo - 2018-10-21) - Look for frameworks
+    // --------------------------------------------------------------------------
 
-        $this->sFrontendFramework = $this->choose(
-            'Frontend Framework',
+    /**
+     * Looks up and sets a framework
+     *
+     * @param string    $sType     The type of framework being selected
+     * @param Framework $oSelected The variable to assign the selected framework to
+     *
+     * @return $this
+     */
+    private function setFramework($sType, &$oSelected)
+    {
+        $sType             = ucfirst(strtolower($sType));
+        $aFrameworks       = ['No framework'];
+        $aFrameworkClasses = [null];
+
+        $sBasePath = BASEPATH . 'src';
+        $oFinder   = new Finder();
+        $oFinder->files()->in($sBasePath . '/Project/Framework/' . $sType);
+        foreach ($oFinder as $oFile) {
+
+            $sFramework = $oFile->getPath() . '/' . $oFile->getBasename('.php');
+            $sFramework = str_replace($sBasePath, 'App', $sFramework);
+            $sFramework = str_replace('/', '\\', $sFramework);
+
+            $oFramework          = new $sFramework();
+            $aFrameworks[]       = $oFramework->getName();
+            $aFrameworkClasses[] = $oFramework;
+        }
+
+        $iChoice = $this->choose(
+            $sType . ' Framework',
             $aFrameworks
         );
+
+        $oSelected = $aFrameworkClasses[$iChoice];
 
         return $this;
     }
@@ -190,8 +224,8 @@ final class Create extends Base
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
-        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->sBackendFramework);
-        $this->oOutput->writeln('<comment>Frontend Framework</comment>: ' . $this->sFrontendFramework);
+        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
+        $this->oOutput->writeln('<comment>Frontend Framework</comment>: ' . $this->oFrontendFramework->getName());
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }

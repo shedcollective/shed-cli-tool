@@ -106,7 +106,7 @@ abstract class Base extends Command
      * @param int      $iDefault    The default option
      * @param callable $cValidation A validation callback
      *
-     * @return mixed
+     * @return integer
      */
     protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null)
     {
@@ -118,7 +118,7 @@ abstract class Base extends Command
             return $this->choose($sQuestion, $aOptions, $iDefault, $cValidation);
         }
 
-        return $sResponse;
+        return array_search($sResponse, $aOptions);
     }
 
     // --------------------------------------------------------------------------

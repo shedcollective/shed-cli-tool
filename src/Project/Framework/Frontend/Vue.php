@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Project\Create\Backend;
+namespace App\Project\Framework\Frontend;
 
 use App\Interfaces\Framework;
 
-final class WordPress implements Framework
+final class Vue implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +13,7 @@ final class WordPress implements Framework
      */
     public function getName()
     {
-        return 'WordPress';
+        return 'Vue';
     }
 
     // --------------------------------------------------------------------------
@@ -27,6 +27,6 @@ final class WordPress implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install WordPress
+        //  @todo (Pablo - 2018-10-21) - Install Vue
     }
 }
