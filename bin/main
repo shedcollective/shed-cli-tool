@@ -1,42 +1,36 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/../src/config.php';
 require __DIR__ . '/../vendor/autoload.php';
 
-//  Autoloader
-spl_autoload_register(function ($sClassName) {
+use App\Helper\Updates;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Finder\Finder;
 
-    //  Prep the class name
-    if (substr($sClassName, 0, 4) == 'App\\') {
-        $sClass = substr($sClassName, 4);
-    } else {
-        $sClass = $sClassName;
+if (Updates::check()) {
+
+    //  @todo (Pablo - 2018-10-21) - Tool requires updating
+
+} else {
+
+    $oApp    = new Application();
+    $oFinder = new Finder();
+
+    //  Auto-load commands
+    $sBasePath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'src';
+    $oFinder->files()->in($sBasePath . DIRECTORY_SEPARATOR . 'Command');
+
+    foreach ($oFinder as $oFile) {
+        $sCommand = $oFile->getPath() . DIRECTORY_SEPARATOR . $oFile->getBasename('.php');
+        $sCommand = str_replace($sBasePath, 'App', $sCommand);
+        $sCommand = str_replace(DIRECTORY_SEPARATOR, '\\', $sCommand);
+
+        if ($sCommand !== 'App\\Command\\Base') {
+            $oApp->add(new $sCommand());
+        }
     }
 
-    //  Replace slashes
-    $sClass = str_replace('\\', DIRECTORY_SEPARATOR, $sClass);
-
-    $sPath = __DIR__ . '/../src/' . $sClass . '.php';
-    if (file_exists($sPath)) {
-        require $sPath;
-    } else {
-        throw new \Exception($sClassName . ' is not a valid class (tried to load from ' . $sPath . ')');
-    }
-});
-
-try {
-
-    $oApp = new App\App($argv);
-    $oApp->go();
-
-} catch (\Exception $e) {
-
-    $oColors = new App\Helper\Output\Colors();
-    echo "\n" . $oColors->getColoredString('EXCEPTION:', 'black', 'red');
-    echo "\n" . $oColors->getColoredString('Code:    ' . $e->getCode(), 'black', 'red');
-    echo "\n" . $oColors->getColoredString('Message: ' . $e->getMessage(), 'black', 'red');
-    echo "\n" . $oColors->getColoredString('File:    ' . $e->getFile(), 'black', 'red');
-    echo "\n" . $oColors->getColoredString('Line:    ' . $e->getLine(), 'black', 'red');
-    echo "\n\n";
+    $oApp->setName('Shed Command Line Tool');
+    $oApp->setVersion(Updates::getCurrentVersion());
+    $oApp->run();
 }

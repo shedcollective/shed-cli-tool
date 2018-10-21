@@ -1,14 +1,15 @@
 {
     "name": "shedcollective/cli-tool",
+    "version": "0.0.0",
     "description": "A CLI tool to make dev life at Shed easier",
     "type": "project",
-    "require": {
-        "symfony/yaml": "^4.1"
-    },
-    "authors": [
-        {
-            "name": "Pablo de la Peña",
-            "email": "p@shedcollective.org"
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
         }
-    ]
+    },
+    "require": {
+        "symfony/console": "^4.1",
+        "symfony/finder": "^4.1"
+    }
 }

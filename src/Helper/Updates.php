@@ -9,6 +9,23 @@ final class Updates
      */
     public static function check()
     {
-        //  @todo (Pablo - 2018-10-06) - Check for updates
+        //  @todo (Pablo - 2018-10-06) - Check for updates if sufficient time has passed (check once daily)
+        //  Consider this: https://github.com/consolidation/self-update
+        return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public static function getCurrentVersion()
+    {
+        $oComposer = json_decode(file_get_contents(_DIR_ . '../../composer.json'));
+        return $oComposer->version;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public static function getLatestVersion()
+    {
+
     }
 }

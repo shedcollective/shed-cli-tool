@@ -4,61 +4,60 @@ namespace App\Command\Project;
 
 use App\Command\Base;
 use App\Helper\Directory;
-use App\Helper\Input;
-use App\Helper\Output;
+use Symfony\Component\Console\Input\InputOption;
 
 final class Create extends Base
 {
     /**
-     * Describes what the command does
-     */
-    const INFO = 'Creates a new project';
-
-    /**
-     * The URL for the docker repository
-     */
-    const DOCKER_URL = 'https://github.com/nails/skeleton-docker-lamp/archive/master.zip';
-
-    /**
-     * The supported frontend frameworks
-     *
-     * @var array
-     */
-    const FRONTEND_FRAMEWORKS = [
-        'VANILLA' => 'Vanilla',
-        'VUE'     => 'Vue',
-        'REACT'   => 'React',
-    ];
-
-    /**
-     * The supported backend environments
-     *
-     * @var array
-     */
-    const BACKEND_FRAMEWORKS = [
-        'NAILS'     => 'Nails',
-        'LARAVEL'   => 'Laravel',
-        'WORDPRESS' => 'WordPress',
-    ];
-
-    // --------------------------------------------------------------------------
-
-    /**
      * The various configurable options
      */
     private $sDir = null;
-    private $sRepo = null;
     private $sBackendFramework = null;
     private $sFrontendFramework = null;
 
     // --------------------------------------------------------------------------
 
     /**
-     * Called when the command is executed
+     * Configure the command
      */
-    public function execute()
+    protected function configure()
     {
-        Output::line('Setting up a new project');
+        $this
+            ->setName('project:create')
+            ->setDescription('Create a new project')
+            ->setHelp('This command will interactively create and configure a new project.')
+            ->addOption(
+                'directory',
+                'd',
+                InputOption::VALUE_OPTIONAL,
+                'The directory to create the project in, if empty then the current working directory is used'
+            )
+            ->addOption(
+                'backend',
+                'b',
+                InputOption::VALUE_OPTIONAL,
+                'Which back-end framework to use: None, Nails, Laravel, or WordPress',
+                'NONE'
+            )
+            ->addOption(
+                'frontend',
+                'f',
+                InputOption::VALUE_OPTIONAL,
+                'Which front-end framework to use: None, Vue, or React',
+                'NONE'
+            );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Execute the command
+     *
+     * @return int|null|void
+     */
+    protected function go()
+    {
+        $this->oOutput->writeln('Setting up a new project');
         $this->setVariables();
         if ($this->confirmVariables()) {
             $this->createProject();
@@ -74,13 +73,28 @@ final class Create extends Base
      */
     private function setVariables()
     {
-        $this->sDir = Input::ask(
-            'Project Directory (Leave blank for current directory)',
-            null,
+        return $this
+            ->setDirectory()
+            ->setBackend()
+            ->setFrontend();
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Set where to create the project
+     *
+     * @return $this
+     */
+    private function setDirectory()
+    {
+        $this->sDir = $this->ask(
+            'Project Directory <info>(Leave blank for current directory)</info>:',
+            $this->oInput->getOption('directory'),
             function ($sInput) {
                 $sInput = static::prepDirectory($sInput);
                 if (!Directory::isEmpty($sInput)) {
-                    Output::error([
+                    $this->error([
                         'Directory is not empty',
                         $sInput,
                     ]);
@@ -90,12 +104,53 @@ final class Create extends Base
                 return true;
             }
         );
-
         $this->sDir = static::prepDirectory($this->sDir);
 
-        $this->sRepo              = Input::ask('Git repository (leave blank to initiate new repo)');
-        $this->sBackendFramework  = Input::choose('Backend Framework', static::BACKEND_FRAMEWORKS);
-        $this->sFrontendFramework = Input::choose('Frontend Framework', static::FRONTEND_FRAMEWORKS);
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Set which backend framework to use
+     *
+     * @return $this
+     */
+    private function setBackend()
+    {
+        $aFrameworks = [
+            'No framework',
+        ];
+
+        //  @todo (Pablo - 2018-10-21) - Look for frameworks
+
+        $this->sBackendFramework = $this->choose(
+            'Backend Framework',
+            $aFrameworks
+        );
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Set which frontend framework to use
+     *
+     * @return $this
+     */
+    private function setFrontend()
+    {
+        $aFrameworks = [
+            'No framework',
+        ];
+
+        //  @todo (Pablo - 2018-10-21) - Look for frameworks
+
+        $this->sFrontendFramework = $this->choose(
+            'Frontend Framework',
+            $aFrameworks
+        );
 
         return $this;
     }
@@ -131,16 +186,14 @@ final class Create extends Base
      */
     private function confirmVariables()
     {
-        Output::line();
-        Output::line('Does this all look OK?');
-        Output::line();
-        Output::line('<comment>Directory</comment>:  ' . $this->sDir);
-        Output::line('<comment>Git repository</comment>:  ' . ($this->sRepo ?: '<none>'));
-        Output::line('<comment>Backend Framework</comment>:  ' . $this->sBackendFramework);
-        Output::line('<comment>Frontend Framework</comment>: ' . $this->sFrontendFramework);
-        Output::line();
-
-        return Input::confirm('Continue?');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('Does this all look OK?');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
+        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->sBackendFramework);
+        $this->oOutput->writeln('<comment>Frontend Framework</comment>: ' . $this->sFrontendFramework);
+        $this->oOutput->writeln('');
+        return $this->confirm('Continue?');
     }
 
     // --------------------------------------------------------------------------
@@ -152,14 +205,14 @@ final class Create extends Base
      */
     private function createProject()
     {
-        Output::line('Creating project...');
+        $this->oOutput->writeln('Creating project...');
         $this
             ->createProjectDir()
             ->configureGit()
             ->installSkeleton()
             ->configureBackend()
             ->configurefrontend();
-        Output::line('Done!');
+        $this->oOutput->writeln('Done!');
         return $this;
     }
 

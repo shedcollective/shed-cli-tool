@@ -1,5 +1,6 @@
 {
   "directories": ["src","vendor"],
+  "files": ["composer.json"],
   "chmod": "0755",
   "main": "bin/main",
   "output": "dist/shed.phar",
