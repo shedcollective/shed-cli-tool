@@ -27,6 +27,6 @@ final class WordPress implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install WordPress
+        Nails::configureDockerFile($sPath, 'apache-wordpress-php72');
     }
 }

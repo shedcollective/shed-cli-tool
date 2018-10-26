@@ -27,6 +27,6 @@ final class Laravel implements Framework
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install Laravel
+        Nails::configureDockerFile($sPath, 'apache-laravel-php72');
     }
 }

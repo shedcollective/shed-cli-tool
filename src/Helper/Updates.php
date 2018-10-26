@@ -10,7 +10,6 @@ final class Updates
     public static function check()
     {
         //  @todo (Pablo - 2018-10-06) - Check for updates if sufficient time has passed (check once daily)
-        //  Consider this: https://github.com/consolidation/self-update
         return false;
     }
 

@@ -12,6 +12,7 @@ use Symfony\Component\Finder\Finder;
 if (Updates::check()) {
 
     //  @todo (Pablo - 2018-10-21) - Tool requires updating
+    //  Consider this: https://github.com/consolidation/self-update
 
 } else {
 

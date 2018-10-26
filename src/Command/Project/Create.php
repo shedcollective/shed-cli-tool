@@ -3,13 +3,22 @@
 namespace App\Command\Project;
 
 use App\Command\Base;
+use App\Exceptions\CommandFailed;
+use App\Exceptions\Directory\FailedToCreate;
+use App\Exceptions\EnvironmentNotValid;
+use App\Exceptions\Zip\CannotOpen;
+use App\Helper\Debug;
 use App\Helper\Directory;
+use App\Helper\System;
 use App\Interfaces\Framework;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
 final class Create extends Base
 {
+//    const DOCKER_SKELETON = 'https://github.com/nails/skeleton-docker-lamp/archive/develop.zip';
+    const DOCKER_SKELETON = '/Users/pablo/Downloads/skeleton-docker-lamp-develop.zip';
+
     /**
      * Where to create the project
      *
@@ -70,13 +79,38 @@ final class Create extends Base
      * Execute the command
      *
      * @return int|null|void
+     * @throws CommandFailed
+     * @throws EnvironmentNotValid
+     * @throws FailedToCreate
      */
     protected function go()
     {
         $this->oOutput->writeln('Setting up a new project');
+        $this->checkEnvironment();
         $this->setVariables();
         if ($this->confirmVariables()) {
             $this->createProject();
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validates that the environment is usable
+     *
+     * @throws EnvironmentNotValid
+     */
+    private function checkEnvironment()
+    {
+        if (!function_exists('exec')) {
+            throw new EnvironmentNotValid('Missing function exec()');
+        }
+
+        $aRequiredCommands = ['git', 'git-flow', 'composer', 'npm'];
+        foreach ($aRequiredCommands as $sRequiredCommand) {
+            if (!System::commandExists($sRequiredCommand)) {
+                throw new EnvironmentNotValid($sRequiredCommand . ' is not installed');
+            }
         }
     }
 
@@ -224,8 +258,8 @@ final class Create extends Base
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
-        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
-        $this->oOutput->writeln('<comment>Frontend Framework</comment>: ' . $this->oFrontendFramework->getName());
+        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . ($this->oBackendFramework ? $this->oBackendFramework->getName() : 'none'));
+        $this->oOutput->writeln('<comment>Frontend Framework</comment>: ' . ($this->oFrontendFramework ? $this->oFrontendFramework->getName() : 'none'));
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }
@@ -236,17 +270,24 @@ final class Create extends Base
      * Creates a new project
      *
      * @return $this
+     * @throws CannotOpen
+     * @throws CommandFailed
+     * @throws FailedToCreate
      */
     private function createProject()
     {
-        $this->oOutput->writeln('Creating project...');
+        $this->oOutput->writeln('');
+
         $this
             ->createProjectDir()
-            ->configureGit()
             ->installSkeleton()
             ->configureBackend()
             ->configurefrontend();
-        $this->oOutput->writeln('Done!');
+
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('Project has been configured at <comment>' . $this->sDir . '</comment>');
+        $this->oOutput->writeln('Run <comment>make up</comment> to build containers and install frameworks');
+        $this->oOutput->writeln('');
         return $this;
     }
 
@@ -256,21 +297,17 @@ final class Create extends Base
      * Creates the project directory if it does not exist
      *
      * @return $this
+     * @throws FailedToCreate
+     * @throws CommandFailed
      */
     private function createProjectDir()
     {
-        //  @todo (Pablo - 2018-10-06) - create directory if it does not exist
-        return $this;
-    }
-
-    /**
-     * Ensures git is configured properly for the project
-     *
-     * @return $this
-     */
-    private function configureGit()
-    {
-        //  @todo (Pablo - 2018-10-06) - pull down repository, check if bare
+        $this->oOutput->write('Creating directory <comment>' . $this->sDir . '</comment>');
+        if (!mkdir($this->sDir)) {
+            throw new FailedToCreate();
+        }
+        System::exec('cd "' . $this->sDir . '"');
+        $this->oOutput->writeln(' ... <info>done</info>');
         return $this;
     }
 
@@ -280,10 +317,36 @@ final class Create extends Base
      * Installs the Docker skeleton
      *
      * @return $this
+     * @throws CannotOpen
+     * @throws CommandFailed
      */
     private function installSkeleton()
     {
-        //  @todo (Pablo - 2018-10-06) - Download Docker skeleton
+        $this->oOutput->write('Installing Docker skeleton');
+
+        //  Download skeleton
+        $sZipPath = $this->sDir . 'docker.zip';
+        file_put_contents($sZipPath, file_get_contents(static::DOCKER_SKELETON));
+
+        //  Extract
+        $oZip = new \ZipArchive();
+        if ($oZip->open($sZipPath) === true) {
+
+            $oZip->extractTo($this->sDir);
+            $oZip->close();
+
+            System::exec('mv ' . $this->sDir . 'skeleton-docker-lamp-develop/* ' . rtrim($this->sDir, '/') . '');
+            System::exec('mv ' . $this->sDir . 'skeleton-docker-lamp-develop/.[a-z]* ' . rtrim($this->sDir, '/') . '');
+
+        } else {
+            throw new CannotOpen('Failed to unzip Docker skeleton');
+        }
+
+        //  Tidy up
+        unlink($sZipPath);
+        rmdir($this->sDir . 'skeleton-docker-lamp-develop');
+
+        $this->oOutput->writeln(' ... <info>done</info>');
         return $this;
     }
 
@@ -296,7 +359,11 @@ final class Create extends Base
      */
     private function configureBackend()
     {
-        //  @todo (Pablo - 2018-10-06) - configure backend framework
+        if ($this->oBackendFramework) {
+            $this->oOutput->write('Installing Backend framework');
+            $this->oBackendFramework->install($this->sDir);
+            $this->oOutput->writeln(' ... <info>done</info>');
+        }
         return $this;
     }
 
@@ -309,7 +376,11 @@ final class Create extends Base
      */
     private function configureFrontend()
     {
-        //  @todo (Pablo - 2018-10-06) - configure frontend framework
+        if ($this->oFrontendFramework) {
+            $this->oOutput->write('Installing Frontend framework');
+            $this->oFrontendFramework->install($this->sDir);
+            $this->oOutput->writeln(' ... <info>done</info>');
+        }
         return $this;
     }
 }
