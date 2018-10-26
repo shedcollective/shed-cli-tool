@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Project\Framework\Frontend;
+namespace App\Project\Framework;
 
+use App\Exceptions\CommandFailed;
 use App\Interfaces\Framework;
 
-final class Vue implements Framework
+final class Laravel implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +14,7 @@ final class Vue implements Framework
      */
     public function getName()
     {
-        return 'Vue';
+        return 'Laravel';
     }
 
     // --------------------------------------------------------------------------
@@ -24,9 +25,12 @@ final class Vue implements Framework
      * @param string The absolute directory to install the framework to
      *
      * @return void
+     * @throws CommandFailed
      */
     public function install($sPath)
     {
-        //  @todo (Pablo - 2018-10-21) - Install Vue
+        //  @todo (Pablo - 2018-10-27) - This still requires some work
+        Nails::configureDockerFile($sPath, 'apache-laravel-php72');
+        Nails::installFramework($sPath, 'apache-laravel-php72', 'shedcollective/frontend-laravel');
     }
 }

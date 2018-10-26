@@ -9,17 +9,19 @@ final class System
     /**
      * Executes a system command
      *
-     * @param string $sCommand The command to execute
+     * @param string|array $mCommand The command to execute
      *
      * @throws CommandFailed
      */
-    public static function exec($sCommand)
+    public static function exec($mCommand)
     {
-        $sLastLine = exec($sCommand, $aOutput, $iExitCode);
+        if (is_array($mCommand)) {
+            $mCommand = implode(' && ', $mCommand);
+        }
+
+        exec($mCommand, $aOutput, $iExitCode);
         if ($iExitCode) {
-            throw new CommandFailed(
-                '"' . $sCommand . '" failed with non-zero exit code ' . $iExitCode . ' (' . $sLastLine . ')'
-            );
+            throw new CommandFailed('"' . $mCommand . '" failed with non-zero exit code ' . $iExitCode);
         }
     }
 

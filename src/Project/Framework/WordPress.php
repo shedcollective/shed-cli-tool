@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Project\Framework\Backend;
+namespace App\Project\Framework;
 
+use App\Exceptions\CommandFailed;
 use App\Interfaces\Framework;
 
-final class Laravel implements Framework
+final class WordPress implements Framework
 {
     /**
      * Return the name of the framework
@@ -13,7 +14,7 @@ final class Laravel implements Framework
      */
     public function getName()
     {
-        return 'Laravel';
+        return 'WordPress';
     }
 
     // --------------------------------------------------------------------------
@@ -24,9 +25,11 @@ final class Laravel implements Framework
      * @param string The absolute directory to install the framework to
      *
      * @return void
+     * @throws CommandFailed
      */
     public function install($sPath)
     {
-        Nails::configureDockerFile($sPath, 'apache-laravel-php72');
+        Nails::configureDockerFile($sPath, 'apache-wordpress-php72');
+        Nails::installFramework($sPath, 'apache-wordpress-php72', 'shedcollective/frontend-wordpress');
     }
 }
