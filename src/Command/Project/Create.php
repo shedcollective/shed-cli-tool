@@ -16,8 +16,12 @@ use Symfony\Component\Finder\Finder;
 
 final class Create extends Base
 {
-//    const DOCKER_SKELETON = 'https://github.com/nails/skeleton-docker-lamp/archive/develop.zip';
-    const DOCKER_SKELETON = '/Users/pablo/Downloads/skeleton-docker-lamp-develop.zip';
+    /**
+     * the URL of the Docker skeleton
+     *
+     * @var string
+     */
+    const DOCKER_SKELETON = 'https://github.com/nails/skeleton-docker-lamp/archive/master.zip';
 
     /**
      * Where to create the project
