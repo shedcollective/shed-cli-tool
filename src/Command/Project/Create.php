@@ -23,6 +23,13 @@ final class Create extends Base
     const DOCKER_SKELETON = 'https://github.com/nails/skeleton-docker-lamp/archive/master.zip';
 
     /**
+     * The project name
+     *
+     * @var string
+     */
+    private $sProjectName = null;
+
+    /**
      * Where to create the project
      *
      * @var string
@@ -47,6 +54,12 @@ final class Create extends Base
             ->setName('project:create')
             ->setDescription('Create a new project')
             ->setHelp('This command will interactively create and configure a new project.')
+            ->addOption(
+                'name',
+                'p',
+                InputOption::VALUE_OPTIONAL,
+                'The name of the project'
+            )
             ->addOption(
                 'directory',
                 'd',
@@ -114,8 +127,21 @@ final class Create extends Base
     private function setVariables()
     {
         return $this
+            ->setProjectName()
             ->setDirectory()
             ->setFramework();
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function setProjectName()
+    {
+        $this->sProjectName = $this->ask(
+            'Project Name:',
+            $this->oInput->getOption('directory')
+        );
+
+        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -214,6 +240,7 @@ final class Create extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>Project Name</comment>:  ' . $this->sProjectName);
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
         $this->oOutput->writeln('<comment>Framework</comment>:  ' . ($this->oFramework ? $this->oFramework->getName() : 'none'));
         $this->oOutput->writeln('');
@@ -326,6 +353,10 @@ final class Create extends Base
             $this->oFramework->install($this->sDir);
             $this->oOutput->writeln(' ... <info>done</info>');
         }
+
+        //  @todo (Pablo - 2018-12-14) - frontend stuff
+        //  @todo (Pablo - 2018-12-14) - replace package.json
+
         return $this;
     }
 }
