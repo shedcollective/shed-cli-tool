@@ -1,5 +1,4 @@
-.idea/
-dist/*
-!dist/.gitkeep
-/vendor/
 .DS_Store
+.idea/
+/vendor/
+

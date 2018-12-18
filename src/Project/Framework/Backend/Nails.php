@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Project\Framework;
+namespace Shed\Cli\Project\Framework\Backend;
 
-use App\Exceptions\CommandFailed;
-use App\Helper\System;
-use App\Interfaces\Framework;
+use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Helper\System;
+use Shed\Cli\Interfaces\Framework;
 
 final class Nails implements Framework
 {
@@ -21,17 +21,31 @@ final class Nails implements Framework
     // --------------------------------------------------------------------------
 
     /**
+     * The configurable options for the framework
+     *
+     * @return array
+     */
+    public function getOptions()
+    {
+        return [];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Install the framework
      *
-     * @param string The absolute directory to install the framework to
+     * @param string $sPath    The absolute directory to install the framework to
+     * @param array  $aOptions The result of any options
      *
      * @return void
-     * @throws CommandFailed
+     * @throws CommandFailedException
      */
-    public function install($sPath)
+    public function install($sPath, array $aOptions = [])
     {
         static::configureDockerFile($sPath, 'apache-nails-php72');
-        static::installFramework($sPath, 'apache-nails-php72', 'shedcollective/frontend-nails');
+        static::configureDockerEnvironmentVariables($sPath, []);
+        static::installFramework($sPath, 'apache-nails-php72');
     }
 
     // --------------------------------------------------------------------------
@@ -56,23 +70,27 @@ final class Nails implements Framework
 
     // --------------------------------------------------------------------------
 
+    public static function configureDockerEnvironmentVariables($sPath, array $aVariables)
+    {
+        //  @todo (Pablo - 2018-12-18) -
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Installs the framework
      *
      * @param string $sPath              The path where the project is being installed
      * @param string $sDesiredDockerFile The name of the Dockerfile where the install-framework.sh file is located
-     * @param string $sNpmPackage        The name of the NPM package to install the frontend
      *
-     * @throws CommandFailed
+     * @throws CommandFailedException
      */
-    public static function installFramework($sPath, $sDesiredDockerFile, $sNpmPackage)
+    public static function installFramework($sPath, $sDesiredDockerFile)
     {
         System::exec([
             'cd "' . $sPath . '"',
             'mkdir -p www',
             './docker/webserver/' . $sDesiredDockerFile . '/templates/install-framework.sh',
-            //  @todo (Pablo - 2018-10-27) - Complete this once F/E have configured everything
-            //  'npm install ' . $sNpmPackage
         ]);
     }
 }

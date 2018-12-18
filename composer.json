@@ -1,15 +1,33 @@
 {
-    "name": "shedcollective/cli-tool",
-    "version": "0.0.0",
-    "description": "A CLI tool to make dev life at Shed easier",
-    "type": "project",
+    "name": "shed/command-line-tool",
+    "version": "1.0.0",
+    "homepage": "http://shedapp.co.uk",
+    "description": "The command line tool for simplifying life at Shed",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Pablo de la Peña",
+            "email": "p@shedcollective.org"
+        }
+    ],
+    "support": {
+        "email": "hello@shedcollective.org"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "symfony/console": "4.*",
+        "symfony/finder": "4.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "7.*"
+    },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "Shed\\Cli\\": "src/"
         }
     },
-    "require": {
-        "symfony/console": "^4.1",
-        "symfony/finder": "^4.1"
-    }
+    "bin": [
+        "dist/shed"
+    ]
 }

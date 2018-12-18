@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Command\Project;
+namespace Shed\Cli\Command\Project;
 
-use App\Command\Base;
+use Shed\Cli\Command\Base;
 
 final class Deploy extends Base
 {
@@ -26,6 +26,7 @@ final class Deploy extends Base
      */
     protected function go()
     {
+        $this->banner('Deploying a project');
         //  ...
     }
 }

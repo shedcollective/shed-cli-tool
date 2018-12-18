@@ -1,8 +1,13 @@
 {
-  "directories": ["src","vendor"],
-  "files": ["composer.json"],
-  "chmod": "0755",
-  "main": "bin/main",
-  "output": "dist/shed.phar",
-  "stub": true
+    "main": "bin/main.php",
+    "output": "dist/shed",
+    "chmod": "0755",
+    "directories": [
+        "src",
+        "vendor"
+    ],
+    "exclude-composer-files": false,
+    "files": [
+        "composer.json"
+    ]
 }

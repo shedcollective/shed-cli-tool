@@ -1,22 +1,22 @@
 <?php
 
-namespace App\Command\Project;
+namespace Shed\Cli\Command\Project;
 
-use App\Command\Base;
-use App\Exceptions\CommandFailed;
-use App\Exceptions\Directory\FailedToCreate;
-use App\Exceptions\EnvironmentNotValid;
-use App\Exceptions\Zip\CannotOpen;
-use App\Helper\Directory;
-use App\Helper\System;
-use App\Interfaces\Framework;
+use Shed\Cli\Command\Base;
+use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Exceptions\Directory\FailedToCreateException;
+use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Exceptions\Zip\CannotOpenException;
+use Shed\Cli\Helper\Directory;
+use Shed\Cli\Helper\System;
+use Shed\Cli\Interfaces\Framework;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
 final class Create extends Base
 {
     /**
-     * the URL of the Docker skeleton
+     * The URL of the Docker skeleton
      *
      * @var string
      */
@@ -30,6 +30,13 @@ final class Create extends Base
     private $sProjectName = null;
 
     /**
+     * The project slug
+     *
+     * @var string
+     */
+    private $sProjectSlug = null;
+
+    /**
      * Where to create the project
      *
      * @var string
@@ -37,11 +44,32 @@ final class Create extends Base
     private $sDir = null;
 
     /**
-     * The framework to use
+     * The backend framework to use
      *
      * @var Framework
      */
-    private $oFramework = null;
+    private $oBackendFramework = null;
+
+    /**
+     * The backend framework options
+     *
+     * @var array
+     */
+    private $oBackendFrameworkOptions = [];
+
+    /**
+     * The frontend framework to use
+     *
+     * @var Framework
+     */
+    private $oFrontendFramework = null;
+
+    /**
+     * The frontend framework options
+     *
+     * @var array
+     */
+    private $oFrontendFrameworkOptions = [];
 
     // --------------------------------------------------------------------------
 
@@ -61,17 +89,28 @@ final class Create extends Base
                 'The name of the project'
             )
             ->addOption(
+                'slug',
+                's',
+                InputOption::VALUE_OPTIONAL,
+                'The slug of the project'
+            )
+            ->addOption(
                 'directory',
                 'd',
                 InputOption::VALUE_OPTIONAL,
                 'The directory to create the project in, if empty then the current working directory is used'
             )
             ->addOption(
-                'framework',
+                'backend-framework',
+                'b',
+                InputOption::VALUE_OPTIONAL,
+                'Which backend framework to use'
+            )
+            ->addOption(
+                'frontend-framework',
                 'f',
                 InputOption::VALUE_OPTIONAL,
-                'Which framework to use: None, Nails, Laravel, or WordPress',
-                'NONE'
+                'Which frontend framework to use'
             );
     }
 
@@ -81,16 +120,18 @@ final class Create extends Base
      * Execute the command
      *
      * @return int|null|void
-     * @throws CannotOpen
-     * @throws CommandFailed
-     * @throws EnvironmentNotValid
-     * @throws FailedToCreate
+     * @throws CannotOpenException
+     * @throws CommandFailedException
+     * @throws NotValidException
+     * @throws FailedToCreateException
      */
     protected function go()
     {
-        $this->oOutput->writeln('Setting up a new project');
-        $this->checkEnvironment();
-        $this->setVariables();
+        $this
+            ->banner('Setting up a new project')
+            ->checkEnvironment()
+            ->setVariables();
+
         if ($this->confirmVariables()) {
             $this->createProject();
         }
@@ -101,20 +142,24 @@ final class Create extends Base
     /**
      * Validates that the environment is usable
      *
-     * @throws EnvironmentNotValid
+     * @throws NotValidException
+     *
+     * @return $this
      */
     private function checkEnvironment()
     {
         if (!function_exists('exec')) {
-            throw new EnvironmentNotValid('Missing function exec()');
+            throw new NotValidException('Missing function exec()');
         }
 
         $aRequiredCommands = ['git', 'git-flow', 'composer', 'npm'];
         foreach ($aRequiredCommands as $sRequiredCommand) {
             if (!System::commandExists($sRequiredCommand)) {
-                throw new EnvironmentNotValid($sRequiredCommand . ' is not installed');
+                throw new NotValidException($sRequiredCommand . ' is not installed');
             }
         }
+
+        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -128,18 +173,63 @@ final class Create extends Base
     {
         return $this
             ->setProjectName()
+            ->setProjectSlug()
             ->setDirectory()
-            ->setFramework();
+            ->setFramework(
+                'Backend',
+                $this->oBackendFramework,
+                $this->oInput->getOption('backend-framework')
+            )
+            ->setFrameworkOptions(
+                $this->oBackendFramework,
+                $this->oBackendFrameworkOptions
+            )
+            ->setFramework(
+                'Frontend',
+                $this->oFrontendFramework,
+                $this->oInput->getOption('frontend-framework')
+            )
+            ->setFrameworkOptions(
+                $this->oFrontendFramework,
+                $this->oFrontendFrameworkOptions);
     }
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Sets the project name property
+     *
+     * @return $this
+     */
     private function setProjectName()
     {
-        $this->sProjectName = $this->ask(
-            'Project Name:',
-            $this->oInput->getOption('directory')
-        );
+        $sOption = $this->oInput->getOption('name');
+        if (empty($sOption)) {
+            $this->sProjectName = $this->ask('Project Name:');
+        } else {
+            $this->sProjectName = $sOption;
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the project slug property
+     *
+     * @return $this
+     */
+    private function setProjectSlug()
+    {
+        if ($this->oInput->getOption('slug')) {
+            $this->sProjectSlug = $this->oInput->getOption('slug');
+        } else {
+            $sDefault           = strtolower($this->sProjectName);
+            $sDefault           = preg_replace('/[^a-z0-9\- ]/', '', $sDefault);
+            $sDefault           = str_replace(' ', '-', $sDefault);
+            $this->sProjectSlug = $this->ask('Project Slug:', $sDefault);
+        }
 
         return $this;
     }
@@ -153,23 +243,26 @@ final class Create extends Base
      */
     private function setDirectory()
     {
-        $this->sDir = $this->ask(
-            'Project Directory <info>(Leave blank for current directory)</info>:',
-            $this->oInput->getOption('directory'),
-            function ($sInput) {
-                $sInput = static::prepDirectory($sInput);
-                if (!Directory::isEmpty($sInput)) {
-                    $this->error([
-                        'Directory is not empty',
-                        $sInput,
-                    ]);
-                    return false;
-                }
-
-                return true;
+        $sOption = $this->oInput->getOption('directory');
+        if (empty($sOption)) {
+            $this->sDir = $this->ask(
+                'Project Directory <info>(Leave blank for current directory)</info>:',
+                null,
+                [$this, 'validateDirectory']
+            );
+        } else {
+            if ($this->validateDirectory($sOption)) {
+                $this->sDir = $sOption;
+            } else {
+                $this->sDir = $this->ask(
+                    'Project Directory <info>(Leave blank for current directory)</info>:',
+                    null,
+                    [$this, 'validateDirectory']
+                );
             }
-        );
-        $this->sDir = static::prepDirectory($this->sDir);
+        }
+
+        $this->sDir = Directory::resolve($this->sDir);
 
         return $this;
     }
@@ -177,31 +270,79 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Looks up and sets the framework
+     * Validate that a directory is empty
+     *
+     * @param string $sDirectory The directory to test
+     *
+     * @return bool
+     */
+    protected function validateDirectory($sDirectory)
+    {
+        $sDirectory = Directory::resolve($sDirectory);
+        if (!Directory::isEmpty($sDirectory)) {
+            $this->error([
+                'Directory is not empty',
+                $sDirectory,
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Looks up and sets the backend framework
+     *
+     * @param string    $sNamespace The namespace of frameworks to use
+     * @param Framework $oProperty  The property to assign the framework to
+     * @param string    $sOption    The value of the framework CLI option
      *
      * @return $this
      */
-    private function setFramework()
+    private function setFramework($sNamespace, &$oProperty, $sOption = null)
     {
-        $aFrameworks       = ['No framework'];
-        $aFrameworkClasses = [null];
+        $aFrameworks           = [];
+        $aFrameworksNormalised = [];
+        $aFrameworkClasses     = [];
 
         $sBasePath = BASEPATH . 'src';
         $oFinder   = new Finder();
-        $oFinder->files()->in($sBasePath . '/Project/Framework/');
+        $oFinder->files()->in($sBasePath . '/Project/Framework/' . $sNamespace . '/');
         foreach ($oFinder as $oFile) {
 
             $sFramework = $oFile->getPath() . '/' . $oFile->getBasename('.php');
-            $sFramework = str_replace($sBasePath, 'App', $sFramework);
+            $sFramework = str_replace($sBasePath, 'Shed\Cli', $sFramework);
             $sFramework = str_replace('/', '\\', $sFramework);
 
-            $oFramework          = new $sFramework();
-            $aFrameworks[]       = $oFramework->getName();
-            $aFrameworkClasses[] = $oFramework;
+            $oFramework              = new $sFramework();
+            $sFrameworkName          = $oFramework->getName();
+            $aFrameworks[]           = $sFrameworkName;
+            $aFrameworksNormalised[] = strtoupper($sFrameworkName);
+            $aFrameworkClasses[]     = $oFramework;
         }
 
-        $iChoice          = $this->choose('Framework', $aFrameworks);
-        $this->oFramework = $aFrameworkClasses[$iChoice];
+        if (count($aFrameworks) === 0) {
+            throw new \RuntimeException('No ' . $sNamespace . ' frameworks available');
+        } elseif (!empty($sOption)) {
+
+            $iChoice = array_search(strtoupper($sOption), $aFrameworksNormalised);
+            if ($iChoice === false) {
+                $this->error([
+                    '"' . $sOption . '" is not a valid ' . $sNamespace . ' framework option',
+                ]);
+                return $this->setFramework($sNamespace, $oProperty);
+            }
+
+        } elseif (count($aFrameworks) === 1) {
+            $this->oOutput->writeln('Only one ' . $sNamespace . ' framework available: ' . $aFrameworks[0]);
+            $iChoice = 0;
+        } else {
+            $iChoice = $this->choose($sNamespace . ' Framework', $aFrameworks);
+        }
+
+        $oProperty = $aFrameworkClasses[$iChoice];
 
         return $this;
     }
@@ -209,23 +350,21 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Takes a directory path, and if not absolute make it absolute relative to current working directory
+     * Configures framework options
      *
-     * @param string $sPath The path to inspect
+     * @param Framework $oFramework The framework to configure
+     * @param array     $aOptions   The property to assign the results to
      *
-     * @return string
+     * @return $this
      */
-    private static function prepDirectory($sPath)
+    private function setFrameworkOptions($oFramework, &$aOptions)
     {
-        if (!preg_match('/^' . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', $sPath)) {
-            $sPath = getcwd() . DIRECTORY_SEPARATOR . $sPath;
+        $aOptions = $oFramework->getOptions();
+        foreach ($aOptions as $oOption) {
+            //  @todo (Pablo - 2018-12-18) - Allow options to be configured
         }
 
-        if (!preg_match('/' . preg_quote(DIRECTORY_SEPARATOR, '/') . '$/', $sPath)) {
-            $sPath = $sPath . DIRECTORY_SEPARATOR;
-        }
-
-        return $sPath;
+        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -241,8 +380,10 @@ final class Create extends Base
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Project Name</comment>:  ' . $this->sProjectName);
+        $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
-        $this->oOutput->writeln('<comment>Framework</comment>:  ' . ($this->oFramework ? $this->oFramework->getName() : 'none'));
+        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
+        $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getName());
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }
@@ -253,9 +394,9 @@ final class Create extends Base
      * Creates a new project
      *
      * @return $this
-     * @throws CannotOpen
-     * @throws CommandFailed
-     * @throws FailedToCreate
+     * @throws CannotOpenException
+     * @throws CommandFailedException
+     * @throws FailedToCreateException
      */
     private function createProject()
     {
@@ -264,7 +405,8 @@ final class Create extends Base
         $this
             ->createProjectDir()
             ->installSkeleton()
-            ->configureFramework();
+            ->installFramework($this->oBackendFramework, $this->oBackendFrameworkOptions)
+            ->installFramework($this->oFrontendFramework, $this->oFrontendFrameworkOptions);
 
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Project has been configured at <comment>' . $this->sDir . '</comment>');
@@ -279,14 +421,14 @@ final class Create extends Base
      * Creates the project directory if it does not exist
      *
      * @return $this
-     * @throws FailedToCreate
-     * @throws CommandFailed
+     * @throws FailedToCreateException
+     * @throws CommandFailedException
      */
     private function createProjectDir()
     {
         $this->oOutput->write('Creating directory <comment>' . $this->sDir . '</comment>');
         if (!mkdir($this->sDir)) {
-            throw new FailedToCreate();
+            throw new FailedToCreateException();
         }
         System::exec('cd "' . $this->sDir . '"');
         $this->oOutput->writeln(' ... <info>done</info>');
@@ -299,8 +441,8 @@ final class Create extends Base
      * Installs the Docker skeleton
      *
      * @return $this
-     * @throws CannotOpen
-     * @throws CommandFailed
+     * @throws CannotOpenException
+     * @throws CommandFailedException
      */
     private function installSkeleton()
     {
@@ -321,7 +463,7 @@ final class Create extends Base
             System::exec('mv ' . $this->sDir . 'skeleton-docker-lamp-master/.[a-z]* ' . rtrim($this->sDir, '/') . '');
 
         } else {
-            throw new CannotOpen('Failed to unzip Docker skeleton');
+            throw new CannotOpenException('Failed to unzip: ' . $sZipPath);
         }
 
         //  Make all the .sh files executable
@@ -342,20 +484,18 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Configures the appropriate Docker file and framework
+     * Installs the framework
+     *
+     * @param Framework $oFramework The framework to install
+     * @param array     $aOptions   The framework options
      *
      * @return $this
      */
-    private function configureFramework()
+    private function installFramework(Framework $oFramework, array $aOptions)
     {
-        if ($this->oFramework) {
-            $this->oOutput->write('Installing framework');
-            $this->oFramework->install($this->sDir);
-            $this->oOutput->writeln(' ... <info>done</info>');
-        }
-
-        //  @todo (Pablo - 2018-12-14) - frontend stuff
-        //  @todo (Pablo - 2018-12-14) - replace package.json
+        $this->oOutput->write('Installing framework: ' . $oFramework->getName());
+        $oFramework->install($this->sDir, $aOptions);
+        $this->oOutput->writeln(' ... <info>done</info>');
 
         return $this;
     }

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Helper;
+namespace Shed\Cli\Helper;
 
-use App\Exceptions\CommandFailed;
+use Shed\Cli\Exceptions\System\CommandFailedException;
 
 final class System
 {
@@ -11,7 +11,7 @@ final class System
      *
      * @param string|array $mCommand The command to execute
      *
-     * @throws CommandFailed
+     * @throws CommandFailedException
      */
     public static function exec($mCommand)
     {
@@ -21,7 +21,7 @@ final class System
 
         exec($mCommand, $aOutput, $iExitCode);
         if ($iExitCode) {
-            throw new CommandFailed('"' . $mCommand . '" failed with non-zero exit code ' . $iExitCode);
+            throw new CommandFailedException('"' . $mCommand . '" failed with non-zero exit code ' . $iExitCode);
         }
     }
 

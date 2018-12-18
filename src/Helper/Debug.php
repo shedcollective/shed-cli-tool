@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helper;
+namespace Shed\Cli\Helper;
 
 final class Debug
 {
