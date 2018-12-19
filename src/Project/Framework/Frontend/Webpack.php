@@ -20,14 +20,14 @@ final class Webpack extends Base implements Framework
      *
      * @var string
      */
-    const FRONTEND_BOOTSTRAPPER = 'https://github.com/shedcollective/shed-frontend-bootstrapper/archive/develop.zip';
+    const FRONTEND_BOOTSTRAPPER = 'https://github.com/shedcollective/shed-frontend-bootstrapper/archive/master.zip';
 
     /**
      * The name of the folder within the zip archive
      *
      * @var string
      */
-    const FRONTEND_BOOTSTRAPPER_FOLDER = 'shed-frontend-bootstrapper-develop';
+    const FRONTEND_BOOTSTRAPPER_FOLDER = 'shed-frontend-bootstrapper-master';
 
     /**
      * These files should exist at the root of the project (i.e. ./www)
