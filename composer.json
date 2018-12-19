@@ -1,7 +1,7 @@
 {
-    "name": "shed/command-line-tool",
+    "name": "shedcollective/command-line-tool",
     "version": "1.0.0",
-    "homepage": "http://shedapp.co.uk",
+    "homepage": "https://shedcollective.com",
     "description": "The command line tool for simplifying life at Shed",
     "license": "MIT",
     "authors": [
