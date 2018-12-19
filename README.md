@@ -15,7 +15,7 @@ brew install shed
 
 ### Using Composer
 ```bash
-composer global require shedcollective/shed-cli-tool
+composer global require shedcollective/command-line-tool
 ```
 
 ### Manually
