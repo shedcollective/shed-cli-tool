@@ -2,10 +2,11 @@
 
 namespace Shed\Cli\Project\Framework\Backend;
 
+use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Base;
 
-final class WordPress extends Base implements Framework
+final class None extends Base implements Framework
 {
     /**
      * Return the name of the framework
@@ -14,7 +15,7 @@ final class WordPress extends Base implements Framework
      */
     public function getName()
     {
-        return 'WordPress';
+        return 'Static';
     }
 
     // --------------------------------------------------------------------------
@@ -57,7 +58,7 @@ final class WordPress extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework)
     {
         $this
-            ->configureDockerFile($sPath, 'apache-wordpress-php72')
-            ->installFramework($sPath, 'apache-wordpress-php72');
+            ->configureDockerFile($sPath, 'apache-php72')
+            ->installFramework($sPath, 'apache-php72');
     }
 }

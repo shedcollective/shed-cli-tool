@@ -2,10 +2,10 @@
 
 namespace Shed\Cli\Project\Framework\Backend;
 
-use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Interfaces\Framework;
+use Shed\Cli\Project\Framework\Base;
 
-final class Laravel implements Framework
+final class Laravel extends Base implements Framework
 {
     /**
      * Return the name of the framework
@@ -32,18 +32,32 @@ final class Laravel implements Framework
     // --------------------------------------------------------------------------
 
     /**
+     * Returns any ENV vars for the project
+     *
+     * @param Framework $oFrontendFramework The frontend framework
+     *
+     * @return array
+     */
+    public function getEnvVars(Framework $oFrontendFramework)
+    {
+        return [];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Install the framework
      *
-     * @param string $sPath    The absolute directory to install the framework to
-     * @param array  $aOptions The result of any options
+     * @param string    $sPath           The absolute directory to install the framework to
+     * @param array     $aOptions        The result of any options
+     * @param Framework $oOtherFramework The other framework being installed
      *
      * @return void
-     * @throws CommandFailedException
      */
-    public function install($sPath, array $aOptions = [])
+    public function install($sPath, array $aOptions, Framework $oOtherFramework)
     {
-        Nails::configureDockerFile($sPath, 'apache-laravel-php72');
-        Nails::configureDockerEnvironmentVariables($sPath, []);
-        Nails::installFramework($sPath, 'apache-laravel-php72');
+        $this
+            ->configureDockerFile($sPath, 'apache-laravel-php72')
+            ->installFramework($sPath, 'apache-laravel-php72');
     }
 }

@@ -9,9 +9,11 @@ use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\System;
+use Shed\Cli\Helper\Zip;
 use Shed\Cli\Interfaces\Framework;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Yaml\Yaml;
 
 final class Create extends Base
 {
@@ -152,7 +154,7 @@ final class Create extends Base
             throw new NotValidException('Missing function exec()');
         }
 
-        $aRequiredCommands = ['git', 'git-flow', 'composer', 'npm'];
+        $aRequiredCommands = ['composer'];
         foreach ($aRequiredCommands as $sRequiredCommand) {
             if (!System::commandExists($sRequiredCommand)) {
                 throw new NotValidException($sRequiredCommand . ' is not installed');
@@ -405,8 +407,12 @@ final class Create extends Base
         $this
             ->createProjectDir()
             ->installSkeleton()
-            ->installFramework($this->oBackendFramework, $this->oBackendFrameworkOptions)
-            ->installFramework($this->oFrontendFramework, $this->oFrontendFrameworkOptions);
+            ->installFrameworks(
+                $this->oBackendFramework,
+                $this->oBackendFrameworkOptions,
+                $this->oFrontendFramework,
+                $this->oFrontendFrameworkOptions
+            );
 
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Project has been configured at <comment>' . $this->sDir . '</comment>');
@@ -426,12 +432,12 @@ final class Create extends Base
      */
     private function createProjectDir()
     {
-        $this->oOutput->write('Creating directory <comment>' . $this->sDir . '</comment>');
+        $this->oOutput->write('Creating directory <comment>' . $this->sDir . '</comment> ...');
         if (!mkdir($this->sDir)) {
             throw new FailedToCreateException();
         }
         System::exec('cd "' . $this->sDir . '"');
-        $this->oOutput->writeln(' ... <info>done</info>');
+        $this->oOutput->writeln('<info>done</info>');
         return $this;
     }
 
@@ -446,25 +452,14 @@ final class Create extends Base
      */
     private function installSkeleton()
     {
-        $this->oOutput->write('Installing Docker skeleton');
+        $this->oOutput->write('Installing Docker skeleton ...');
 
         //  Download skeleton
         $sZipPath = $this->sDir . 'docker.zip';
         file_put_contents($sZipPath, file_get_contents(static::DOCKER_SKELETON));
 
         //  Extract
-        $oZip = new \ZipArchive();
-        if ($oZip->open($sZipPath) === true) {
-
-            $oZip->extractTo($this->sDir);
-            $oZip->close();
-
-            System::exec('mv ' . $this->sDir . 'skeleton-docker-lamp-master/* ' . rtrim($this->sDir, '/') . '');
-            System::exec('mv ' . $this->sDir . 'skeleton-docker-lamp-master/.[a-z]* ' . rtrim($this->sDir, '/') . '');
-
-        } else {
-            throw new CannotOpenException('Failed to unzip: ' . $sZipPath);
-        }
+        Zip::unzip($sZipPath, $this->sDir, 'skeleton-docker-lamp-master');
 
         //  Make all the .sh files executable
         $oFinder = new Finder();
@@ -473,30 +468,65 @@ final class Create extends Base
             System::exec('chmod +x "' . $oFile->getPath() . '/' . $oFile->getFilename() . '"');
         }
 
-        //  Tidy up
-        unlink($sZipPath);
-        rmdir($this->sDir . 'skeleton-docker-lamp-master');
-
-        $this->oOutput->writeln(' ... <info>done</info>');
+        $this->oOutput->writeln('<info>done</info>');
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Installs the framework
+     * Installs the frameworks and configures ENV vars
      *
-     * @param Framework $oFramework The framework to install
-     * @param array     $aOptions   The framework options
+     * @param Framework $oBackendFramework  The backend framework
+     * @param array     $aBackendOptions    The backend framework options
+     * @param Framework $oFrontendFramework The frontend framework
+     * @param array     $aFrontendOptions   The frontend framework options
      *
      * @return $this
      */
-    private function installFramework(Framework $oFramework, array $aOptions)
-    {
-        $this->oOutput->write('Installing framework: ' . $oFramework->getName());
-        $oFramework->install($this->sDir, $aOptions);
-        $this->oOutput->writeln(' ... <info>done</info>');
+    private function installFrameworks(
+        Framework $oBackendFramework,
+        array $aBackendOptions,
+        Framework $oFrontendFramework,
+        array $aFrontendOptions
+    ) {
+        $this->oOutput->write('Installing backend framework: ' . $oBackendFramework->getName() . ' ... ');
+        $oBackendFramework->install($this->sDir, $aBackendOptions, $oFrontendFramework);
+        $this->oOutput->writeln('<info>done</info>');
+
+        $this->oOutput->write('Installing frontend framework: ' . $oFrontendFramework->getName() . ' ... ');
+        $oFrontendFramework->install($this->sDir, $aFrontendOptions, $oBackendFramework);
+        $this->oOutput->writeln('<info>done</info>');
+
+        $this->oOutput->write('Configuring web server environment variables ... ');
+        $this->configureWebServerEnvVars($oBackendFramework, $oFrontendFramework);
+        $this->oOutput->writeln('<info>done</info>');
 
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @param Framework $oBackendFramework  The backend framework
+     * @param Framework $oFrontendFramework The frontend framework
+     */
+    private function configureWebServerEnvVars($oBackendFramework, $oFrontendFramework)
+    {
+        $aConfig = Yaml::parseFile($this->sDir . 'docker-compose.override.yml');
+        if (empty($aConfig['webserver']['environment'])) {
+            $aConfig['webserver']['environment'] = [];
+        }
+
+        $aConfig['webserver']['environment'] = array_merge(
+            $aConfig['webserver']['environment'],
+            $oBackendFramework->getEnvVars($oFrontendFramework),
+            $oFrontendFramework->getEnvVars($oBackendFramework)
+        );
+
+        file_put_contents(
+            $this->sDir . 'docker-compose.override.yml',
+            Yaml::dump($aConfig, 100)
+        );
     }
 }

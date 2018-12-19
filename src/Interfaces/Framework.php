@@ -23,12 +23,24 @@ interface Framework
     // --------------------------------------------------------------------------
 
     /**
+     * Returns any ENV vars for the project
+     *
+     * @param Framework $oOtherFramework  The other framework
+     *
+     * @return array
+     */
+    public function getEnvVars(Framework $oOtherFramework);
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Install the framework
      *
-     * @param string $sPath    The absolute directory to install the framework to
-     * @param array  $aOptions The result of any options
+     * @param string    $sPath           The absolute directory to install the framework to
+     * @param array     $aOptions        The result of any options
+     * @param Framework $oOtherFramework The other framework being installed
      *
      * @return void
      */
-    public function install($sPath, array $aOptions = []);
+    public function install($sPath, array $aOptions, Framework $oOtherFramework);
 }

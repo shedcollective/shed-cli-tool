@@ -16,7 +16,7 @@ final class System
     public static function exec($mCommand)
     {
         if (is_array($mCommand)) {
-            $mCommand = implode(' && ', $mCommand);
+            $mCommand = implode(' && ', array_filter($mCommand));
         }
 
         exec($mCommand, $aOutput, $iExitCode);
