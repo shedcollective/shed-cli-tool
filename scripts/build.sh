@@ -28,14 +28,12 @@ commandNotInstalled()
 if ! [ -x "$(command -v composer)" ]; then
     commandNotInstalled composer "https://getcomposer.org" "brew install composer"
     exit 1
-elif ! [ -x "$(command -v box)" ]; then
-    commandNotInstalled box "https://github.com/humbug/box" "brew tap humbug/box && brew install box"
-    exit 1
 fi
 
 
 # --------------------------------------------------------------------------
 # Build
 # --------------------------------------------------------------------------
-composer --no-interaction --optimize-autoloader --no-dev install
-box compile
+composer update --lock -q # So our lock file is up to date (version number)
+composer --no-interaction --optimize-autoloader --no-dev --ansi install
+vendor/bin/box compile  --ansi

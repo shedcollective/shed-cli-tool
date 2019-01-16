@@ -1,7 +1,6 @@
 {
     "main": "bin/main.php",
     "output": "dist/shed",
-    "chmod": "0755",
     "directories": [
         "src",
         "vendor"
@@ -9,5 +8,20 @@
     "exclude-composer-files": false,
     "files": [
         "composer.json"
+    ],
+    "finder": [
+        {
+            "notName": "/LICENSE|.*\\.md|.*\\.dist|Makefile|composer\\.json|composer\\.lock/",
+            "exclude": [
+                "bamarni",
+                "doc",
+                "test",
+                "test_old",
+                "tests",
+                "Test",
+                "Tests"
+            ],
+            "in": "vendor"
+        }
     ]
 }

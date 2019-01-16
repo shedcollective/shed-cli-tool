@@ -22,3 +22,28 @@ composer global require shedcollective/command-line-tool
 
 1. Clone this repository
 2. Add `dist` to your `$PATH`
+
+
+## Usage
+
+Create a new project in the active directory
+
+```bash
+shed project:create
+```
+
+Create a new project in another directory
+
+```bash
+shed new --dir=~/my-project
+```
+
+
+## Development
+
+This project uses [humbug/box](https://github.com/humbug/box) for compilation. You may use the following commands for development:
+
+```bash
+composer build
+composer test
+```
