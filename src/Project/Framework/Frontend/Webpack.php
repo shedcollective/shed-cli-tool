@@ -6,6 +6,7 @@ use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Helper\Zip;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Backend\Laravel;
 use Shed\Cli\Project\Framework\Backend\Nails;
@@ -134,6 +135,12 @@ final class Webpack extends Base implements Framework
         } elseif ($oOtherFramework instanceof WordPress) {
             $this->installWordPress($sZipPath, $sPath);
         }
+
+        //  Update package.json
+        $sPackagePath   = $sPath . 'www/package.json';
+        $oPackage       = json_decode(file_get_contents($sPackagePath));
+        $oPackage->name = $aInstallOptions['name'];
+        file_put_contents($sPackagePath, json_encode($oPackage, JSON_PRETTY_PRINT));
     }
 
     // --------------------------------------------------------------------------
