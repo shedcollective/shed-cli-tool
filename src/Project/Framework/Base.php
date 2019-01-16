@@ -4,6 +4,7 @@ namespace Shed\Cli\Project\Framework;
 
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Helper\System;
+use Symfony\Component\Yaml\Yaml;
 
 abstract class Base
 {
@@ -17,14 +18,14 @@ abstract class Base
      */
     protected function configureDockerFile($sPath, $sDesiredDockerFile)
     {
-        $sDockerComposePath = $sPath . 'docker-compose.yml';
-        $sConfig            = file_get_contents($sPath . 'docker-compose.yml');
-        $sConfig            = preg_replace(
-            '/build: "docker\/webserver\/.*?"/',
-            'build: "docker/webserver/' . $sDesiredDockerFile,
-            $sConfig
+        $aConfig = Yaml::parseFile($sPath . 'docker-compose.yml');
+
+        $aConfig['webserver']['build'] = 'docker/webserver/' . $sDesiredDockerFile;
+
+        file_put_contents(
+            $sPath . 'docker-compose.yml',
+            Yaml::dump($aConfig, 100)
         );
-        file_put_contents($sDockerComposePath, $sConfig);
 
         return $this;
     }
