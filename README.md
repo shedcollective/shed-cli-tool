@@ -35,7 +35,7 @@ shed project:create
 Create a new project in another directory
 
 ```bash
-shed new --dir=~/my-project
+shed project:create --dir=~/my-project
 ```
 
 

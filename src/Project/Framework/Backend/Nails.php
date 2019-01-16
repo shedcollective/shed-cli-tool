@@ -4,9 +4,19 @@ namespace Shed\Cli\Project\Framework\Backend;
 
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Base;
+use Shed\Cli\Helper\System;
 
 final class Nails extends Base implements Framework
 {
+    /**
+     * The URL of the app skeleton
+     *
+     * @var string
+     */
+    const APP_SKELETON = 'https://github.com/shedcollective/skeleton-app/archive/master.zip';
+
+    // --------------------------------------------------------------------------
+
     /**
      * Return the name of the framework
      *
@@ -57,7 +67,14 @@ final class Nails extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework)
     {
         $this
-            ->configureDockerFile($sPath, 'apache-nails-php72')
-            ->installFramework($sPath, 'apache-nails-php72');
+            ->configureDockerFile($sPath, 'apache-nails-php72');
+
+        //  Install Nails; done manually so we can use the Shed flavour of the skeleton
+        $aArguments = [
+            '--dir="' . $sPath . 'www"',
+            '--app-skeleton="' . static::APP_SKELETON . '"',
+            '--no-docker',
+        ];
+        System::exec('nails new ' . implode(' ', $aArguments));
     }
 }
