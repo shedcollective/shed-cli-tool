@@ -35,9 +35,7 @@ jobs:
           key: composer-dependencies-{{ checksum "composer.json" }}
 
       # Run tests
-      - run: ./vendor/bin/phpunit
+      - run: composer test
 
       # Build
-      - run: curl -L https://github.com/humbug/box/releases/download/3.4.0/box.phar --output box
-      - run: chmod +x ./box
-      - run: ./box compile
+      - run: composer build
