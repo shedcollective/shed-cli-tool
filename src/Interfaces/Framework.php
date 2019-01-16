@@ -39,8 +39,9 @@ interface Framework
      * @param string    $sPath           The absolute directory to install the framework to
      * @param array     $aOptions        The result of any options
      * @param Framework $oOtherFramework The other framework being installed
+     * @param array     $aInstallOptions The install options
      *
      * @return void
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework);
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions);
 }

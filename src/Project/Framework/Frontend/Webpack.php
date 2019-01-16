@@ -78,18 +78,18 @@ final class Webpack extends Base implements Framework
     {
         if ($oBackendFramework instanceof Laravel) {
             return [
-                'WEBPACK_INPUT_PATH=./resources/assets/js/',
-                'WEBPACK_OUTPUT_PATH=./public/',
+                'WEBPACK_INPUT_PATH'  => './resources/assets/js/',
+                'WEBPACK_OUTPUT_PATH' => './public/',
             ];
         } elseif ($oBackendFramework instanceof Nails) {
             return [
-                'WEBPACK_INPUT_PATH=./assets/js/',
-                'WEBPACK_OUTPUT_PATH=./assets/build/',
+                'WEBPACK_INPUT_PATH'  => './assets/js/',
+                'WEBPACK_OUTPUT_PATH' => './assets/build/',
             ];
         } elseif ($oBackendFramework instanceof None) {
             return [
-                'WEBPACK_INPUT_PATH=./assets/js/',
-                'WEBPACK_OUTPUT_PATH=./assets/build/',
+                'WEBPACK_INPUT_PATH'  => './assets/js/',
+                'WEBPACK_OUTPUT_PATH' => './assets/build/',
             ];
         } else {
             return [];
@@ -104,12 +104,13 @@ final class Webpack extends Base implements Framework
      * @param string    $sPath           The absolute directory to install the framework to
      * @param array     $aOptions        The result of any options
      * @param Framework $oOtherFramework The other framework being installed
+     * @param array     $aInstallOptions The install options
      *
      * @return void
      * @throws CommandFailedException
      * @throws CannotOpenException
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework)
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
     {
         //  Clean up target
         $aFiles    = array_merge(static::ROOT_FILES, ['webpack.*.js', 'assets']);

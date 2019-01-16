@@ -415,7 +415,7 @@ final class Create extends Base
             );
 
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('Project has been configured at <comment>' . $this->sDir . '</comment>');
+        $this->oOutput->writeln('🎉 Project has been configured at <comment>' . $this->sDir . '</comment>');
         $this->oOutput->writeln('Run <comment>make up</comment> to build containers and install frameworks');
         $this->oOutput->writeln('');
         return $this;
@@ -432,12 +432,12 @@ final class Create extends Base
      */
     private function createProjectDir()
     {
-        $this->oOutput->write('Creating directory <comment>' . $this->sDir . '</comment> ...');
+        $this->oOutput->write('📁 Creating directory <comment>' . $this->sDir . '</comment>... ');
         if (!mkdir($this->sDir)) {
             throw new FailedToCreateException();
         }
         System::exec('cd "' . $this->sDir . '"');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->oOutput->writeln('👍');
         return $this;
     }
 
@@ -452,7 +452,7 @@ final class Create extends Base
      */
     private function installSkeleton()
     {
-        $this->oOutput->write('Installing Docker skeleton ...');
+        $this->oOutput->write('📦 Installing Docker skeleton... ');
 
         //  Download skeleton
         $sZipPath = $this->sDir . 'docker.zip';
@@ -468,7 +468,7 @@ final class Create extends Base
             System::exec('chmod +x "' . $oFile->getPath() . '/' . $oFile->getFilename() . '"');
         }
 
-        $this->oOutput->writeln('<info>done</info>');
+        $this->oOutput->writeln('👍');
         return $this;
     }
 
@@ -490,17 +490,24 @@ final class Create extends Base
         Framework $oFrontendFramework,
         array $aFrontendOptions
     ) {
-        $this->oOutput->write('Installing backend framework: ' . $oBackendFramework->getName() . ' ... ');
-        $oBackendFramework->install($this->sDir, $aBackendOptions, $oFrontendFramework);
-        $this->oOutput->writeln('<info>done</info>');
 
-        $this->oOutput->write('Installing frontend framework: ' . $oFrontendFramework->getName() . ' ... ');
-        $oFrontendFramework->install($this->sDir, $aFrontendOptions, $oBackendFramework);
-        $this->oOutput->writeln('<info>done</info>');
+        $aInstallOptions = [
+            'name' => $this->sProjectName,
+            'slug' => $this->sProjectSlug,
+            'dir'  => $this->sDir,
+        ];
 
-        $this->oOutput->write('Configuring web server environment variables ... ');
+        $this->oOutput->write('🔧 Installing backend framework: <info>' . $oBackendFramework->getName() . '</info>... ');
+        $oBackendFramework->install($this->sDir, $aBackendOptions, $oFrontendFramework, $aInstallOptions);
+        $this->oOutput->writeln('👍');
+
+        $this->oOutput->write('🎨 Installing frontend framework: <info>' . $oFrontendFramework->getName() . '</info>... ');
+        $oFrontendFramework->install($this->sDir, $aFrontendOptions, $oBackendFramework, $aInstallOptions);
+        $this->oOutput->writeln('👍');
+
+        $this->oOutput->write('🧐 Configuring web server environment variables... ');
         $this->configureWebServerEnvVars($oBackendFramework, $oFrontendFramework);
-        $this->oOutput->writeln('<info>done</info>');
+        $this->oOutput->writeln('👍');
 
         return $this;
     }
@@ -508,24 +515,59 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
+     * Configure the Webserver containers environment variables
+     *
      * @param Framework $oBackendFramework  The backend framework
      * @param Framework $oFrontendFramework The frontend framework
      */
     private function configureWebServerEnvVars($oBackendFramework, $oFrontendFramework)
     {
-        $aConfig = Yaml::parseFile($this->sDir . 'docker-compose.override.yml');
+        static::updateWebserverEnvVars(
+            $this->sDir,
+            array_merge(
+                $oBackendFramework->getEnvVars($oFrontendFramework),
+                $oFrontendFramework->getEnvVars($oBackendFramework)
+            )
+        );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Save additional environment variables to the webserver's Docker configuration
+     *
+     * @param string $sPath The path to the docker-compose.override.yml file
+     * @param array  $aVars The variables to save
+     */
+    public static function updateWebserverEnvVars($sPath, array $aVars)
+    {
+        $aConfig = Yaml::parseFile($sPath . 'docker-compose.override.yml');
         if (empty($aConfig['webserver']['environment'])) {
             $aConfig['webserver']['environment'] = [];
         }
 
-        $aConfig['webserver']['environment'] = array_merge(
-            $aConfig['webserver']['environment'],
-            $oBackendFramework->getEnvVars($oFrontendFramework),
-            $oFrontendFramework->getEnvVars($oBackendFramework)
+        $aEnvVars = [];
+        array_map(
+            function($sInput) use (&$aEnvVars) {
+                list($sKey, $sValue) = explode('=', $sInput, 2);
+                $aEnvVars[$sKey] = $sValue;
+            },
+            $aConfig['webserver']['environment']
         );
 
+        $aEnvVars = array_merge(
+            $aEnvVars,
+            $aVars
+        );
+
+
+        $aConfig['webserver']['environment'] = [];
+        foreach ($aEnvVars as $sKey => $sValue) {
+            $aConfig['webserver']['environment'][] = $sKey . '=' . $sValue;
+        }
+
         file_put_contents(
-            $this->sDir . 'docker-compose.override.yml',
+            $sPath . 'docker-compose.override.yml',
             Yaml::dump($aConfig, 100)
         );
     }
