@@ -1,15 +1,21 @@
 <?php
 
-namespace Shed\Cli\Interfaces;
+namespace Shed\Cli\Project\Framework\Frontend;
 
-interface Framework
+use Shed\Cli\Interfaces\Framework;
+use Shed\Cli\Project\Framework\Base;
+
+final class None extends Base implements Framework
 {
     /**
      * Return the name of the framework
      *
      * @return string
      */
-    public function getName();
+    public function getName()
+    {
+        return 'None';
+    }
 
     // --------------------------------------------------------------------------
 
@@ -18,18 +24,24 @@ interface Framework
      *
      * @return array
      */
-    public function getOptions();
+    public function getOptions()
+    {
+        return [];
+    }
 
     // --------------------------------------------------------------------------
 
     /**
      * Returns any ENV vars for the project
      *
-     * @param Framework $oOtherFramework The other framework
+     * @param Framework $oBackendFramework The other framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oOtherFramework);
+    public function getEnvVars(Framework $oBackendFramework)
+    {
+        return [];
+    }
 
     // --------------------------------------------------------------------------
 
@@ -41,5 +53,8 @@ interface Framework
      * @param Framework $oOtherFramework The other framework being installed
      * @param array     $aInstallOptions The install options
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions);
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
+    {
+        //  Silence is golden
+    }
 }

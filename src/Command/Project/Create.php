@@ -325,6 +325,26 @@ final class Create extends Base
             $aFrameworkClasses[]     = $oFramework;
         }
 
+        //  Cherry-pick "none" or "static" as the first framework, if it's there
+        $aCherries = ['None', 'Static'];
+        foreach ($aCherries as $sCherry) {
+            $iCherryIndex = array_search($sCherry, $aFrameworks);
+            if ($iCherryIndex !== false) {
+                break;
+            }
+        }
+
+        if (isset($iCherryIndex) && $iCherryIndex !== false) {
+
+            $aNoneFrameworks           = array_splice($aFrameworks, $iCherryIndex, 1);
+            $aNoneFrameworksNormalised = array_splice($aFrameworksNormalised, $iCherryIndex, 1);
+            $aNoneFrameworkClasses     = array_splice($aFrameworkClasses, $iCherryIndex, 1);
+
+            array_unshift($aFrameworks, reset($aNoneFrameworks));
+            array_unshift($aFrameworksNormalised, reset($aNoneFrameworksNormalised));
+            array_unshift($aFrameworkClasses, reset($aNoneFrameworkClasses));
+        }
+
         if (count($aFrameworks) === 0) {
             throw new \RuntimeException('No ' . $sNamespace . ' frameworks available');
         } elseif (!empty($sOption)) {
@@ -548,7 +568,7 @@ final class Create extends Base
 
         $aEnvVars = [];
         array_map(
-            function($sInput) use (&$aEnvVars) {
+            function ($sInput) use (&$aEnvVars) {
                 list($sKey, $sValue) = explode('=', $sInput, 2);
                 $aEnvVars[$sKey] = $sValue;
             },
