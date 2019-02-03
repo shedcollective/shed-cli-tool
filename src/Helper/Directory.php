@@ -73,6 +73,9 @@ final class Directory
             $sPath = preg_replace('/^~\//', $_SERVER['HOME'] . '/', $sPath);
         }
 
+        //  Resolve ./
+        $sPath = preg_replace('/^\.\//', getcwd() . DIRECTORY_SEPARATOR, $sPath);
+
         //  Resolve relative URLs
         if (!preg_match('/^\//', $sPath)) {
             $sPath = getcwd() . DIRECTORY_SEPARATOR . $sPath;
