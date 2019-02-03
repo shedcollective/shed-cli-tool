@@ -139,7 +139,7 @@ final class Webpack extends Base implements Framework
         //  Update package.json
         $sPackagePath   = $sPath . 'www/package.json';
         $oPackage       = json_decode(file_get_contents($sPackagePath));
-        $oPackage->name = $aInstallOptions['name'];
+        $oPackage->name = $aInstallOptions['slug'];
         file_put_contents($sPackagePath, json_encode($oPackage, JSON_PRETTY_PRINT));
     }
 
