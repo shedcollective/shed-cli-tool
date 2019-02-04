@@ -57,7 +57,7 @@ final class Create extends Base
      *
      * @var array
      */
-    private $oBackendFrameworkOptions = [];
+    private $aBackendFrameworkOptions = [];
 
     /**
      * The frontend framework to use
@@ -71,14 +71,14 @@ final class Create extends Base
      *
      * @var array
      */
-    private $oFrontendFrameworkOptions = [];
+    private $aFrontendFrameworkOptions = [];
 
     // --------------------------------------------------------------------------
 
     /**
      * Configure the command
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('project:create')
@@ -121,13 +121,13 @@ final class Create extends Base
     /**
      * Execute the command
      *
-     * @return int|null|void
+     * @return int
      * @throws CannotOpenException
      * @throws CommandFailedException
      * @throws NotValidException
      * @throws FailedToCreateException
      */
-    protected function go()
+    protected function go(): int
     {
         $this
             ->banner('Setting up a new project')
@@ -137,6 +137,8 @@ final class Create extends Base
         if ($this->confirmVariables()) {
             $this->createProject();
         }
+
+        return static::EXIT_CODE_SUCCESS;
     }
 
     // --------------------------------------------------------------------------
@@ -148,7 +150,7 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function checkEnvironment()
+    private function checkEnvironment(): Create
     {
         if (!function_exists('exec')) {
             throw new NotValidException('Missing function exec()');
@@ -171,7 +173,7 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setVariables()
+    private function setVariables(): Create
     {
         return $this
             ->setProjectName()
@@ -184,7 +186,7 @@ final class Create extends Base
             )
             ->setFrameworkOptions(
                 $this->oBackendFramework,
-                $this->oBackendFrameworkOptions
+                $this->aBackendFrameworkOptions
             )
             ->setFramework(
                 'Frontend',
@@ -193,7 +195,8 @@ final class Create extends Base
             )
             ->setFrameworkOptions(
                 $this->oFrontendFramework,
-                $this->oFrontendFrameworkOptions);
+                $this->aFrontendFrameworkOptions
+            );
     }
 
     // --------------------------------------------------------------------------
@@ -203,8 +206,9 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setProjectName()
+    private function setProjectName(): Create
     {
+        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
         $sOption = $this->oInput->getOption('name');
         if (empty($sOption)) {
             $this->sProjectName = $this->ask('Project Name:');
@@ -222,8 +226,9 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setProjectSlug()
+    private function setProjectSlug(): Create
     {
+        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
         if ($this->oInput->getOption('slug')) {
             $this->sProjectSlug = $this->oInput->getOption('slug');
         } else {
@@ -243,7 +248,7 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setDirectory()
+    private function setDirectory(): Create
     {
         $sOption = $this->oInput->getOption('directory');
         if (empty($sOption)) {
@@ -278,14 +283,14 @@ final class Create extends Base
      *
      * @return bool
      */
-    protected function validateDirectory($sDirectory)
+    protected function validateDirectory($sDirectory): bool
     {
         $sDirectory = Directory::resolve($sDirectory);
         if (!Directory::isEmpty($sDirectory)) {
-            $this->error([
+            $this->error(array_filter([
                 'Directory is not empty',
                 $sDirectory,
-            ]);
+            ]));
             return false;
         }
 
@@ -295,7 +300,7 @@ final class Create extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Looks up and sets the backend framework
+     * Looks up and sets the framework
      *
      * @param string    $sNamespace The namespace of frameworks to use
      * @param Framework $oProperty  The property to assign the framework to
@@ -303,7 +308,7 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setFramework($sNamespace, &$oProperty, $sOption = null)
+    private function setFramework($sNamespace, &$oProperty, $sOption = null): Create
     {
         $aFrameworks           = [];
         $aFrameworksNormalised = [];
@@ -314,7 +319,12 @@ final class Create extends Base
         $oFinder->files()->in($sBasePath . '/Project/Framework/' . $sNamespace . '/');
         foreach ($oFinder as $oFile) {
 
-            $sFramework = $oFile->getPath() . '/' . $oFile->getBasename('.php');
+            $sClassName = $oFile->getBasename('.php');
+            if ($sClassName === 'Base') {
+                continue;
+            }
+
+            $sFramework = $oFile->getPath() . '/' . $sClassName;
             $sFramework = str_replace($sBasePath, 'Shed\Cli', $sFramework);
             $sFramework = str_replace('/', '\\', $sFramework);
 
@@ -379,7 +389,7 @@ final class Create extends Base
      *
      * @return $this
      */
-    private function setFrameworkOptions($oFramework, &$aOptions)
+    private function setFrameworkOptions($oFramework, &$aOptions): Create
     {
         $aOptions = $oFramework->getOptions();
         foreach ($aOptions as $oOption) {
@@ -420,7 +430,7 @@ final class Create extends Base
      * @throws CommandFailedException
      * @throws FailedToCreateException
      */
-    private function createProject()
+    private function createProject(): Create
     {
         $this->oOutput->writeln('');
 
@@ -429,9 +439,9 @@ final class Create extends Base
             ->installSkeleton()
             ->installFrameworks(
                 $this->oBackendFramework,
-                $this->oBackendFrameworkOptions,
+                $this->aBackendFrameworkOptions,
                 $this->oFrontendFramework,
-                $this->oFrontendFrameworkOptions
+                $this->aFrontendFrameworkOptions
             );
 
         $this->oOutput->writeln('');
@@ -450,7 +460,7 @@ final class Create extends Base
      * @throws FailedToCreateException
      * @throws CommandFailedException
      */
-    private function createProjectDir()
+    private function createProjectDir(): Create
     {
         $this->oOutput->write('📁 Creating directory <comment>' . $this->sDir . '</comment>... ');
         if (!mkdir($this->sDir)) {
@@ -470,7 +480,7 @@ final class Create extends Base
      * @throws CannotOpenException
      * @throws CommandFailedException
      */
-    private function installSkeleton()
+    private function installSkeleton(): Create
     {
         $this->oOutput->write('📦 Installing Docker skeleton... ');
 
@@ -509,7 +519,7 @@ final class Create extends Base
         array $aBackendOptions,
         Framework $oFrontendFramework,
         array $aFrontendOptions
-    ) {
+    ): Create {
 
         $aInstallOptions = [
             'name' => $this->sProjectName,
@@ -540,7 +550,7 @@ final class Create extends Base
      * @param Framework $oBackendFramework  The backend framework
      * @param Framework $oFrontendFramework The frontend framework
      */
-    private function configureWebServerEnvVars($oBackendFramework, $oFrontendFramework)
+    private function configureWebServerEnvVars($oBackendFramework, $oFrontendFramework): void
     {
         static::updateWebserverEnvVars(
             $this->sDir,
@@ -559,7 +569,7 @@ final class Create extends Base
      * @param string $sPath The path to the docker-compose.override.yml file
      * @param array  $aVars The variables to save
      */
-    public static function updateWebserverEnvVars($sPath, array $aVars)
+    public static function updateWebserverEnvVars($sPath, array $aVars): void
     {
         $aConfig = Yaml::parseFile($sPath . 'docker-compose.override.yml');
         if (empty($aConfig['webserver']['environment'])) {

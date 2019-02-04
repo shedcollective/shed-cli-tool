@@ -49,7 +49,7 @@ final class Webpack extends Base implements Framework
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return 'Webpack';
     }
@@ -61,7 +61,7 @@ final class Webpack extends Base implements Framework
      *
      * @return array
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return [];
     }
@@ -75,7 +75,7 @@ final class Webpack extends Base implements Framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oBackendFramework)
+    public function getEnvVars(Framework $oBackendFramework): array
     {
         if ($oBackendFramework instanceof Laravel) {
             return [
@@ -111,7 +111,7 @@ final class Webpack extends Base implements Framework
      * @throws CommandFailedException
      * @throws CannotOpenException
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         //  Clean up target
         $aFiles    = array_merge(static::ROOT_FILES, ['webpack.*.js', 'assets']);
@@ -151,7 +151,7 @@ final class Webpack extends Base implements Framework
      * @param string $sZipPath The path to the Zip
      * @param string $sPath    the path to the project
      */
-    private function installLaravel($sZipPath, $sPath)
+    private function installLaravel($sZipPath, $sPath): void
     {
         Zip::unzip(
             $sZipPath,
@@ -179,7 +179,7 @@ final class Webpack extends Base implements Framework
      * @param string $sZipPath The path to the Zip
      * @param string $sPath    the path to the project
      */
-    private function installNails($sZipPath, $sPath)
+    private function installNails($sZipPath, $sPath): void
     {
         Zip::unzip(
             $sZipPath,
@@ -197,7 +197,7 @@ final class Webpack extends Base implements Framework
      * @param string $sZipPath The path to the Zip
      * @param string $sPath    the path to the project
      */
-    private function installNone($sZipPath, $sPath)
+    private function installNone($sZipPath, $sPath): void
     {
         Zip::unzip(
             $sZipPath,
@@ -215,7 +215,7 @@ final class Webpack extends Base implements Framework
      * @param string $sZipPath The path to the Zip
      * @param string $sPath    the path to the project
      */
-    private function installWordPress($sZipPath, $sPath)
+    private function installWordPress($sZipPath, $sPath): void
     {
         //  @todo (Pablo - 2018-12-19) - Who knows
     }

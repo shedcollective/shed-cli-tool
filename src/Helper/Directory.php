@@ -11,7 +11,7 @@ final class Directory
      *
      * @return string
      */
-    public static function normalize($sPath)
+    public static function normalize($sPath): string
     {
         return str_replace('/', DIRECTORY_SEPARATOR, $sPath);
     }
@@ -25,7 +25,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function exists($sPath)
+    public static function exists($sPath): bool
     {
         return is_dir($sPath);
     }
@@ -39,7 +39,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function isEmpty($sPath)
+    public static function isEmpty($sPath): bool
     {
         if (!is_dir($sPath)) {
             return true;
@@ -62,9 +62,9 @@ final class Directory
      *
      * @param string $sPath the path to resolve
      *
-     * @return string|string[]|null
+     * @return string
      */
-    public static function resolve($sPath)
+    public static function resolve($sPath): string
     {
         $sPath = trim($sPath);
 

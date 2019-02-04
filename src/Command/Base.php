@@ -15,6 +15,13 @@ use Symfony\Component\Console\Question\Question;
 abstract class Base extends Command
 {
     /**
+     * The successful exit code
+     *
+     * @var int
+     */
+    const EXIT_CODE_SUCCESS = 0;
+
+    /**
      * The console's input interface
      *
      * @var InputInterface
@@ -43,9 +50,9 @@ abstract class Base extends Command
      * @param InputInterface  $oInput
      * @param OutputInterface $oOutput
      *
-     * @return int|null|void
+     * @return int
      */
-    protected function execute(InputInterface $oInput, OutputInterface $oOutput)
+    protected function execute(InputInterface $oInput, OutputInterface $oOutput): int
     {
         $this->oInput    = $oInput;
         $this->oOutput   = $oOutput;
@@ -60,7 +67,7 @@ abstract class Base extends Command
 
         Colors::setStyles($this->oOutput);
 
-        $this->go();
+        return $this->go();
     }
 
     // --------------------------------------------------------------------------
@@ -70,7 +77,7 @@ abstract class Base extends Command
      *
      * @return mixed
      */
-    abstract protected function go();
+    abstract protected function go(): int;
 
     // --------------------------------------------------------------------------
 
@@ -81,7 +88,7 @@ abstract class Base extends Command
      *
      * @return $this
      */
-    protected function banner($sTitle)
+    protected function banner($sTitle): Base
     {
         $sTitle = $sTitle ? 'Shed CLI: ' . $sTitle : 'Shed CLI';
         $this->oOutput->writeln('');
@@ -99,7 +106,7 @@ abstract class Base extends Command
      *
      * @param array $aLines The lines to render
      */
-    protected function error(array $aLines)
+    protected function error(array $aLines): void
     {
         $this->outputBlock($aLines, 'error');
     }
@@ -111,7 +118,7 @@ abstract class Base extends Command
      *
      * @param array $aLines The lines to render
      */
-    protected function warning(array $aLines)
+    protected function warning(array $aLines): void
     {
         $this->outputBlock($aLines, 'warning');
     }
@@ -124,8 +131,11 @@ abstract class Base extends Command
      * @param array  $aLines The lines to render
      * @param string $sType  The type of block to render
      */
-    protected function outputBlock(array $aLines, $sType)
+    protected function outputBlock(array $aLines, $sType): void
     {
+        $aLines     = array_map(function ($sLine) {
+            return ' ' . $sLine . ' ';
+        }, $aLines);
         $aLengths   = array_map('strlen', $aLines);
         $iMaxLength = max($aLengths);
 
@@ -145,9 +155,9 @@ abstract class Base extends Command
      * @param string   $sDefault    The default response
      * @param callable $cValidation A validation callback
      *
-     * @return mixed
+     * @return string|null
      */
-    protected function ask($sQuestion, $sDefault = null, $cValidation = null)
+    protected function ask($sQuestion, $sDefault = null, $cValidation = null): ?string
     {
         $sQuestion = $this->prepQuestion($sQuestion, $sDefault);
         $oQuestion = new Question($sQuestion, $sDefault);
@@ -170,9 +180,9 @@ abstract class Base extends Command
      * @param int      $iDefault    The default option
      * @param callable $cValidation A validation callback
      *
-     * @return integer
+     * @return int
      */
-    protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null)
+    protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null): int
     {
         $sQuestion = $this->prepQuestion($sQuestion, $aOptions[$iDefault]);
         $oQuestion = new ChoiceQuestion($sQuestion, $aOptions, $iDefault);
@@ -193,9 +203,9 @@ abstract class Base extends Command
      * @param string $sQuestion the question to ask
      * @param bool   $bDefault  The default response
      *
-     * @return boolean
+     * @return bool
      */
-    protected function confirm($sQuestion, $bDefault = true)
+    protected function confirm($sQuestion, $bDefault = true): bool
     {
         $sQuestion = $this->prepQuestion($sQuestion);
         $oQuestion = new ConfirmationQuestion($sQuestion, $bDefault);
@@ -208,10 +218,11 @@ abstract class Base extends Command
      * Prepare the question string
      *
      * @param string $sQuestion The question to prepare
+     * @param string $sDefault  The default value
      *
      * @return string
      */
-    private function prepQuestion($sQuestion, $sDefault = null)
+    private function prepQuestion($sQuestion, $sDefault = null): string
     {
         $sQuestion = trim($sQuestion);
         if (preg_match('/[^?:]$/', $sQuestion)) {

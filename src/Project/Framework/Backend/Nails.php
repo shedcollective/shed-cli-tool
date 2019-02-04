@@ -25,7 +25,7 @@ final class Nails extends Base implements Framework
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return 'Nails';
     }
@@ -37,7 +37,7 @@ final class Nails extends Base implements Framework
      *
      * @return array
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return [];
     }
@@ -51,7 +51,7 @@ final class Nails extends Base implements Framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oFrontendFramework)
+    public function getEnvVars(Framework $oFrontendFramework): array
     {
         return [];
     }
@@ -67,8 +67,9 @@ final class Nails extends Base implements Framework
      * @param array     $aInstallOptions The install options
      *
      * @return void
+     * @throws \Exception
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
             ->configureDockerFile($sPath, 'apache-nails-php72')
@@ -87,7 +88,7 @@ final class Nails extends Base implements Framework
      *
      * @return $this
      */
-    private function installAppSkeleton($sPath)
+    private function installAppSkeleton($sPath): Nails
     {
         $aArguments = [
             '--dir="' . $sPath . 'www"',
@@ -107,8 +108,9 @@ final class Nails extends Base implements Framework
      * @param string $sPath The absolute directory where the framework is being installed
      *
      * @return $this
+     * @throws \Exception
      */
-    private function generatePrivateKey($sPath)
+    private function generatePrivateKey($sPath): Nails
     {
         Create::updateWebserverEnvVars(
             $sPath,
@@ -122,9 +124,12 @@ final class Nails extends Base implements Framework
     /**
      * Generate a random string
      *
+     * @param int $iLength The desired length of the random string
+     *
      * @return string
+     * @throws \Exception
      */
-    private function generateRandomString($iLength = 32)
+    private function generateRandomString($iLength = 32): string
     {
         return bin2hex(random_bytes($iLength));
     }
@@ -134,9 +139,13 @@ final class Nails extends Base implements Framework
     /**
      * Update config/app.php
      *
-     * @return string
+     * @param string $sPath     The path to the installation
+     * @param string $sConstant The constant to set
+     * @param string $sValue    The value to set
+     *
+     * @return $this
      */
-    private function updateAppConfigConstant($sPath, $sConstant, $sValue)
+    private function updateAppConfigConstant($sPath, $sConstant, $sValue): Nails
     {
         $sConfigPath = $sPath . 'www/config/app.php';
         $sConfig     = file_get_contents($sConfigPath);

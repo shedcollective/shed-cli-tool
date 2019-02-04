@@ -14,7 +14,7 @@ final class Zip
      * @param string $sExtractTo      Where to extract the archive to
      * @param string $sInternalFolder The name of any internal folder of the zip
      */
-    public static function unzip($sZipPath, $sExtractTo, $sInternalFolder = '')
+    public static function unzip($sZipPath, $sExtractTo, $sInternalFolder = ''): void
     {
         $oZip = new \ZipArchive();
         if ($oZip->open($sZipPath) === true) {

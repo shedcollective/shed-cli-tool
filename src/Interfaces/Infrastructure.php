@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Interfaces;
 
-interface Framework
+interface Infrastructure
 {
     /**
      * Return the name of the framework
@@ -25,21 +25,21 @@ interface Framework
     /**
      * Returns any ENV vars for the project
      *
-     * @param Framework $oOtherFramework The other framework
-     *
      * @return array
      */
-    public function getEnvVars(Framework $oOtherFramework): array;
+    public function getEnvVars(): array;
 
     // --------------------------------------------------------------------------
 
     /**
-     * Install the framework
-     *
-     * @param string    $sPath           The absolute directory to install the framework to
-     * @param array     $aOptions        The result of any options
-     * @param Framework $oOtherFramework The other framework being installed
-     * @param array     $aInstallOptions The install options
+     * Create the server
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void;
+    public function create(): void;
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Destroy the server
+     */
+    public function destroy(): void;
 }

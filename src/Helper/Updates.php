@@ -11,8 +11,10 @@ final class Updates
 
     /**
      * Checks for updates
+     *
+     * @return bool
      */
-    public static function check()
+    public static function check(): bool
     {
         //  @todo (Pablo - 2018-10-06) - Check for updates if sufficient time has passed (check once daily)
         return false;
@@ -25,7 +27,7 @@ final class Updates
      *
      * @return string
      */
-    public static function getCurrentVersion()
+    public static function getCurrentVersion(): string
     {
         if (static::$sCurrentVersion) {
             return static::$sCurrentVersion;
@@ -49,7 +51,7 @@ final class Updates
      *
      * @return string
      */
-    public static function getLatestVersion()
+    public static function getLatestVersion(): string
     {
         if (static::$sLatestVersion) {
             return static::$sLatestVersion;
