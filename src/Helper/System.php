@@ -34,7 +34,7 @@ final class System
      *
      * @return bool
      */
-    public static function commandExists($sCommand): bool
+    public static function commandExists(string $sCommand): bool
     {
         $sCommandPath = `which $sCommand`;
         return !empty($sCommandPath);

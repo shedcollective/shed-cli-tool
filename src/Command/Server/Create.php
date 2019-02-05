@@ -216,7 +216,11 @@ final class Create extends Base
             $sInfrastructure = str_replace($sBasePath, 'Shed\Cli', $sInfrastructure);
             $sInfrastructure = str_replace('/', '\\', $sInfrastructure);
 
-            $oInfrastructure              = new $sInfrastructure();
+            $oInfrastructure = new $sInfrastructure(
+                $this->oInput,
+                $this->oOutput
+            );
+
             $sInfrastructureName          = $oInfrastructure->getName();
             $aInfrastructures[]           = $sInfrastructureName;
             $aInfrastructuresNormalised[] = strtoupper($sInfrastructureName);
@@ -259,9 +263,36 @@ final class Create extends Base
      */
     private function setInfrastructureOptions($oInfrastructure, &$aOptions): Create
     {
-        $aOptions = $oInfrastructure->getOptions();
-        foreach ($aOptions as $oOption) {
-            //  @todo (Pablo - 2018-12-18) - Allow options to be configured
+        foreach ($oInfrastructure->getOptions() as $sKey => $oOption) {
+
+            $sType       = property_exists($oOption, 'type') ? $oOption->type : 'ask';
+            $mChoices    = property_exists($oOption, 'options') ? $oOption->options : null;
+            $mDefault    = property_exists($oOption, 'default') ? $oOption->default : null;
+            $mValidation = property_exists($oOption, 'validation') ? $oOption->validation : null;
+
+            if ($sType === 'ask') {
+
+                $aOptions[$sKey] = $this->ask(
+                    $oOption->label,
+                    $mDefault,
+                    $mValidation
+                );
+
+            } elseif ($sType === 'choose' && !empty($mChoices)) {
+
+                if (is_callable($mChoices)) {
+                    $aChoices = call_user_func($mChoices);
+                } else {
+                    $aChoices = $mChoices;
+                }
+
+                $aOptions[$sKey] = $this->choose(
+                    $oOption->label,
+                    $aChoices,
+                    $mDefault,
+                    $mValidation
+                );
+            }
         }
 
         return $this;
@@ -279,8 +310,9 @@ final class Create extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>Domain</comment>:  ' . $this->sDomain);
-        $this->oOutput->writeln('<comment>Infrastructure</comment>:  ' . $this->oInfrastructure->getName());
+        $this->oOutput->writeln('<comment>Domain</comment>:         ' . $this->sDomain);
+        $this->oOutput->writeln('<comment>Infrastructure</comment>: ' . $this->oInfrastructure->getName());
+        //  @todo (Pablo - 2019-02-05) - List infrastructure variables
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }

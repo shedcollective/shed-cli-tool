@@ -7,11 +7,11 @@ final class Directory
     /**
      * Normalizes *nix style forward slashes with the system's DIRECTORY_SEPARATOR
      *
-     * @param $sPath
+     * @param string $sPath The path to normalise
      *
      * @return string
      */
-    public static function normalize($sPath): string
+    public static function normalize(string $sPath): string
     {
         return str_replace('/', DIRECTORY_SEPARATOR, $sPath);
     }
@@ -25,7 +25,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function exists($sPath): bool
+    public static function exists(string $sPath): bool
     {
         return is_dir($sPath);
     }
@@ -39,7 +39,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function isEmpty($sPath): bool
+    public static function isEmpty(string $sPath): bool
     {
         if (!is_dir($sPath)) {
             return true;
@@ -64,7 +64,7 @@ final class Directory
      *
      * @return string
      */
-    public static function resolve($sPath): string
+    public static function resolve(string $sPath): string
     {
         $sPath = trim($sPath);
 

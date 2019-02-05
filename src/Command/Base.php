@@ -5,7 +5,6 @@ namespace Shed\Cli\Command;
 use Shed\Cli\Helper\Colors;
 use Shed\Cli\Helper\Updates;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
@@ -35,13 +34,6 @@ abstract class Base extends Command
      */
     protected $oOutput;
 
-    /**
-     * The question helper
-     *
-     * @var QuestionHelper
-     */
-    protected $oQuestion;
-
     // --------------------------------------------------------------------------
 
     /**
@@ -54,9 +46,8 @@ abstract class Base extends Command
      */
     protected function execute(InputInterface $oInput, OutputInterface $oOutput): int
     {
-        $this->oInput    = $oInput;
-        $this->oOutput   = $oOutput;
-        $this->oQuestion = $this->getHelper('question');
+        $this->oInput  = $oInput;
+        $this->oOutput = $oOutput;
 
         if (Updates::check()) {
             $this->warning([
@@ -159,9 +150,10 @@ abstract class Base extends Command
      */
     protected function ask($sQuestion, $sDefault = null, $cValidation = null): ?string
     {
+        $oHelper   = $this->getHelper('question');
         $sQuestion = $this->prepQuestion($sQuestion, $sDefault);
         $oQuestion = new Question($sQuestion, $sDefault);
-        $sResponse = $this->oQuestion->ask($this->oInput, $this->oOutput, $oQuestion);
+        $sResponse = $oHelper->ask($this->oInput, $this->oOutput, $oQuestion);
 
         if (is_callable($cValidation) && !call_user_func($cValidation, $sResponse)) {
             return $this->ask($sQuestion, $sDefault, $cValidation);
@@ -184,9 +176,11 @@ abstract class Base extends Command
      */
     protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null): int
     {
-        $sQuestion = $this->prepQuestion($sQuestion, $aOptions[$iDefault]);
+        $oHelper   = $this->getHelper('question');
+        $mDefault  = array_key_exists($iDefault, $aOptions) ? $aOptions[$iDefault] : null;
+        $sQuestion = $this->prepQuestion($sQuestion, $mDefault);
         $oQuestion = new ChoiceQuestion($sQuestion, $aOptions, $iDefault);
-        $sResponse = $this->oQuestion->ask($this->oInput, $this->oOutput, $oQuestion);
+        $sResponse = $oHelper->ask($this->oInput, $this->oOutput, $oQuestion);
 
         if (is_callable($cValidation) && !call_user_func($cValidation, $sResponse)) {
             return $this->choose($sQuestion, $aOptions, $iDefault, $cValidation);
@@ -207,9 +201,10 @@ abstract class Base extends Command
      */
     protected function confirm($sQuestion, $bDefault = true): bool
     {
+        $oHelper   = $this->getHelper('question');
         $sQuestion = $this->prepQuestion($sQuestion);
         $oQuestion = new ConfirmationQuestion($sQuestion, $bDefault);
-        return $this->oQuestion->ask($this->oInput, $this->oOutput, $oQuestion);
+        return $oHelper->ask($this->oInput, $this->oOutput, $oQuestion);
     }
 
     // --------------------------------------------------------------------------

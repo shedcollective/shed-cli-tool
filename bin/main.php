@@ -3,6 +3,7 @@
 
 namespace Shed\Cli;
 
+use Shed\Cli\Helper\Config;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\Updates;
 use Symfony\Component\Console\Application;
@@ -17,6 +18,8 @@ define('BASEPATH', Directory::normalize(__DIR__ . '/../'));
 
 $oApp    = new Application();
 $oFinder = new Finder();
+
+Config::loadConfig();
 
 //  Auto-load commands
 $sBasePath = BASEPATH . 'src';

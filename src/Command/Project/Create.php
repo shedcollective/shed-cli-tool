@@ -391,9 +391,12 @@ final class Create extends Base
      */
     private function setFrameworkOptions($oFramework, &$aOptions): Create
     {
-        $aOptions = $oFramework->getOptions();
-        foreach ($aOptions as $oOption) {
-            //  @todo (Pablo - 2018-12-18) - Allow options to be configured
+        foreach ($oFramework->getOptions() as $sKey => $oOption) {
+            $aOptions[$sKey] = $this->ask(
+                $oOption->label,
+                $oOption->default,
+                $oOption->validation
+            );
         }
 
         return $this;
@@ -415,7 +418,9 @@ final class Create extends Base
         $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
         $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
+        //  @todo (Pablo - 2019-02-05) - List backend framework variables
         $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getName());
+        //  @todo (Pablo - 2019-02-05) - List frontend framework variables
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }

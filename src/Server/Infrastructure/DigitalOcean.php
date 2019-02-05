@@ -2,7 +2,10 @@
 
 namespace Shed\Cli\Server\Infrastructure;
 
+use Shed\Cli\Command\DigitalOcean\Auth;
+use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Interfaces\Infrastructure;
+use Shed\Cli\Helper\Config;
 
 final class DigitalOcean extends Base implements Infrastructure
 {
@@ -25,7 +28,25 @@ final class DigitalOcean extends Base implements Infrastructure
      */
     public function getOptions(): array
     {
-        return [];
+        return [
+            'CONTEXT' => (object) [
+                'type'    => 'choose',
+                'label'   => 'Which DigitalOcean Account',
+                'options' => function () {
+                    $aAccounts = array_map(function ($sItem) {
+                        $aToken = explode(Auth::CONFIG_ACCOUNTS_SEPARATOR, $sItem);
+                        return reset($aToken);
+                    }, Config::get(Auth::CONFIG_ACCOUNTS_KEY));
+
+                    if (empty($aAccounts)) {
+                        throw new CliException(
+                            'No Digital Ocean accounts configured; `shed digitalocean:auth` to configure'
+                        );
+                    }
+                    return $aAccounts;
+                },
+            ],
+        ];
     }
 
     // --------------------------------------------------------------------------
