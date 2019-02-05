@@ -392,11 +392,40 @@ final class Create extends Base
     private function setFrameworkOptions($oFramework, &$aOptions): Create
     {
         foreach ($oFramework->getOptions() as $sKey => $oOption) {
-            $aOptions[$sKey] = $this->ask(
-                $oOption->label,
-                $oOption->default,
-                $oOption->validation
-            );
+
+            $sType       = property_exists($oOption, 'type') ? $oOption->type : 'ask';
+            $mChoices    = property_exists($oOption, 'options') ? $oOption->options : null;
+            $mDefault    = property_exists($oOption, 'default') ? $oOption->default : null;
+            $mValidation = property_exists($oOption, 'validation') ? $oOption->validation : null;
+
+            if ($sType === 'ask') {
+
+                $aOptions[$sKey] = $this->ask(
+                    $oOption->label,
+                    $mDefault,
+                    $mValidation
+                );
+
+            } elseif ($sType === 'choose' && !empty($mChoices)) {
+
+                if (is_callable($mChoices)) {
+                    $aChoices = call_user_func($mChoices);
+                } else {
+                    $aChoices = $mChoices;
+                }
+
+                if (count($aChoices) === 1) {
+                    reset($aChoices);
+                    $aOptions[$sKey] = key($aChoices);
+                } else {
+                    $aOptions[$sKey] = $this->choose(
+                        $oOption->label,
+                        $aChoices,
+                        $mDefault,
+                        $mValidation
+                    );
+                }
+            }
         }
 
         return $this;
@@ -417,10 +446,21 @@ final class Create extends Base
         $this->oOutput->writeln('<comment>Project Name</comment>:  ' . $this->sProjectName);
         $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
+
         $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
-        //  @todo (Pablo - 2019-02-05) - List backend framework variables
+        foreach ($this->oBackendFramework->getOptions() as $sKey => $oOption) {
+            $this->oOutput->writeln(
+                $oOption->summarise($this->aBackendFrameworkOptions[$sKey])
+            );
+        }
+
         $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getName());
-        //  @todo (Pablo - 2019-02-05) - List frontend framework variables
+        foreach ($this->oFrontendFramework->getOptions() as $sKey => $oOption) {
+            $this->oOutput->writeln(
+                $oOption->summarise($this->aFrontendFrameworkOptions[$sKey])
+            );
+        }
+
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }

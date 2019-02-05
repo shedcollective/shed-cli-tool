@@ -4,7 +4,6 @@ namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command\Base;
 use Shed\Cli\Exceptions\Environment\NotValidException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Infrastructure;
 use Symfony\Component\Console\Input\InputOption;
@@ -265,33 +264,33 @@ final class Create extends Base
     {
         foreach ($oInfrastructure->getOptions() as $sKey => $oOption) {
 
-            $sType       = property_exists($oOption, 'type') ? $oOption->type : 'ask';
-            $mChoices    = property_exists($oOption, 'options') ? $oOption->options : null;
-            $mDefault    = property_exists($oOption, 'default') ? $oOption->default : null;
-            $mValidation = property_exists($oOption, 'validation') ? $oOption->validation : null;
+            $sType       = $oOption->getType();
+            $sLabel      = $oOption->getLabel();
+            $aChoices    = $oOption->getOptions();
+            $mDefault    = $oOption->getDefault();
+            $mValidation = $oOption->getValidation();
 
             if ($sType === 'ask') {
 
                 $aOptions[$sKey] = $this->ask(
-                    $oOption->label,
+                    $sLabel,
                     $mDefault,
                     $mValidation
                 );
 
-            } elseif ($sType === 'choose' && !empty($mChoices)) {
+            } elseif ($sType === 'choose' && !empty($aChoices)) {
 
-                if (is_callable($mChoices)) {
-                    $aChoices = call_user_func($mChoices);
+                if (count($aChoices) === 1) {
+                    reset($aChoices);
+                    $aOptions[$sKey] = key($aChoices);
                 } else {
-                    $aChoices = $mChoices;
+                    $aOptions[$sKey] = $this->choose(
+                        $sLabel,
+                        $aChoices,
+                        $mDefault,
+                        $mValidation
+                    );
                 }
-
-                $aOptions[$sKey] = $this->choose(
-                    $oOption->label,
-                    $aChoices,
-                    $mDefault,
-                    $mValidation
-                );
             }
         }
 
@@ -310,9 +309,13 @@ final class Create extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>Domain</comment>:         ' . $this->sDomain);
+        $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
         $this->oOutput->writeln('<comment>Infrastructure</comment>: ' . $this->oInfrastructure->getName());
-        //  @todo (Pablo - 2019-02-05) - List infrastructure variables
+        foreach ($this->oInfrastructure->getOptions() as $sKey => $oOption) {
+            $this->oOutput->writeln(
+                $oOption->summarise($this->aInfrastructureOptions[$sKey])
+            );
+        }
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }
@@ -327,12 +330,7 @@ final class Create extends Base
     private function createServer(): Create
     {
         $this->oOutput->writeln('');
-
-        //  @todo (Pablo - 2019-02-04) - Create the server
-
-        $this->oOutput->writeln('');
         $this->oOutput->writeln('🚧 command is a work in progress');
-        //  @todo (Pablo - 2019-02-04) - More useful messages
         $this->oOutput->writeln('');
         return $this;
     }

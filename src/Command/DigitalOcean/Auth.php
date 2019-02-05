@@ -2,15 +2,13 @@
 
 namespace Shed\Cli\Command\DigitalOcean;
 
+use DigitalOceanV2\Adapter\BuzzAdapter;
+use DigitalOceanV2\DigitalOceanV2;
 use Shed\Cli\Command\Base;
-use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Helper\Config;
-use Shed\Cli\Helper\Debug;
-use Shed\Cli\Helper\System;
-use Shed\Cli\Interfaces\Infrastructure;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Finder\Finder;
 
 final class Auth extends Base
 {
@@ -20,13 +18,6 @@ final class Auth extends Base
      * @var string
      */
     const CONFIG_ACCOUNTS_KEY = 'server.infrastructure.digitalocean.accounts';
-
-    /**
-     * Config label/token separator
-     *
-     * @var string
-     */
-    const CONFIG_ACCOUNTS_SEPARATOR = ':';
 
     // --------------------------------------------------------------------------
 
@@ -44,6 +35,13 @@ final class Auth extends Base
      */
     private $sToken = null;
 
+    /**
+     * The verified DO account
+     *
+     * @var \stdClass
+     */
+    private $oAccount;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -56,9 +54,9 @@ final class Auth extends Base
             ->setDescription('Manage authenticated DigitalOcean accounts')
             ->setHelp('This command allows for the configuration of DigitalOcean access tokens.')
             ->addArgument(
-                'account',
+                'action',
                 InputArgument::OPTIONAL,
-                'View the token for an existing account'
+                '[view] or [delete] an existing token; use with --label or --token'
             )
             ->addOption(
                 'label',
@@ -83,8 +81,127 @@ final class Auth extends Base
      */
     protected function go(): int
     {
-        //  @todo (Pablo - 2019-02-05) - Support deleting tokens
-        //  @todo (Pablo - 2019-02-05) - Support viewing tokens
+        switch ($this->oInput->getArgument('action')) {
+            case 'view':
+                $this->viewToken();
+                break;
+            case 'delete':
+                $this->deleteToken();
+                break;
+            default:
+                $this->addToken();
+                break;
+        }
+
+        return static::EXIT_CODE_SUCCESS;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * View token details
+     */
+    private function viewToken(): void
+    {
+        $oAccounts = static::getAccounts();
+        $sLabel    = trim($this->oInput->getOption('label'));
+        $sToken    = trim($this->oInput->getOption('token'));
+
+        try {
+
+            if (!empty($sLabel)) {
+
+                if (!property_exists($oAccounts, $sLabel)) {
+                    throw new CommandFailedException('"' . $sLabel . '" is not a registered account');
+                } else {
+                    $sToken = $oAccounts->{$sLabel};
+                }
+
+                $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
+                $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
+
+            } elseif (!empty($sToken)) {
+
+                if (!in_array($sToken, (array) $oAccounts)) {
+                    throw new CommandFailedException('"' . $sToken . '" is not a registered access token');
+                } else {
+                    $sLabel = array_search($sToken, (array) $oAccounts);
+                }
+
+                $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
+                $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
+
+            } else {
+                foreach ($oAccounts as $sLabel => $sToken) {
+                    $this->oOutput->writeln('');
+                    $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
+                    $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
+                }
+            }
+
+            $this->oOutput->writeln('');
+
+        } catch (CommandFailedException $e) {
+            $this->error([$e->getMessage()]);
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Add a token
+     */
+    private function deleteToken(): void
+    {
+        $oAccounts = static::getAccounts();
+        $sLabel    = trim($this->oInput->getOption('label'));
+        $sToken    = trim($this->oInput->getOption('token'));
+
+        try {
+
+            if (!empty($sLabel)) {
+
+                if (!property_exists($oAccounts, $sLabel)) {
+                    throw new CommandFailedException('"' . $sLabel . '" is not a registered account');
+                } else {
+                    $sToken = $oAccounts->{$sLabel};
+                }
+
+            } elseif (!empty($sToken)) {
+
+                if (!in_array($sToken, (array) $oAccounts)) {
+                    throw new CommandFailedException('"' . $sToken . '" is not a registered access token');
+                } else {
+                    $sLabel = array_search($sToken, (array) $oAccounts);
+                }
+
+            } else {
+                throw new CommandFailedException('Must specify an account label or token to look up');
+            }
+
+            $this->oOutput->writeln('');
+            $this->oOutput->writeln('You are about to delete the following access token:');
+            $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
+            $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
+            $this->oOutput->writeln('');
+
+            if ($this->confirm('Continue?')) {
+                unset($oAccounts->{$sLabel});
+                Config::set(static::CONFIG_ACCOUNTS_KEY, $oAccounts);
+            }
+
+        } catch (CommandFailedException $e) {
+            $this->error([$e->getMessage()]);
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Add a token
+     */
+    private function addToken(): void
+    {
         $this
             ->banner('Configuring new Digital Ocean account')
             ->setVariables();
@@ -92,9 +209,6 @@ final class Auth extends Base
         if ($this->confirmVariables()) {
             $this->addAccount();
         }
-
-
-        return static::EXIT_CODE_SUCCESS;
     }
 
     // --------------------------------------------------------------------------
@@ -186,9 +300,24 @@ final class Auth extends Base
      */
     protected function validateLabel($sLabel): bool
     {
-        //  @todo (Pablo - 2019-02-05) - Not an argument name (e.g delete)
-        //  @todo (Pablo - 2019-02-05) - valid characters only [a-zA-Z0-9 \-]
-        //  @todo (Pablo - 2019-02-05) - Does not contain static::CONFIG_ACCOUNTS_SEPARATOR
+        $sLabel    = trim($sLabel);
+        $sPattern  = '[^a-zA-Z0-0 \-]';
+        $aReserved = [];
+
+        if (preg_match('/' . $sPattern . '/', $sLabel)) {
+            $this->error([
+                '"' . $sLabel . '" contains invalid characters',
+                $sPattern,
+            ]);
+            return false;
+        } elseif (in_array($sLabel, $aReserved)) {
+            $this->error([
+                '"' . $sLabel . '" is a reserved word',
+                implode(', ', $aReserved),
+            ]);
+            return false;
+        }
+
         return true;
     }
 
@@ -203,8 +332,29 @@ final class Auth extends Base
      */
     protected function validateToken($sToken): bool
     {
-        //  @todo (Pablo - 2019-02-05) - Not already in use
-        //  @todo (Pablo - 2019-02-05) - Works with API
+        $sToken    = trim($sToken);
+        $oAccounts = static::getAccounts();
+        $sKey      = array_search($sToken, (array) $oAccounts);
+
+        if ($sKey !== false && $sKey !== trim($this->sLabel)) {
+            $this->error([
+                'Token is already in use for account "' . $sKey . '"',
+            ]);
+            return false;
+        }
+
+        //  Confirm auth code works
+        try {
+
+            $oAdapter       = new BuzzAdapter($sToken);
+            $oDigitalOcean  = new DigitalOceanV2($oAdapter);
+            $oAccount       = $oDigitalOcean->account();
+            $this->oAccount = $oAccount->getUserInformation();
+
+        } catch (\Exception $e) {
+            $this->error([$e->getMessage(), $sToken]);
+            return false;
+        }
         return true;
     }
 
@@ -222,6 +372,7 @@ final class Auth extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Account Label</comment>: ' . $this->sLabel);
         $this->oOutput->writeln('<comment>Access Token</comment>:  ' . $this->sToken);
+        $this->oOutput->writeln('<comment>Account Email</comment>: ' . $this->oAccount->email);
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }
@@ -235,13 +386,26 @@ final class Auth extends Base
      */
     private function addAccount(): Auth
     {
-        $aAccounts   = Config::get(static::CONFIG_ACCOUNTS_KEY);
-        $aAccounts[] = $this->sLabel . static::CONFIG_ACCOUNTS_SEPARATOR . $this->sToken;
-        Config::set(static::CONFIG_ACCOUNTS_KEY, $aAccounts);
+        $aAccounts                = (array) static::getAccounts();
+        $aAccounts[$this->sLabel] = $this->sToken;
+        ksort($aAccounts);
+        Config::set(static::CONFIG_ACCOUNTS_KEY, (object) $aAccounts);
 
         $this->oOutput->writeln('');
         $this->oOutput->writeln('🎉 Saved credentials for  <info>' . $this->sLabel . '</info>');
         $this->oOutput->writeln('');
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the accounts object
+     *
+     * @return \stdClass
+     */
+    public static function getAccounts(): \stdClass
+    {
+        return Config::get(Auth::CONFIG_ACCOUNTS_KEY) ?: (object) [];
     }
 }
