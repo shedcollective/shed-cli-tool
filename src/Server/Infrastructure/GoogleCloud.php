@@ -44,9 +44,15 @@ final class GoogleCloud extends Base implements Infrastructure
 
     /**
      * Create the server
+     *
+     * @param string $sDomain  The configured domain name
+     * @param array  $aOptions The configured options
      */
-    public function create(): void
+    public function create(string $sDomain, array $aOptions): void
     {
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('🚧 Deploying Google Cloud servers command is a work in progress');
+        $this->oOutput->writeln('');
     }
 
     // --------------------------------------------------------------------------

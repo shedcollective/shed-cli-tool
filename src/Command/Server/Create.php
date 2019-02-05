@@ -329,9 +329,10 @@ final class Create extends Base
      */
     private function createServer(): Create
     {
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('🚧 command is a work in progress');
-        $this->oOutput->writeln('');
+        $this->oInfrastructure->create(
+            $this->sDomain,
+            $this->aInfrastructureOptions
+        );
         return $this;
     }
 }
