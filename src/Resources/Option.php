@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Resources;
 
+use Shed\Cli\Helper\Debug;
+
 final class Option
 {
     /**
@@ -53,6 +55,13 @@ final class Option
      * @var callable|null
      */
     private $cSummary = null;
+
+    /**
+     * The selected value
+     *
+     * @var mixed
+     */
+    private $mValue = null;
 
     // --------------------------------------------------------------------------
 
@@ -123,12 +132,14 @@ final class Option
     /**
      * Return the option's values
      *
+     * @param array $aOptions The options array
+     *
      * @return callable|array
      */
-    public function getOptions(): array
+    public function getOptions(array $aOptions = []): array
     {
         if (is_callable($this->mOptions)) {
-            return call_user_func($this->mOptions);
+            return call_user_func($this->mOptions, $aOptions);
         } else {
             return $this->mOptions;
         }
@@ -148,20 +159,34 @@ final class Option
 
     // --------------------------------------------------------------------------
 
+    public function setValue($mValue)
+    {
+        $this->mValue = $mValue;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function getValue()
+    {
+        return $this->mValue;
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Return the option's summary callback
      *
-     * @param mixed $mValue The selected value
+     * @param array $aOptions The selected options
      *
      * @return string
      */
-    public function summarise($mValue): string
+    public function summarise(array $aOptions = []): string
     {
         if ($this->getType() === static::TYPE_CHOOSE) {
-            $aOptions = $this->getOptions();
-            return '<comment>' . $this->getLabel() . '</comment>: ' . $aOptions[$mValue];
+            $aOptions = $this->getOptions($aOptions);
+            return '<comment>' . $this->getLabel() . '</comment>: ' . $aOptions[$this->mValue];
         } else {
-            return '<comment>' . $this->getLabel() . '</comment>: ' . $mValue;
+            return '<comment>' . $this->getLabel() . '</comment>: ' . $this->mValue;
         }
     }
 }

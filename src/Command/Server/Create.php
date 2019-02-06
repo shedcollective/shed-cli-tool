@@ -118,10 +118,7 @@ final class Create extends Base
                 $this->oInfrastructure,
                 $this->oInput->getOption('infrastructure')
             )
-            ->setInfrastructureOptions(
-                $this->oInfrastructure,
-                $this->aInfrastructureOptions
-            );
+            ->setInfrastructureOptions();
     }
 
     // --------------------------------------------------------------------------
@@ -203,7 +200,7 @@ final class Create extends Base
 
         $sBasePath = BASEPATH . 'src';
         $oFinder   = new Finder();
-        $oFinder->files()->in($sBasePath . '/Server/Infrastructure/');
+        $oFinder->files()->in($sBasePath . '/Server/Infrastructure/')->depth(0);
         foreach ($oFinder as $oFile) {
 
             $sClassName = $oFile->getBasename('.php');
@@ -255,24 +252,23 @@ final class Create extends Base
     /**
      * Configures infrastructure options
      *
-     * @param Infrastructure $oInfrastructure The infrastructure to configure
-     * @param array          $aOptions        The property to assign the results to
-     *
      * @return $this
      */
-    private function setInfrastructureOptions($oInfrastructure, &$aOptions): Create
+    private function setInfrastructureOptions(): Create
     {
-        foreach ($oInfrastructure->getOptions() as $sKey => $oOption) {
+        $this->aInfrastructureOptions = $this->oInfrastructure->getOptions();
+
+        foreach ($this->aInfrastructureOptions as $sKey => $oOption) {
 
             $sType       = $oOption->getType();
             $sLabel      = $oOption->getLabel();
-            $aChoices    = $oOption->getOptions();
+            $aChoices    = $oOption->getOptions($this->aInfrastructureOptions);
             $mDefault    = $oOption->getDefault();
             $mValidation = $oOption->getValidation();
 
             if ($sType === 'ask') {
 
-                $aOptions[$sKey] = $this->ask(
+                $mResult = $this->ask(
                     $sLabel,
                     $mDefault,
                     $mValidation
@@ -282,16 +278,21 @@ final class Create extends Base
 
                 if (count($aChoices) === 1) {
                     reset($aChoices);
-                    $aOptions[$sKey] = key($aChoices);
+                    $mResult = key($aChoices);
                 } else {
-                    $aOptions[$sKey] = $this->choose(
+                    $mResult = $this->choose(
                         $sLabel,
                         $aChoices,
                         $mDefault,
                         $mValidation
                     );
                 }
+
+            } else {
+                $mResult = null;
             }
+
+            $oOption->setValue($mResult);
         }
 
         return $this;
@@ -311,9 +312,9 @@ final class Create extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
         $this->oOutput->writeln('<comment>Infrastructure</comment>: ' . $this->oInfrastructure->getName());
-        foreach ($this->oInfrastructure->getOptions() as $sKey => $oOption) {
+        foreach ($this->aInfrastructureOptions as $sKey => $oOption) {
             $this->oOutput->writeln(
-                $oOption->summarise($this->aInfrastructureOptions[$sKey])
+                $oOption->summarise($this->aInfrastructureOptions)
             );
         }
         $this->oOutput->writeln('');

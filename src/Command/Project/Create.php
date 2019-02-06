@@ -393,39 +393,38 @@ final class Create extends Base
     {
         foreach ($oFramework->getOptions() as $sKey => $oOption) {
 
-            $sType       = property_exists($oOption, 'type') ? $oOption->type : 'ask';
-            $mChoices    = property_exists($oOption, 'options') ? $oOption->options : null;
-            $mDefault    = property_exists($oOption, 'default') ? $oOption->default : null;
-            $mValidation = property_exists($oOption, 'validation') ? $oOption->validation : null;
+            $sType       = $oOption->getType();
+            $sLabel      = $oOption->getLabel();
+            $aChoices    = $oOption->getOptions($aOptions);
+            $mDefault    = $oOption->getDefault();
+            $mValidation = $oOption->getValidation();
 
             if ($sType === 'ask') {
 
                 $aOptions[$sKey] = $this->ask(
-                    $oOption->label,
+                    $sLabel,
                     $mDefault,
                     $mValidation
                 );
 
-            } elseif ($sType === 'choose' && !empty($mChoices)) {
-
-                if (is_callable($mChoices)) {
-                    $aChoices = call_user_func($mChoices);
-                } else {
-                    $aChoices = $mChoices;
-                }
+            } elseif ($sType === 'choose' && !empty($aChoices)) {
 
                 if (count($aChoices) === 1) {
                     reset($aChoices);
                     $aOptions[$sKey] = key($aChoices);
                 } else {
                     $aOptions[$sKey] = $this->choose(
-                        $oOption->label,
+                        $sLabel,
                         $aChoices,
                         $mDefault,
                         $mValidation
                     );
                 }
+            } else {
+                $aOptions[$sKey] = null;
             }
+
+            $oOption->setValue($aOptions[$sKey]);
         }
 
         return $this;
@@ -450,14 +449,14 @@ final class Create extends Base
         $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
         foreach ($this->oBackendFramework->getOptions() as $sKey => $oOption) {
             $this->oOutput->writeln(
-                $oOption->summarise($this->aBackendFrameworkOptions[$sKey])
+                $oOption->summarise($this->aBackendFrameworkOptions)
             );
         }
 
         $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getName());
         foreach ($this->oFrontendFramework->getOptions() as $sKey => $oOption) {
             $this->oOutput->writeln(
-                $oOption->summarise($this->aFrontendFrameworkOptions[$sKey])
+                $oOption->summarise($this->aFrontendFrameworkOptions)
             );
         }
 

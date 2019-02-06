@@ -2,25 +2,14 @@
 
 namespace Shed\Cli\Command\DigitalOcean;
 
-use DigitalOceanV2\Adapter\BuzzAdapter;
-use DigitalOceanV2\DigitalOceanV2;
 use Shed\Cli\Command\Base;
 use Shed\Cli\Exceptions\System\CommandFailedException;
-use Shed\Cli\Helper\Config;
+use Shed\Cli\Server\Infrastructure\Api\DigitalOcean;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
 final class Auth extends Base
 {
-    /**
-     * Config key containing accounts
-     *
-     * @var string
-     */
-    const CONFIG_ACCOUNTS_KEY = 'server.infrastructure.digitalocean.accounts';
-
-    // --------------------------------------------------------------------------
-
     /**
      * The label
      *
@@ -103,7 +92,7 @@ final class Auth extends Base
      */
     private function viewToken(): void
     {
-        $oAccounts = static::getAccounts();
+        $aAccounts = DigitalOcean::getAccounts();
         $sLabel    = trim($this->oInput->getOption('label'));
         $sToken    = trim($this->oInput->getOption('token'));
 
@@ -111,10 +100,10 @@ final class Auth extends Base
 
             if (!empty($sLabel)) {
 
-                if (!property_exists($oAccounts, $sLabel)) {
+                if (!array_key_exists($sLabel, $aAccounts)) {
                     throw new CommandFailedException('"' . $sLabel . '" is not a registered account');
                 } else {
-                    $sToken = $oAccounts->{$sLabel};
+                    $sToken = $aAccounts[$sLabel];
                 }
 
                 $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
@@ -122,17 +111,17 @@ final class Auth extends Base
 
             } elseif (!empty($sToken)) {
 
-                if (!in_array($sToken, (array) $oAccounts)) {
+                if (!in_array($sToken, $aAccounts)) {
                     throw new CommandFailedException('"' . $sToken . '" is not a registered access token');
                 } else {
-                    $sLabel = array_search($sToken, (array) $oAccounts);
+                    $sLabel = array_search($sToken, $aAccounts);
                 }
 
                 $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
                 $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
 
             } else {
-                foreach ($oAccounts as $sLabel => $sToken) {
+                foreach ($aAccounts as $sLabel => $sToken) {
                     $this->oOutput->writeln('');
                     $this->oOutput->writeln('<comment>Label</comment>: ' . $sLabel);
                     $this->oOutput->writeln('<comment>Token</comment>: ' . $sToken);
@@ -153,7 +142,7 @@ final class Auth extends Base
      */
     private function deleteToken(): void
     {
-        $oAccounts = static::getAccounts();
+        $aAccounts = DigitalOcean::getAccounts();
         $sLabel    = trim($this->oInput->getOption('label'));
         $sToken    = trim($this->oInput->getOption('token'));
 
@@ -161,18 +150,18 @@ final class Auth extends Base
 
             if (!empty($sLabel)) {
 
-                if (!property_exists($oAccounts, $sLabel)) {
+                if (!array_key_exists($sLabel, $aAccounts)) {
                     throw new CommandFailedException('"' . $sLabel . '" is not a registered account');
                 } else {
-                    $sToken = $oAccounts->{$sLabel};
+                    $sToken = $aAccounts[$sLabel];
                 }
 
             } elseif (!empty($sToken)) {
 
-                if (!in_array($sToken, (array) $oAccounts)) {
+                if (!in_array($sToken, $aAccounts)) {
                     throw new CommandFailedException('"' . $sToken . '" is not a registered access token');
                 } else {
-                    $sLabel = array_search($sToken, (array) $oAccounts);
+                    $sLabel = array_search($sToken, $aAccounts);
                 }
 
             } else {
@@ -186,8 +175,7 @@ final class Auth extends Base
             $this->oOutput->writeln('');
 
             if ($this->confirm('Continue?')) {
-                unset($oAccounts->{$sLabel});
-                Config::set(static::CONFIG_ACCOUNTS_KEY, $oAccounts);
+                DigitalOcean::deleteAccount($sLabel);
             }
 
         } catch (CommandFailedException $e) {
@@ -333,7 +321,7 @@ final class Auth extends Base
     protected function validateToken($sToken): bool
     {
         $sToken    = trim($sToken);
-        $oAccounts = static::getAccounts();
+        $oAccounts = DigitalOcean::getAccounts();
         $sKey      = array_search($sToken, (array) $oAccounts);
 
         if ($sKey !== false && $sKey !== trim($this->sLabel)) {
@@ -346,10 +334,8 @@ final class Auth extends Base
         //  Confirm auth code works
         try {
 
-            $oAdapter       = new BuzzAdapter($sToken);
-            $oDigitalOcean  = new DigitalOceanV2($oAdapter);
-            $oAccount       = $oDigitalOcean->account();
-            $this->oAccount = $oAccount->getUserInformation();
+            $oDo            = new DigitalOcean($sToken);
+            $this->oAccount = $oDo->getUserInformation();
 
         } catch (\Exception $e) {
             $this->error([$e->getMessage(), $sToken]);
@@ -386,26 +372,11 @@ final class Auth extends Base
      */
     private function addAccount(): Auth
     {
-        $aAccounts                = (array) static::getAccounts();
-        $aAccounts[$this->sLabel] = $this->sToken;
-        ksort($aAccounts);
-        Config::set(static::CONFIG_ACCOUNTS_KEY, (object) $aAccounts);
+        DigitalOcean::addAccount($this->sLabel, $this->sToken);
 
         $this->oOutput->writeln('');
         $this->oOutput->writeln('🎉 Saved credentials for  <info>' . $this->sLabel . '</info>');
         $this->oOutput->writeln('');
         return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns the accounts object
-     *
-     * @return \stdClass
-     */
-    public static function getAccounts(): \stdClass
-    {
-        return Config::get(Auth::CONFIG_ACCOUNTS_KEY) ?: (object) [];
     }
 }
