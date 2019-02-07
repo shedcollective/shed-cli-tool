@@ -4,6 +4,7 @@ namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command\Base;
 use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Infrastructure;
 use Symfony\Component\Console\Input\InputOption;
@@ -330,10 +331,22 @@ final class Create extends Base
      */
     private function createServer(): Create
     {
-        $this->oInfrastructure->create(
+        $this->oOutput->writeln('');
+        $this->oOutput->write('Creating server...');
+
+        $oServer = $this->oInfrastructure->create(
             $this->sDomain,
             $this->aInfrastructureOptions
         );
+
+        //  @todo (Pablo - 2019-02-07) - Record server details at shedcollective.com
+
+        $this->oOutput->writeln('<info>done!</info>');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>ID</comment>:         ' . $oServer->getId());
+        $this->oOutput->writeln('<comment>IP Address</comment>: ' . $oServer->getIp());
+        $this->oOutput->writeln('');
+
         return $this;
     }
 }

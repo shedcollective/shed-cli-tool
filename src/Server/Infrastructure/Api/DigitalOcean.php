@@ -223,6 +223,18 @@ final class DigitalOcean
     // --------------------------------------------------------------------------
 
     /**
+     * Return the DO Droplet API
+     *
+     * @return \DigitalOceanV2\Api\Droplet
+     */
+    public function getDropletApi(): Api\Droplet
+    {
+        return $this->getApi()->droplet();
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Return information of the authenticated user
      *
      * @return \DigitalOceanV2\Entity\Account

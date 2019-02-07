@@ -375,7 +375,7 @@ final class Auth extends Base
         DigitalOcean::addAccount($this->sLabel, $this->sToken);
 
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('🎉 Saved credentials for  <info>' . $this->sLabel . '</info>');
+        $this->oOutput->writeln('🎉 Saved credentials for <info>' . $this->sLabel . '</info>');
         $this->oOutput->writeln('');
         return $this;
     }

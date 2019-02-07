@@ -2,8 +2,6 @@
 
 namespace Shed\Cli\Resources;
 
-use Shed\Cli\Helper\Debug;
-
 final class Option
 {
     /**
@@ -136,7 +134,7 @@ final class Option
      *
      * @return callable|array
      */
-    public function getOptions(array $aOptions = []): array
+    public function getOptions(array $aOptions = []): ?array
     {
         if (is_callable($this->mOptions)) {
             return call_user_func($this->mOptions, $aOptions);
@@ -182,11 +180,15 @@ final class Option
      */
     public function summarise(array $aOptions = []): string
     {
-        if ($this->getType() === static::TYPE_CHOOSE) {
+        if (is_callable($this->cSummary)) {
+            $sSummary = call_user_func($this->cSummary, $aOptions);
+        } elseif ($this->getType() === static::TYPE_CHOOSE) {
             $aOptions = $this->getOptions($aOptions);
-            return '<comment>' . $this->getLabel() . '</comment>: ' . $aOptions[$this->mValue];
+            $sSummary = $aOptions[$this->mValue];
         } else {
-            return '<comment>' . $this->getLabel() . '</comment>: ' . $this->mValue;
+            $sSummary = $this->mValue;
         }
+
+        return '<comment>' . $this->getLabel() . '</comment>: ' . $sSummary;
     }
 }

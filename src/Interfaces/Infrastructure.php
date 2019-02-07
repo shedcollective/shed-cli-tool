@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Interfaces;
 
+use Shed\Cli\Resources\Server;
+
 interface Infrastructure
 {
     /**
@@ -36,8 +38,10 @@ interface Infrastructure
      *
      * @param string $sDomain  The configured domain name
      * @param array  $aOptions The configured options
+     *
+     * @return Server
      */
-    public function create(string $sDomain, array $aOptions): void;
+    public function create(string $sDomain, array $aOptions): Server;
 
     // --------------------------------------------------------------------------
 

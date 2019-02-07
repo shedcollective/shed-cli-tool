@@ -3,6 +3,7 @@
 namespace Shed\Cli\Server\Infrastructure;
 
 use Shed\Cli\Interfaces\Infrastructure;
+use Shed\Cli\Resources\Server;
 
 final class Amazon extends Base implements Infrastructure
 {
@@ -47,8 +48,10 @@ final class Amazon extends Base implements Infrastructure
      *
      * @param string $sDomain  The configured domain name
      * @param array  $aOptions The configured options
+     *
+     * @return Server
      */
-    public function create(string $sDomain, array $aOptions): void
+    public function create(string $sDomain, array $aOptions): Server
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('🚧 Deploying AWS servers is a work in progress');
