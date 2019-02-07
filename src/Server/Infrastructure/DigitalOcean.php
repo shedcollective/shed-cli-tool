@@ -124,7 +124,7 @@ final class DigitalOcean extends Base implements Infrastructure
     public function getOptions(): array
     {
         return [
-            'ACCOUNT'     => new Option(
+            'ACCOUNT' => new Option(
                 Option::TYPE_CHOOSE,
                 'DO Account',
                 null,
@@ -138,83 +138,58 @@ final class DigitalOcean extends Base implements Infrastructure
                     return array_keys($aAccounts);
                 }
             ),
-            'REGION'      => new Option(
-                Option::TYPE_CHOOSE,
-                'Region',
-                null,
-                function (array $aOptions) {
-
-                    if (empty($this->aRegions)) {
-                        $oAccount            = Api\DigitalOcean::getAccountByIndex($aOptions['ACCOUNT']->getValue());
-                        $this->oDigitalOcean = new Api\DigitalOcean($oAccount->token);
-                        $this->aRegions      = $this->oDigitalOcean->getRegionApi()->getAll();
-                        $this->aRegions      = array_values(
-                            array_filter(
-                                $this->aRegions,
-                                function ($oRegion) {
-                                    return $oRegion->available;
-                                }
-                            )
-                        );
-                    }
-
-                    $aOptions = [];
-                    foreach ($this->aRegions as $oRegion) {
-                        $aOptions[] = $oRegion->name;
-                    }
-
-                    return $aOptions;
-                }
-            ),
-            'SIZE'        => new Option(
-                Option::TYPE_CHOOSE,
-                'Memory',
-                null,
-                function () {
-                    $aOptions = [];
-                    foreach (static::SIZES as $aSize) {
-                        $aOptions[] = $aSize['label'];
-                    }
-                    return $aOptions;
-                }
-            ),
-            'IMAGE'       => new Option(
-                Option::TYPE_CHOOSE,
-                'Image',
-                null,
-                function () {
-                    $aOptions = [];
-                    foreach (static::IMAGES as $aImage) {
-                        $aOptions[] = $aImage['label'];
-                    }
-                    return $aOptions;
-                }
-            ),
-            'ENVIRONMENT' => new Option(
-                Option::TYPE_CHOOSE,
-                'Environment',
-                null,
-                static::ENVIRONMENTS
-            ),
-            'FRAMEWORK'   => new Option(
-                Option::TYPE_CHOOSE,
-                'Framework',
-                null,
-                static::FRAMEWORKS
-            ),
-            'KEYWORDS'    => new Option(
-                Option::TYPE_ASK,
-                'Keywords',
-                null,
-                null,
-                null,
-                function (array $aOptions) {
-                    return implode(
-                        ', ',
-                        $this->getKeywords($aOptions)
-                    );
-                }
-            ),
+//            'REGION'  => new Option(
+//                Option::TYPE_CHOOSE,
+//                'Region',
+//                null,
+//                function (array $aOptions) {
+//
+//                    if (empty($this->aRegions)) {
+//                        $oAccount            = Api\DigitalOcean::getAccountByIndex($aOptions['ACCOUNT']->getValue());
+//                        $this->oDigitalOcean = new Api\DigitalOcean($oAccount->token);
+//                        $this->aRegions      = $this->oDigitalOcean->getRegionApi()->getAll();
+//                        $this->aRegions      = array_values(
+//                            array_filter(
+//                                $this->aRegions,
+//                                function ($oRegion) {
+//                                    return $oRegion->available;
+//                                }
+//                            )
+//                        );
+//                    }
+//
+//                    $aOptions = [];
+//                    foreach ($this->aRegions as $oRegion) {
+//                        $aOptions[] = $oRegion->name;
+//                    }
+//
+//                    return $aOptions;
+//                }
+//            ),
+//            'SIZE'    => new Option(
+//                Option::TYPE_CHOOSE,
+//                'Memory',
+//                null,
+//                function () {
+//                    $aOptions = [];
+//                    foreach (static::SIZES as $aSize) {
+//                        $aOptions[] = $aSize['label'];
+//                    }
+//                    return $aOptions;
+//                }
+//            ),
+//            'IMAGE'   => new Option(
+//                Option::TYPE_CHOOSE,
+//                'Image',
+//                null,
+//                function () {
+//                    $aOptions = [];
+//                    foreach (static::IMAGES as $aImage) {
+//                        $aOptions[] = $aImage['label'];
+//                    }
+//                    return $aOptions;
+//                }
+//            ),
         ];
     }
 

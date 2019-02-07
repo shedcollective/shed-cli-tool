@@ -12,12 +12,47 @@ use Symfony\Component\Finder\Finder;
 
 final class Create extends Base
 {
+    const ENVIRONMENTS = [
+        (object) [
+            'id'    => 'PRODUCTION',
+            'label' => 'Production',
+        ],
+        (object) [
+            'id'    => 'STAGING',
+            'label' => 'Staging',
+        ],
+    ];
+
+    const FRAMEWORKS = [
+        (object) [
+            'id'    => 'NAILS',
+            'label' => 'Nails',
+        ],
+        (object) [
+            'id'    => 'LARAVEL',
+            'label' => 'Laravel',
+        ],
+        (object) [
+            'id'    => 'WORDPRESS',
+            'label' => 'WordPress',
+        ],
+        (object) [
+            'id'    => 'STATIC',
+            'label' => 'Static',
+        ],
+    ];
+
+    // --------------------------------------------------------------------------
+
     /**
      * The domain name
      *
      * @var string
      */
     private $sDomain = null;
+
+    private $oEnvironment = null;
+    private $oFramework = null;
 
     /**
      * The infrastructure to use
@@ -26,12 +61,17 @@ final class Create extends Base
      */
     private $oInfrastructure = null;
 
+    private $oRegion = null;
+    private $oSize = null;
+
     /**
      * The infrastructure options
      *
      * @var array
      */
     private $aInfrastructureOptions = [];
+
+    private $aKeywords = [];
 
     // --------------------------------------------------------------------------
 
@@ -115,11 +155,17 @@ final class Create extends Base
     {
         return $this
             ->setDomain()
+            ->setEnvironment()
+            ->setFramework()
             ->setInfrastructure(
                 $this->oInfrastructure,
                 $this->oInput->getOption('infrastructure')
             )
-            ->setInfrastructureOptions();
+            ->setRegion()
+            ->setSize()
+            ->setImage()
+            ->setInfrastructureOptions()
+            ->setKeywords();
     }
 
     // --------------------------------------------------------------------------
