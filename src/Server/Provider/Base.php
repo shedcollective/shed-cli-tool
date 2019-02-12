@@ -1,6 +1,6 @@
 <?php
 
-namespace Shed\Cli\Server\Infrastructure;
+namespace Shed\Cli\Server\Provider;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

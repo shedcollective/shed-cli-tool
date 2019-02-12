@@ -329,7 +329,7 @@ final class Create extends Base
             $sFramework = str_replace('/', '\\', $sFramework);
 
             $oFramework              = new $sFramework();
-            $sFrameworkName          = $oFramework->getName();
+            $sFrameworkName          = $oFramework->getLabel();
             $aFrameworks[]           = $sFrameworkName;
             $aFrameworksNormalised[] = strtoupper($sFrameworkName);
             $aFrameworkClasses[]     = $oFramework;
@@ -446,14 +446,14 @@ final class Create extends Base
         $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
         $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
 
-        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getName());
+        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getLabel());
         foreach ($this->oBackendFramework->getOptions() as $sKey => $oOption) {
             $this->oOutput->writeln(
                 $oOption->summarise($this->aBackendFrameworkOptions)
             );
         }
 
-        $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getName());
+        $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getLabel());
         foreach ($this->oFrontendFramework->getOptions() as $sKey => $oOption) {
             $this->oOutput->writeln(
                 $oOption->summarise($this->aFrontendFrameworkOptions)
@@ -571,11 +571,11 @@ final class Create extends Base
             'dir'  => $this->sDir,
         ];
 
-        $this->oOutput->write('🔧 Installing backend framework: <info>' . $oBackendFramework->getName() . '</info>... ');
+        $this->oOutput->write('🔧 Installing backend framework: <info>' . $oBackendFramework->getLabel() . '</info>... ');
         $oBackendFramework->install($this->sDir, $aBackendOptions, $oFrontendFramework, $aInstallOptions);
         $this->oOutput->writeln('👍');
 
-        $this->oOutput->write('🎨 Installing frontend framework: <info>' . $oFrontendFramework->getName() . '</info>... ');
+        $this->oOutput->write('🎨 Installing frontend framework: <info>' . $oFrontendFramework->getLabel() . '</info>... ');
         $oFrontendFramework->install($this->sDir, $aFrontendOptions, $oBackendFramework, $aInstallOptions);
         $this->oOutput->writeln('👍');
 

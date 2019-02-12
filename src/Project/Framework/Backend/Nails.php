@@ -25,7 +25,7 @@ final class Nails extends Base implements Framework
      *
      * @return string
      */
-    public function getName(): string
+    public function getLabel(): string
     {
         return 'Nails';
     }

@@ -4,7 +4,7 @@ namespace Shed\Cli\Command\DigitalOcean;
 
 use Shed\Cli\Command\Base;
 use Shed\Cli\Exceptions\System\CommandFailedException;
-use Shed\Cli\Server\Infrastructure\Api\DigitalOcean;
+use Shed\Cli\Server\Provider\Api\DigitalOcean;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 

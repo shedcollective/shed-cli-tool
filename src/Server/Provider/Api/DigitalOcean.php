@@ -1,6 +1,6 @@
 <?php
 
-namespace Shed\Cli\Server\Infrastructure\Api;
+namespace Shed\Cli\Server\Provider\Api;
 
 use DigitalOceanV2\Adapter\BuzzAdapter;
 use DigitalOceanV2\Api;
@@ -16,7 +16,7 @@ final class DigitalOcean
      *
      * @var string
      */
-    const CONFIG_ACCOUNTS_KEY = 'server.infrastructure.digitalocean.accounts';
+    const CONFIG_ACCOUNTS_KEY = 'server.provider.digitalocean.accounts';
 
     // --------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@ interface Framework
      *
      * @return string
      */
-    public function getName(): string;
+    public function getLabel(): string;
 
     // --------------------------------------------------------------------------
 
