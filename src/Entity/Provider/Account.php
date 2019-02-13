@@ -1,16 +1,11 @@
 <?php
 
-namespace Shed\Cli\Resources\Provider;
+namespace Shed\Cli\Entity\Provider;
 
-final class Account
+use Shed\Cli\Entity;
+
+final class Account extends Entity
 {
-    /**
-     * The account's label
-     *
-     * @var string
-     */
-    private $sLabel = '';
-
     /**
      * The account's secret
      *
@@ -28,35 +23,8 @@ final class Account
      */
     public function __construct(string $sLabel, string $sSecret)
     {
-        $this->sLabel  = $sLabel;
+        parent::__construct($sLabel);
         $this->sSecret = $sSecret;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Set the account's Label property
-     *
-     * @param string $sLabel the label to set
-     *
-     * @return $this;
-     */
-    public function setLabel(string $sLabel): self
-    {
-        $this->sLabel = $sLabel;
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Get the account's Label property
-     *
-     * @return string
-     */
-    public function getLabel(): string
-    {
-        return $this->sLabel;
     }
 
     // --------------------------------------------------------------------------

@@ -4,10 +4,8 @@ namespace Shed\Cli\Project\Framework\Backend;
 
 use Shed\Cli\Command\Project\Create;
 use Shed\Cli\Helper\System;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Base;
-use Symfony\Component\Yaml\Yaml;
 
 final class Nails extends Base implements Framework
 {

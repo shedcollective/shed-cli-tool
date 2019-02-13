@@ -2,14 +2,15 @@
 
 namespace Shed\Cli\Server\Provider;
 
-use Shed\Cli\Interfaces\Provider;
-use Shed\Cli\Resources\Provider\Account;
-use Shed\Cli\Resources\Provider\Image;
-use Shed\Cli\Resources\Provider\Region;
-use Shed\Cli\Resources\Provider\Size;
-use Shed\Cli\Resources\Server;
+use Shed\Cli\Interfaces;
+use Shed\Cli\Entity;
+use Shed\Cli\Entity\Provider\Account;
+use Shed\Cli\Entity\Provider\Image;
+use Shed\Cli\Entity\Provider\Region;
+use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Server;
 
-final class GoogleCloud extends Base implements Provider
+final class GoogleCloud extends Server\Provider implements Interfaces\Provider
 {
     /**
      * Return the name of the framework
@@ -118,7 +119,7 @@ final class GoogleCloud extends Base implements Provider
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
      *
-     * @return Server
+     * @return Entity\Server
      */
     public function create(
         string $sDomain,
@@ -130,7 +131,7 @@ final class GoogleCloud extends Base implements Provider
         Image $oImage,
         array $aOptions,
         array $aKeywords
-    ): Server {
+    ): Entity\Server {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('🚧 Deploying Google Cloud servers command is a work in progress');
         $this->oOutput->writeln('');

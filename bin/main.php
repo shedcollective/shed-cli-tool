@@ -29,10 +29,7 @@ foreach ($oFinder as $oFile) {
     $sCommand = $oFile->getPath() . DIRECTORY_SEPARATOR . $oFile->getBasename('.php');
     $sCommand = str_replace($sBasePath, 'Shed/Cli', $sCommand);
     $sCommand = str_replace(DIRECTORY_SEPARATOR, '\\', $sCommand);
-
-    if ($sCommand !== 'Shed\\Cli\\Command\\Base') {
-        $oApp->add(new $sCommand());
-    }
+    $oApp->add(new $sCommand());
 }
 
 $oApp->setName('Shed Command Line Tool');

@@ -2,11 +2,11 @@
 
 namespace Shed\Cli\Interfaces;
 
-use Shed\Cli\Resources\Provider\Account;
-use Shed\Cli\Resources\Provider\Image;
-use Shed\Cli\Resources\Provider\Region;
-use Shed\Cli\Resources\Provider\Size;
-use Shed\Cli\Resources\Server;
+use Shed\Cli\Entity\Provider\Account;
+use Shed\Cli\Entity\Provider\Image;
+use Shed\Cli\Entity\Provider\Region;
+use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Entity\Server;
 
 interface Provider
 {

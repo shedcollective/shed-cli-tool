@@ -1,8 +1,10 @@
 <?php
 
-namespace Shed\Cli\Resources;
+namespace Shed\Cli\Entity;
 
-final class Option
+use Shed\Cli\Entity;
+
+final class Option extends Entity
 {
     /**
      * The option types
@@ -18,13 +20,6 @@ final class Option
      * @var string
      */
     private $sType = Option::TYPE_ASK;
-
-    /**
-     * The option label
-     *
-     * @var string
-     */
-    private $sLabel = '';
 
     /**
      * The option default
@@ -81,8 +76,10 @@ final class Option
         callable $cValidation = null,
         callable $cSummary = null
     ) {
+
+        parent::__construct($sLabel);
+
         $this->sType       = $sType;
-        $this->sLabel      = $sLabel;
         $this->mDefault    = $mDefault;
         $this->mOptions    = $mOptions;
         $this->cValidation = $cValidation;
@@ -99,18 +96,6 @@ final class Option
     public function getType(): string
     {
         return $this->sType;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Return the option's label
-     *
-     * @return string
-     */
-    public function getLabel(): string
-    {
-        return $this->sLabel;
     }
 
     // --------------------------------------------------------------------------

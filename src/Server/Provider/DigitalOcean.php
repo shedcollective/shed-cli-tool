@@ -2,16 +2,17 @@
 
 namespace Shed\Cli\Server\Provider;
 
-use Shed\Cli\Helper\Debug;
-use Shed\Cli\Interfaces\Provider;
-use Shed\Cli\Resources\Provider\Account;
-use Shed\Cli\Resources\Provider\Image;
-use Shed\Cli\Resources\Provider\Region;
-use Shed\Cli\Resources\Provider\Size;
-use Shed\Cli\Resources\Server;
+use Shed\Cli\Command\Server\Create;
+use Shed\Cli\Interfaces;
+use Shed\Cli\Entity;
+use Shed\Cli\Entity\Provider\Account;
+use Shed\Cli\Entity\Provider\Image;
+use Shed\Cli\Entity\Provider\Region;
+use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Server;
 use Shed\Cli\Server\Provider\Api;
 
-final class DigitalOcean extends Base implements Provider
+final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
     /**
      * The available DigitalOcean images
@@ -20,27 +21,19 @@ final class DigitalOcean extends Base implements Provider
      */
     const IMAGES = [
         [
-            'id'    => '38835928',
-            //'slug'  => 'docker-18-04',
-            'slug'  => 'DOCKER',
+            'slug'  => 'docker-18-04',
             'label' => 'Docker',
         ],
         [
-            'id'    => '42326229',
-            //'slug'  => 'lamp-18-04',
-            'slug'  => 'LAMP',
+            'slug'  => 'lamp-18-04',
             'label' => 'LAMP',
         ],
         [
-            'id'    => '41320116',
-            //'slug'  => 'wordpress-18-04',
-            'slug'  => 'WORDPRESS',
+            'slug'  => 'wordpress-18-04',
             'label' => 'WordPress',
         ],
         [
-            'id'    => '40744498',
-            //'slug'  => 'mysql-18-04',
-            'slug'  => 'MYSQL',
+            'slug'  => 'mysql-18-04',
             'label' => 'MySQL',
         ],
     ];
@@ -208,7 +201,7 @@ final class DigitalOcean extends Base implements Provider
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
      *
-     * @return Server
+     * @return Entity\Server
      */
     public function create(
         string $sDomain,
@@ -220,11 +213,7 @@ final class DigitalOcean extends Base implements Provider
         Image $oImage,
         array $aOptions,
         array $aKeywords
-    ): Server {
-
-        $aImage       = static::IMAGES[$aOptions['IMAGE']->getValue()];
-        $oRegion      = $this->aRegions[$aOptions['REGION']->getValue()];
-        $sSize        = static::SIZES[$aOptions['SIZE']->getValue()]['slug'];
+    ): Entity\Server {
 
         $aData = [
             'name'              => implode(
@@ -235,28 +224,27 @@ final class DigitalOcean extends Base implements Provider
                     },
                     [
                         $sDomain,
-                        $aImage['label'],
+                        $oImage->getLabel(),
                         $sEnvironment,
                         $sFramework,
                     ]
                 )
             ),
-            'region'            => $oRegion->slug,
-            'size'              => $sSize,
-            'image'             => $aImage['slug'],
-            'backups'           => false,
+            'region'            => $oRegion->getSlug(),
+            'size'              => $oSize->getSlug(),
+            'image'             => $oImage->getSlug(),
+            'backups'           => $sEnvironment === Create::ENV_PRODUCTION,
             'ipv6'              => false,
             'privateNetworking' => false,
-            //  @todo (Pablo - 2019-02-07) - Fetch local key + global keys from account
             'sshKeys'           => [],
             'userData'          => '',
             'monitoring'        => true,
             'volumes'           => [],
-            'tags'              => $this->getKeywords($aOptions),
+            'tags'              => $aKeywords,
             'wait'              => true,
         ];
 
-        Debug::dd($aData);
+        //  @todo (Pablo - 2019-02-07) - Fetch local key + global keys from account
 
         $oDroplet = $this
             ->oDigitalOcean
@@ -277,11 +265,18 @@ final class DigitalOcean extends Base implements Provider
                 $aData['wait']
             );
 
-        $oServer = new Server();
-        $oServer->setId($oDroplet->id);
-        $oServer->setIp($oDroplet->networks[0]->ipAddress);
-
-        return $oServer;
+        $oServer = new Entity\Server();
+        $oDisk   = new Entity\Provider\Disk($oDroplet->disk, $oDroplet->disk);
+        return $oServer
+            ->setLabel($oDroplet->name)
+            ->setSlug($oDroplet->name)
+            ->setId($oDroplet->id)
+            ->setIp($oDroplet->networks[0]->ipAddress)
+            ->setDomain($sDomain)
+            ->setDisk($oDisk)
+            ->setImage($oImage)
+            ->setRegion($oRegion)
+            ->setSize($oSize);
     }
 
     // --------------------------------------------------------------------------

@@ -2,13 +2,13 @@
 
 namespace Shed\Cli\Command\DigitalOcean;
 
-use Shed\Cli\Command\Base;
+use Shed\Cli\Command\Command;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Server\Provider\Api\DigitalOcean;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-final class Auth extends Base
+final class Auth extends Command
 {
     /**
      * The label
@@ -222,8 +222,7 @@ final class Auth extends Base
      */
     private function setLabel(): Auth
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('label');
+        $sOption = trim($this->oInput->getOption('label'));
         if (empty($sOption)) {
             $this->sLabel = $this->ask(
                 'Account label:',
@@ -254,8 +253,7 @@ final class Auth extends Base
      */
     private function setToken(): Auth
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('token');
+        $sOption = trim($this->oInput->getOption('token'));
         if (empty($sOption)) {
             $this->sToken = $this->ask(
                 'Access token:',
@@ -288,7 +286,14 @@ final class Auth extends Base
      */
     protected function validateLabel($sLabel): bool
     {
-        $sLabel    = trim($sLabel);
+        if (empty($sLabel)) {
+            $this->error(array_filter([
+                'Label is required',
+                $sLabel,
+            ]));
+            return false;
+        }
+
         $sPattern  = '[^a-zA-Z0-0 \-]';
         $aReserved = [];
 
@@ -320,7 +325,14 @@ final class Auth extends Base
      */
     protected function validateToken($sToken): bool
     {
-        $sToken    = trim($sToken);
+        if (empty($sToken)) {
+            $this->error(array_filter([
+                'Token is required',
+                $sToken,
+            ]));
+            return false;
+        }
+
         $oAccounts = DigitalOcean::getAccounts();
         $sKey      = array_search($sToken, (array) $oAccounts);
 

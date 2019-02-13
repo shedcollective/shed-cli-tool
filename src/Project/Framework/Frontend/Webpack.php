@@ -6,7 +6,6 @@ use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Helper\Zip;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Backend\Laravel;
 use Shed\Cli\Project\Framework\Backend\Nails;

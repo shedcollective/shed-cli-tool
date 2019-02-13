@@ -2,29 +2,70 @@
 
 namespace Shed\Cli\Command\Server;
 
-use Shed\Cli\Command\Base;
+use Shed\Cli\Command\Command;
 use Shed\Cli\Exceptions\Environment\NotValidException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
-use Shed\Cli\Resources\Provider\Account;
-use Shed\Cli\Resources\Provider\Image;
-use Shed\Cli\Resources\Provider\Region;
-use Shed\Cli\Resources\Provider\Size;
+use Shed\Cli\Entity\Provider\Account;
+use Shed\Cli\Entity\Provider\Image;
+use Shed\Cli\Entity\Provider\Region;
+use Shed\Cli\Entity\Provider\Size;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
-final class Create extends Base
+final class Create extends Command
 {
+    /**
+     * The string for the production environment
+     *
+     * @var string
+     */
+    const ENV_PRODUCTION = 'PRODUCTION';
+
+    /**
+     * The string for the staging environment
+     *
+     * @var string
+     */
+    const ENV_STAGING = 'STAGING';
+
     /**
      * The available environments
      *
      * @var array
      */
     const ENVIRONMENTS = [
-        'PRODUCTION',
-        'STAGING',
+        self::ENV_PRODUCTION,
+        self::ENV_STAGING,
     ];
+
+    /**
+     * The string value for Nails framework
+     *
+     * @var string
+     */
+    const FRAMEWORK_NAILS = 'NAILS';
+
+    /**
+     * The string value for Laravel framework
+     *
+     * @var string
+     */
+    const FRAMEWORK_LARAVEL = 'LARAVEL';
+
+    /**
+     * The string value for WordPress framework
+     *
+     * @var string
+     */
+    const FRAMEWORK_WORDPRESS = 'WORDPRESS';
+
+    /**
+     * The string value for static framework
+     *
+     * @var string
+     */
+    const FRAMEWORK_STATIC = 'STATIC';
 
     /**
      * The available frameworks
@@ -32,10 +73,10 @@ final class Create extends Base
      * @var array
      */
     const FRAMEWORKS = [
-        'NAILS',
-        'LARAVEL',
-        'WORDPRESS',
-        'STATIC',
+        self::FRAMEWORK_NAILS,
+        self::FRAMEWORK_LARAVEL,
+        self::FRAMEWORK_WORDPRESS,
+        self::FRAMEWORK_STATIC,
     ];
 
     // --------------------------------------------------------------------------
@@ -108,7 +149,7 @@ final class Create extends Base
      *
      * @var array
      */
-    private $aKeywords = '';
+    private $aKeywords = [];
 
     // --------------------------------------------------------------------------
 
@@ -242,8 +283,7 @@ final class Create extends Base
      */
     private function setDomain(): Create
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('domain');
+        $sOption = trim($this->oInput->getOption('domain'));
         if (empty($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
@@ -253,7 +293,7 @@ final class Create extends Base
         } else {
             if ($this->validateDomain($sOption)) {
                 $this->sDomain = $sOption;
-                $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
+                $this->oOutput->writeln('<comment>Domain Name</comment>: ' . $this->sDomain);
             } else {
                 $this->sDomain = $this->ask(
                     'Domain Name:',
@@ -277,6 +317,14 @@ final class Create extends Base
      */
     protected function validateDomain($sDomain): bool
     {
+        if (empty($sDomain)) {
+            $this->error(array_filter([
+                'Domain is required',
+                $sDomain,
+            ]));
+            return false;
+        }
+
         $sTestDomain = $sDomain;
         if (!preg_match('/^http/', $sTestDomain)) {
             $sTestDomain = 'https://' . $sTestDomain;
@@ -304,8 +352,8 @@ final class Create extends Base
      */
     private function setEnvironment(): Create
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('environment');
+        //  @todo (Pablo - 2019-02-13) - Maybe make this a choice input
+        $sOption = trim($this->oInput->getOption('environment'));
         if (empty($sOption)) {
             $this->sEnvironment = $this->ask(
                 'Environment:',
@@ -325,6 +373,8 @@ final class Create extends Base
             }
         }
 
+        $this->sEnvironment = strtoupper($this->sEnvironment);
+
         return $this;
     }
 
@@ -339,7 +389,23 @@ final class Create extends Base
      */
     protected function validateEnvironment($sEnvironment): bool
     {
-        return in_array($sEnvironment, static::ENVIRONMENTS);
+        if (empty($sEnvironment)) {
+            $this->error(array_filter([
+                'Environment is required',
+                $sEnvironment,
+            ]));
+            return false;
+        }
+
+        if (!in_array(strtoupper($sEnvironment), static::ENVIRONMENTS)) {
+            $this->error(array_filter([
+                '"' . $sEnvironment . '" is not a valid Environment',
+                'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
+            ]));
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
@@ -351,8 +417,8 @@ final class Create extends Base
      */
     private function setFramework(): Create
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('framework');
+        //  @todo (Pablo - 2019-02-13) - Maybe make this a choice input
+        $sOption = trim($this->oInput->getOption('framework'));
         if (empty($sOption)) {
             $this->sFramework = $this->ask(
                 'Framework:',
@@ -372,6 +438,8 @@ final class Create extends Base
             }
         }
 
+        $this->sFramework = strtoupper($this->sFramework);
+
         return $this;
     }
 
@@ -386,7 +454,23 @@ final class Create extends Base
      */
     protected function validateFramework($sFramework): bool
     {
-        return in_array($sFramework, static::FRAMEWORKS);
+        if (empty($sFramework)) {
+            $this->error(array_filter([
+                'Framework is required',
+                $sFramework,
+            ]));
+            return false;
+        }
+
+        if (!in_array(strtoupper($sFramework), static::FRAMEWORKS)) {
+            $this->error(array_filter([
+                '"' . $sFramework . '" is not a valid Framework',
+                'Should be one of: ' . implode(', ', static::FRAMEWORKS),
+            ]));
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
@@ -408,7 +492,7 @@ final class Create extends Base
         foreach ($oFinder as $oFile) {
 
             $sClassName = $oFile->getBasename('.php');
-            if ($sClassName === 'Base') {
+            if ($sClassName === 'Command') {
                 continue;
             }
 
@@ -431,7 +515,7 @@ final class Create extends Base
             throw new \RuntimeException('No providers available');
         } elseif ($this->oInput->getOption('provider')) {
 
-            $sOption = $this->oInput->getOption('provider');
+            $sOption = trim($this->oInput->getOption('provider'));
             $iChoice = array_search(strtoupper($sOption), $aProvidersNormalised);
             if ($iChoice === false) {
                 $this->error([
@@ -553,7 +637,7 @@ final class Create extends Base
             $iChoice = $this->choose(
                 $sLabel . ':',
                 array_values(array_map(function ($oItem) {
-                    return $oItem->getLabel();
+                    return $oItem->getLabel() . ' <info>(' . $oItem->getSlug() . ')</info>';
                 }, $aOptions))
             );
 
@@ -625,7 +709,7 @@ final class Create extends Base
      */
     private function setKeywords(): Create
     {
-        $sOption = $this->oInput->getOption('keywords');
+        $sOption = trim($this->oInput->getOption('keywords'));
         if (empty($sOption)) {
             $sKeywords = $this->ask('Keywords:');
         } else {
@@ -722,6 +806,11 @@ final class Create extends Base
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>ID</comment>:         ' . $oServer->getId());
         $this->oOutput->writeln('<comment>IP Address</comment>: ' . $oServer->getIp());
+        $this->oOutput->writeln('<comment>Domain</comment>:     ' . $oServer->getDomain());
+        $this->oOutput->writeln('<comment>Disk</comment>:       ' . $oServer->getDisk()->getLabel());
+        $this->oOutput->writeln('<comment>Image</comment>:      ' . $oServer->getImage()->getLabel());
+        $this->oOutput->writeln('<comment>Region</comment>:     ' . $oServer->getRegion()->getLabel());
+        $this->oOutput->writeln('<comment>Size</comment>:       ' . $oServer->getSize()->getLabel());
         $this->oOutput->writeln('');
 
         return $this;

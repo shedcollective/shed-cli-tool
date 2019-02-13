@@ -1,32 +1,32 @@
 <?php
 
-namespace Shed\Cli\Resources\Provider;
+namespace Shed\Cli;
 
-final class Image
+abstract class Entity
 {
     /**
-     * The image's label
+     * The entity's label
      *
      * @var string
      */
-    private $sLabel = '';
+    protected $sLabel = '';
 
     /**
-     * The image's slug
+     * The entity's slug
      *
      * @var string
      */
-    private $sSlug = '';
+    protected $sSlug = '';
 
     // --------------------------------------------------------------------------
 
     /**
-     * Image constructor.
+     * Size constructor.
      *
-     * @param string $sLabel The image's label
-     * @param string $sSlug  The image's slug
+     * @param string $sLabel The entity's label
+     * @param string $sSlug  The entity's slug
      */
-    public function __construct(string $sLabel, string $sSlug)
+    public function __construct(string $sLabel = '', string $sSlug = '')
     {
         $this->sLabel = $sLabel;
         $this->sSlug  = $sSlug;
@@ -35,9 +35,9 @@ final class Image
     // --------------------------------------------------------------------------
 
     /**
-     * Set the image's Label property
+     * Set the entity's Label property
      *
-     * @param string $sLabel the label to set
+     * @param string $sLabel The label to set
      *
      * @return $this;
      */
@@ -50,7 +50,7 @@ final class Image
     // --------------------------------------------------------------------------
 
     /**
-     * Get the image's Label property
+     * Get the entity's Label property
      *
      * @return string
      */
@@ -62,9 +62,9 @@ final class Image
     // --------------------------------------------------------------------------
 
     /**
-     * Set the image's Slug property
+     * Set the entity's Slug property
      *
-     * @param string $sSlug the label to set
+     * @param string $sSlug The slug to set
      *
      * @return $this;
      */
@@ -77,12 +77,12 @@ final class Image
     // --------------------------------------------------------------------------
 
     /**
-     * Get the image's Slug property
+     * Get the entity's Slug property
      *
      * @return string
      */
     public function getSlug(): string
     {
-        return $this->sLabel;
+        return $this->sSlug;
     }
 }

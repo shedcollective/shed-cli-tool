@@ -34,6 +34,6 @@ fi
 # --------------------------------------------------------------------------
 # Build
 # --------------------------------------------------------------------------
-#composer update --lock -q # So our lock file is up to date (version number)
+composer update --lock -q # So our lock file is up to date (version number)
 composer --no-interaction --optimize-autoloader --no-dev --ansi install
 vendor/bin/box compile  --ansi

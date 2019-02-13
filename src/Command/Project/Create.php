@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Command\Project;
 
-use Shed\Cli\Command\Base;
+use Shed\Cli\Command\Command;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
-final class Create extends Base
+final class Create extends Command
 {
     /**
      * The URL of the Docker skeleton
@@ -208,15 +208,49 @@ final class Create extends Base
      */
     private function setProjectName(): Create
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        $sOption = $this->oInput->getOption('name');
+        $sOption = trim($this->oInput->getOption('name'));
         if (empty($sOption)) {
-            $this->sProjectName = $this->ask('Project Name:');
+            $this->sProjectName = $this->ask(
+                'Project Name:',
+                null,
+                [$this, 'validateProjectName']
+            );
         } else {
-            $this->sProjectName = $sOption;
+            if ($this->validateProjectName($sOption)) {
+                $this->sProjectName = $sOption;
+                $this->oOutput->writeln('<comment>Project Name</comment>: ' . $this->sProjectName);
+            } else {
+                $this->sProjectName = $this->ask(
+                    'Project Name:',
+                    null,
+                    [$this, 'validateProjectName']
+                );
+            }
         }
 
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validate a project name is valid
+     *
+     * @param string $sProjectName The name to test
+     *
+     * @return bool
+     */
+    protected function validateProjectName($sProjectName): bool
+    {
+        if (empty($sProjectName)) {
+            $this->error(array_filter([
+                'Project Name is required',
+                $sProjectName,
+            ]));
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
@@ -228,17 +262,53 @@ final class Create extends Base
      */
     private function setProjectSlug(): Create
     {
-        //  @todo (Pablo - 2019-02-04) - Do not allow empty value
-        if ($this->oInput->getOption('slug')) {
-            $this->sProjectSlug = $this->oInput->getOption('slug');
+        $sOption  = trim($this->oInput->getOption('slug'));
+        $sDefault = strtolower($this->sProjectName);
+        $sDefault = preg_replace('/[^a-z0-9\- ]/', '', $sDefault);
+        $sDefault = str_replace(' ', '-', $sDefault);
+
+        if (empty($sOption)) {
+            $this->sProjectSlug = $this->ask(
+                'Project Slug:',
+                $sDefault,
+                [$this, 'validateProjectSlug']
+            );
         } else {
-            $sDefault           = strtolower($this->sProjectName);
-            $sDefault           = preg_replace('/[^a-z0-9\- ]/', '', $sDefault);
-            $sDefault           = str_replace(' ', '-', $sDefault);
-            $this->sProjectSlug = $this->ask('Project Slug:', $sDefault);
+            if ($this->validateProjectSlug($sOption)) {
+                $this->sProjectSlug = $sOption;
+                $this->oOutput->writeln('<comment>Project Slug</comment>: ' . $this->sProjectSlug);
+            } else {
+                $this->sProjectSlug = $this->ask(
+                    'Project Slug:',
+                    $sDefault,
+                    [$this, 'validateProjectSlug']
+                );
+            }
         }
 
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validate a project slug is valid
+     *
+     * @param string $sProjectSlug The slug to test
+     *
+     * @return bool
+     */
+    protected function validateProjectSlug($sProjectSlug): bool
+    {
+        if (empty($sProjectSlug)) {
+            $this->error(array_filter([
+                'Project Slug is required',
+                $sProjectSlug,
+            ]));
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
@@ -250,7 +320,7 @@ final class Create extends Base
      */
     private function setDirectory(): Create
     {
-        $sOption = $this->oInput->getOption('directory');
+        $sOption = trim($this->oInput->getOption('directory'));
         if (empty($sOption)) {
             $this->sDir = $this->ask(
                 'Project Directory <info>(Leave blank for current directory)</info>:',
@@ -320,7 +390,7 @@ final class Create extends Base
         foreach ($oFinder as $oFile) {
 
             $sClassName = $oFile->getBasename('.php');
-            if ($sClassName === 'Base') {
+            if ($sClassName === 'Command') {
                 continue;
             }
 

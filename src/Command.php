@@ -4,14 +4,13 @@ namespace Shed\Cli\Command;
 
 use Shed\Cli\Helper\Colors;
 use Shed\Cli\Helper\Updates;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 
-abstract class Base extends Command
+abstract class Command extends \Symfony\Component\Console\Command\Command
 {
     /**
      * The successful exit code
@@ -79,7 +78,7 @@ abstract class Base extends Command
      *
      * @return $this
      */
-    protected function banner($sTitle): Base
+    protected function banner($sTitle): Command
     {
         $sTitle = $sTitle ? 'Shed CLI: ' . $sTitle : 'Shed CLI';
         $this->oOutput->writeln('');
@@ -159,7 +158,7 @@ abstract class Base extends Command
             return $this->ask($sQuestion, $sDefault, $cValidation);
         }
 
-        return $sResponse;
+        return trim($sResponse);
     }
 
     // --------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 <?php
 
-namespace Shed\Cli\Server\Provider;
+namespace Shed\Cli\Server;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-abstract class Base
+abstract class Provider
 {
     /**
      * The console's input interface
@@ -24,7 +24,7 @@ abstract class Base
     // --------------------------------------------------------------------------
 
     /**
-     * Base constructor.
+     * Command constructor.
      *
      * @param InputInterface  $oInput  The command's input interface
      * @param OutputInterface $oOutput The command's output interface
