@@ -3,6 +3,7 @@
 
 namespace Shed\Cli;
 
+use Shed\Cli\Helper\Config;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\Updates;
 use Symfony\Component\Console\Application;
@@ -18,6 +19,8 @@ define('BASEPATH', Directory::normalize(__DIR__ . '/../'));
 $oApp    = new Application();
 $oFinder = new Finder();
 
+Config::loadConfig();
+
 //  Auto-load commands
 $sBasePath = BASEPATH . 'src';
 $oFinder->files()->in($sBasePath . '/Command');
@@ -26,10 +29,7 @@ foreach ($oFinder as $oFile) {
     $sCommand = $oFile->getPath() . DIRECTORY_SEPARATOR . $oFile->getBasename('.php');
     $sCommand = str_replace($sBasePath, 'Shed/Cli', $sCommand);
     $sCommand = str_replace(DIRECTORY_SEPARATOR, '\\', $sCommand);
-
-    if ($sCommand !== 'Shed\\Cli\\Command\\Base') {
-        $oApp->add(new $sCommand());
-    }
+    $oApp->add(new $sCommand());
 }
 
 $oApp->setName('Shed Command Line Tool');

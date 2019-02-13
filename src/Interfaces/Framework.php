@@ -9,7 +9,7 @@ interface Framework
      *
      * @return string
      */
-    public function getName();
+    public function getLabel(): string;
 
     // --------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ interface Framework
      *
      * @return array
      */
-    public function getOptions();
+    public function getOptions(): array;
 
     // --------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ interface Framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oOtherFramework);
+    public function getEnvVars(Framework $oOtherFramework): array;
 
     // --------------------------------------------------------------------------
 
@@ -41,5 +41,5 @@ interface Framework
      * @param Framework $oOtherFramework The other framework being installed
      * @param array     $aInstallOptions The install options
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions);
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void;
 }

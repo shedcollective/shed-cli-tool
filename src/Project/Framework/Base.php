@@ -16,7 +16,7 @@ abstract class Base
      *
      * @return $this
      */
-    protected function configureDockerFile($sPath, $sDesiredDockerFile)
+    protected function configureDockerFile($sPath, $sDesiredDockerFile): Base
     {
         $aConfig = Yaml::parseFile($sPath . 'docker-compose.yml');
 
@@ -41,7 +41,7 @@ abstract class Base
      * @return $this
      * @throws CommandFailedException
      */
-    protected function installFramework($sPath, $sDesiredDockerFile)
+    protected function installFramework($sPath, $sDesiredDockerFile): Base
     {
         System::exec([
             'cd "' . $sPath . '"',

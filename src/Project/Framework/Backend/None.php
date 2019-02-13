@@ -2,7 +2,6 @@
 
 namespace Shed\Cli\Project\Framework\Backend;
 
-use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Base;
 
@@ -13,7 +12,7 @@ final class None extends Base implements Framework
      *
      * @return string
      */
-    public function getName()
+    public function getLabel(): string
     {
         return 'Static';
     }
@@ -25,7 +24,7 @@ final class None extends Base implements Framework
      *
      * @return array
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return [];
     }
@@ -39,7 +38,7 @@ final class None extends Base implements Framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oFrontendFramework)
+    public function getEnvVars(Framework $oFrontendFramework): array
     {
         return [];
     }
@@ -56,7 +55,7 @@ final class None extends Base implements Framework
      *
      * @return void
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
             ->configureDockerFile($sPath, 'apache-php72')

@@ -13,7 +13,7 @@ final class System
      *
      * @throws CommandFailedException
      */
-    public static function exec($mCommand)
+    public static function exec($mCommand): void
     {
         if (is_array($mCommand)) {
             $mCommand = implode(' && ', array_filter($mCommand));
@@ -34,7 +34,7 @@ final class System
      *
      * @return bool
      */
-    public static function commandExists($sCommand)
+    public static function commandExists(string $sCommand): bool
     {
         $sCommandPath = `which $sCommand`;
         return !empty($sCommandPath);
