@@ -6,20 +6,9 @@ use DigitalOceanV2\Adapter\BuzzAdapter;
 use DigitalOceanV2\Api;
 use DigitalOceanV2\Entity;
 use DigitalOceanV2\DigitalOceanV2;
-use Shed\Cli\Exceptions\DigitalOcean\AccountNotFoundException;
-use Shed\Cli\Helper\Config;
 
 final class DigitalOcean
 {
-    /**
-     * Config key containing accounts
-     *
-     * @var string
-     */
-    const CONFIG_ACCOUNTS_KEY = 'server.provider.digitalocean.accounts';
-
-    // --------------------------------------------------------------------------
-
     /**
      * The access token to use
      *
@@ -37,7 +26,7 @@ final class DigitalOcean
     // --------------------------------------------------------------------------
 
     /**
-     * DigitalOcean constructor.
+     * Auth constructor.
      *
      * @param string $sAccessToken The access token to use
      */
@@ -46,118 +35,6 @@ final class DigitalOcean
         $this->sAccessToken = $sAccessToken;
         $oAdapter           = new BuzzAdapter($sAccessToken);
         $this->oApi         = new DigitalOceanV2($oAdapter);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Return all configured accounts
-     *
-     * @return array
-     */
-    public static function getAccounts(): array
-    {
-        return (array) Config::get(static::CONFIG_ACCOUNTS_KEY) ?: [];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Get an account at a specific index
-     *
-     * @param int $iIndex The index to look for
-     *
-     * @return \stdClass
-     */
-    public static function getAccountByIndex(int $iIndex): \stdClass
-    {
-        $aAccounts = static::getAccounts();
-        $aKeys     = array_keys($aAccounts);
-
-        if (!array_key_exists($iIndex, $aKeys)) {
-            throw new AccountNotFoundException('No account at index "' . $iIndex . '"');
-        }
-        return (object) [
-            'label' => $aKeys[$iIndex],
-            'token' => $aAccounts[$aKeys[$iIndex]],
-        ];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Get an account by it's label
-     *
-     * @param string $sLabel The label to search for
-     *
-     * @return \stdClass
-     */
-    public static function getAccountByLabel(string $sLabel): \stdClass
-    {
-        $aAccounts = static::getAccounts();
-
-        if (!array_key_exists($sLabel, $aAccounts)) {
-            throw new AccountNotFoundException('No account with label "' . $sLabel . '"');
-        }
-
-        return (object) [
-            'label' => $sLabel,
-            'token' => $aAccounts[$sLabel],
-        ];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Get an account by it's token
-     *
-     * @param string $sToken the token to search for
-     *
-     * @return \stdClass
-     */
-    public static function getAccountBytoken(string $sToken): \stdClass
-    {
-        $aAccounts = static::getAccounts();
-        $sLabel    = array_search($sToken, $aAccounts);
-
-        if ($sLabel === false) {
-            throw new AccountNotFoundException('No account with token "' . $$sToken . '"');
-        }
-
-        return (object) [
-            'label' => $sLabel,
-            'token' => $sToken,
-        ];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Add an account
-     *
-     * @param string $sLabel The account label
-     * @param string $sToken the account token
-     */
-    public static function addAccount(string $sLabel, string $sToken): void
-    {
-        $aAccounts          = static::getAccounts();
-        $aAccounts[$sLabel] = $sToken;
-        ksort($aAccounts);
-        Config::set(static::CONFIG_ACCOUNTS_KEY, $aAccounts);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * The account to delete
-     *
-     * @param string $sLabel
-     */
-    public static function deleteAccount(string $sLabel = ''): void
-    {
-        $aAccounts = static::getAccounts();
-        unset($aAccounts[$sLabel]);
-        Config::set(static::CONFIG_ACCOUNTS_KEY, $aAccounts);
     }
 
     // --------------------------------------------------------------------------

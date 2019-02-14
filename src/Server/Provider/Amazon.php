@@ -2,12 +2,14 @@
 
 namespace Shed\Cli\Server\Provider;
 
-use Shed\Cli\Interfaces;
+use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Exceptions\CliException;
+use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 
 final class Amazon extends Server\Provider implements Interfaces\Provider
@@ -31,8 +33,15 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
      */
     public function getAccounts(): array
     {
-        //  @todo (Pablo - 2019-02-12) - Complete this method
-        return [];
+        $aOut = Auth\Amazon::getAccounts();
+
+        if (empty($aOut)) {
+            throw new CliException(
+                'No ' . Auth\Amazon::LABEL . ' accounts registered; use `shed auth:' . Auth\Amazon::SLUG . '` to add an account'
+            );
+        }
+
+        return $aOut;
     }
 
     // --------------------------------------------------------------------------
@@ -132,9 +141,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords
     ): Entity\Server {
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('🚧 Deploying AWS servers is a work in progress');
-        $this->oOutput->writeln('');
+        throw new CliException('🚧 Deploying AWS servers is a work in progress');
     }
 
     // --------------------------------------------------------------------------

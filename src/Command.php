@@ -1,6 +1,6 @@
 <?php
 
-namespace Shed\Cli\Command;
+namespace Shed\Cli;
 
 use Shed\Cli\Helper\Colors;
 use Shed\Cli\Helper\Updates;

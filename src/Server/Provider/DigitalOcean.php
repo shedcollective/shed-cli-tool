@@ -2,20 +2,23 @@
 
 namespace Shed\Cli\Server\Provider;
 
+use Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Server\Create;
-use Shed\Cli\Interfaces;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Exceptions\CliException;
+use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 use Shed\Cli\Server\Provider\Api;
+
 
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
     /**
-     * The available DigitalOcean images
+     * The available Auth images
      *
      * @var array
      */
@@ -39,7 +42,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     ];
 
     /**
-     * The available DigitalOcean droplet sizes
+     * The available Auth droplet sizes
      *
      * @var array
      */
@@ -87,7 +90,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     public function getLabel(): string
     {
-        return 'DigitalOcean';
+        return 'Digital Ocean';
     }
 
     // --------------------------------------------------------------------------
@@ -96,13 +99,18 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * Return an array of accounts
      *
      * @return array
+     * @throws CliException
      */
     public function getAccounts(): array
     {
-        $aOut = [];
-        foreach (Api\DigitalOcean::getAccounts() as $sLabel => $sSecret) {
-            $aOut[$sLabel] = new Account($sLabel, $sSecret);
+        $aOut = Auth\DigitalOcean::getAccounts();
+
+        if (empty($aOut)) {
+            throw new CliException(
+                'No ' . Auth\DigitalOcean::LABEL . ' accounts registered; use `shed auth:' . Auth\DigitalOcean::SLUG . '` to add an account'
+            );
         }
+
         return $aOut;
     }
 
@@ -291,14 +299,14 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
-     * Fetch and cache regions from DigitalOcean
+     * Fetch and cache regions from Auth
      *
      * @param Account $oAccount The account to use
      */
     private function fetchRegions(Account $oAccount)
     {
         if (empty($this->aRegions)) {
-            $this->oDigitalOcean = new Api\DigitalOcean($oAccount->getSecret());
+            $this->oDigitalOcean = new Api\DigitalOcean($oAccount->getToken());
             $this->aRegions      = $this->oDigitalOcean->getRegionApi()->getAll();
             $this->aRegions      = array_values(
                 array_filter(

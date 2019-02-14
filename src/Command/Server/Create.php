@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Command\Server;
 
-use Shed\Cli\Command\Command;
+use Shed\Cli\Command;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
@@ -637,7 +637,9 @@ final class Create extends Command
             $iChoice = $this->choose(
                 $sLabel . ':',
                 array_values(array_map(function ($oItem) {
-                    return $oItem->getLabel() . ' <info>(' . $oItem->getSlug() . ')</info>';
+                    $sLabel = $oItem->getLabel();
+                    $sLabel .= $oItem->getSlug() ? ' <info>(' . $oItem->getSlug() . ')</info>' : '';
+                    return $sLabel;
                 }, $aOptions))
             );
 

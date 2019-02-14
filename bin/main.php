@@ -26,10 +26,15 @@ $sBasePath = BASEPATH . 'src';
 $oFinder->files()->in($sBasePath . '/Command');
 
 foreach ($oFinder as $oFile) {
+
     $sCommand = $oFile->getPath() . DIRECTORY_SEPARATOR . $oFile->getBasename('.php');
     $sCommand = str_replace($sBasePath, 'Shed/Cli', $sCommand);
     $sCommand = str_replace(DIRECTORY_SEPARATOR, '\\', $sCommand);
-    $oApp->add(new $sCommand());
+
+    $oReflection = new \ReflectionClass($sCommand);
+    if (!$oReflection->isAbstract()) {
+        $oApp->add(new $sCommand());
+    }
 }
 
 $oApp->setName('Shed Command Line Tool');
