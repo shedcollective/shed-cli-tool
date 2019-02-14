@@ -7,50 +7,50 @@ use Shed\Cli\Entity;
 final class Account extends Entity
 {
     /**
-     * The account's secret
+     * The account's token
      *
      * @var string
      */
-    private $sSecret = '';
+    private $sToken = '';
 
     // --------------------------------------------------------------------------
 
     /**
      * Account constructor.
      *
-     * @param string $sLabel  The account's label
-     * @param string $sSecret The account's secret
+     * @param string $sLabel The account's label
+     * @param string $sToken The account's token
      */
-    public function __construct(string $sLabel, string $sSecret)
+    public function __construct(string $sLabel, string $sToken)
     {
         parent::__construct($sLabel);
-        $this->sSecret = $sSecret;
+        $this->sToken = $sToken;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Set the account's Secret property
+     * Set the account's Token property
      *
-     * @param string $sSecret the label to set
+     * @param string $sToken the label to set
      *
      * @return $this;
      */
-    public function setSecret(string $sSecret): self
+    public function setToken(string $sToken): self
     {
-        $this->sSecret = $sSecret;
+        $this->sToken = $sToken;
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Get the account's Secret property
+     * Get the account's Token property
      *
      * @return string
      */
-    public function getSecret(): string
+    public function getToken(): string
     {
-        return $this->sSecret;
+        return $this->sToken;
     }
 }

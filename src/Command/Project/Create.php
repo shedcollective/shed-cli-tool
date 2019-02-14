@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Command\Project;
 
-use Shed\Cli\Command\Command;
+use Shed\Cli\Command;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;

@@ -1,0 +1,36 @@
+<?php
+
+namespace Shed\Cli\Command\Auth;
+
+use Shed\Cli\Command\Auth;
+use Shed\Cli\Server\Provider\Api;
+
+final class DigitalOcean extends Auth
+{
+    /**
+     * The third party slug
+     *
+     * @var string
+     */
+    const SLUG = 'digitalocean';
+
+    /**
+     * The third party name
+     *
+     * @var string
+     */
+    const LABEL = 'Digital Ocean';
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Verify a token is valid
+     *
+     * @param string $sToken The token to validate
+     */
+    protected function testToken(string $sToken): void
+    {
+        $oDo = new Api\DigitalOcean($sToken);
+        $oDo->getUserInformation();
+    }
+}
