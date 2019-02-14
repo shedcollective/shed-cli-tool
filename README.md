@@ -26,17 +26,7 @@ composer global require shedcollective/command-line-tool
 
 ## Usage
 
-Create a new project in the active directory
-
-```bash
-shed project:create
-```
-
-Create a new project in another directory
-
-```bash
-shed project:create --dir=~/my-project
-```
+Execute `shed` with no parameters to explore the available commands.
 
 
 ## Development
