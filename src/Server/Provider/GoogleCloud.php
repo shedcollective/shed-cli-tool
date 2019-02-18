@@ -9,6 +9,7 @@ use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
 use Shed\Cli\Exceptions\CliException;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 
@@ -120,7 +121,10 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         $this->fetchRegions($oAccount);
         $aOut = [];
         foreach ($this->aRegions as $oRegion) {
-            $aOut[$oRegion->name] = new Region($oRegion->name, $oRegion->name);
+            foreach ($oRegion->zones as $sZone) {
+                $sZone        = preg_replace('/^.*\/([a-z0-9\-]+)$/', '$1', $sZone);
+                $aOut[$sZone] = new Region($oRegion->name, $sZone);
+            }
         }
 
         return $aOut;
@@ -215,12 +219,9 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         array $aKeywords
     ): Entity\Server {
 
-        // The name of the zone for this request.
-        $sZone = 'my-zone';  // TODO: Update placeholder value.
-
-        // TODO: Assign values to desired properties of `requestBody`:
-        $oRequestBody = new \Google_Service_Compute_Instance();
-        $oRequestBody->setName(implode(
+        //  Prep variables
+        $sProjectId = $this->oGoogleCloud->getKeyObject()->project_id;
+        $sName      = implode(
             '-',
             array_map(
                 function ($sBit) {
@@ -233,24 +234,87 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                     $sFramework,
                 ]
             )
-        ));
-        //  Size
-        //  Image
-        //  SSH keys
-        //  Tags
+        );
+
+        // --------------------------------------------------------------------------
+
+        //  Disks
+        //  https://github.com/PaulRashidi/compute-getting-started-php/blob/master/app.php#L209
+        //  @todo (Pablo - 2019-02-18) - Create a disk
+        $oDisk = new \Google_Service_Compute_Disk();
+        $oDisk->setName($sName . '-disk');
+        $oDisk->setSourceImage('/global/images/' . $oImage->getSlug());
+        $oDisk->setSizeGb(50);
+
+        //  Insert disk
+        //  Wait
+
+        //  Fetch the disk
+        //  @todo (Pablo - 2019-02-18) - Fetch the boot disk
+
+        // --------------------------------------------------------------------------
+
+        //  Define the Networks
+        $oNetworks = new \Google_Service_Compute_NetworkInterface();
+        $oNetworks->setNetwork('/global/networks/default');
+
+        // --------------------------------------------------------------------------
+
+        //  Define the tags
+        $oTags = new \Google_Service_Compute_Tags();
+        $oTags->setItems($aKeywords);
+
+        // --------------------------------------------------------------------------
+
+        //  Make the request
+        $oRequestBody = new \Google_Service_Compute_Instance();
+
+        //  Request Body
+        //  https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
+        $oRequestBody->setName($sName);
+        $oRequestBody->setMachineType('zones/' . $oRegion->getSlug() . '/machineTypes/' . $oSize->getSlug());
+        $oRequestBody->setTags($oTags);
+        $oRequestBody->setNetworkInterfaces([$oNetworks]);
+        $oRequestBody->setDisks([$oDisk]);
+
+        //  @todo (Pablo - 2019-02-07) - Fetch local key + global keys from account
 
         $oResponse = $this
             ->oGoogleCloud
             ->getApi()
             ->instances
             ->insert(
-                $this->oGoogleCloud->getKeyObject()->project_id,
-                $sZone,
+                $sProjectId,
+                $oRegion->getSlug(),
                 $oRequestBody
             );
 
+        //  Wait
+        //  Get instance
+        $oInstance = $this
+            ->oGoogleCloud
+            ->getApi()
+            ->instances
+            ->get(
+                $sProjectId,
+                $oRegion->getSlug(),
+                $sName
+            );
 
-        throw new CliException('🚧 Deploying Google Cloud servers is a work in progress');
+        Debug::dd($oResponse);
+
+        $oServer = new Entity\Server();
+        $oDisk   = new Entity\Provider\Disk($oInstance->disk, $oInstance->disk);
+        return $oServer
+            ->setLabel($oInstance->name)
+            ->setSlug($oInstance->name)
+            ->setId($oInstance->id)
+            ->setIp($oInstance->networks[0]->ipAddress)
+            ->setDomain($sDomain)
+            ->setDisk($oDisk)
+            ->setImage($oImage)
+            ->setRegion($oRegion)
+            ->setSize($oSize);
     }
 
     // --------------------------------------------------------------------------

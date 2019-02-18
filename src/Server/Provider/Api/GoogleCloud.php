@@ -47,7 +47,7 @@ final class GoogleCloud
         $this->oClient = new \Google_Client();
         $this->oClient->setApplicationName('Shed CLI Tool ' . Updates::getCurrentVersion());
         $this->oClient->useApplicationDefaultCredentials();
-        $this->oClient->addScope('https://www.googleapis.com/auth/compute');
+        $this->oClient->addScope(\Google_Service_Compute::COMPUTE);
 
         $this->oApi = new \Google_Service_Compute($this->oClient);
     }
@@ -135,5 +135,33 @@ final class GoogleCloud
                 $this->getKeyObject()
                     ->project_id
             );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Wait for an operation to complete
+     *
+     * @param \Google_Service_Compute $oService   The Compute service
+     * @param string                  $sProjectId The Project ID
+     * @param string                  $sZone      The Zone
+     * @param string                  $sOperation The operation to wait for
+     *
+     * @return int
+     */
+    public static function wait(
+        \Google_Service_Compute $oService,
+        string $sProjectId,
+        string $sZone,
+        string $sOperation
+    ) {
+        for ($x = 0; $x <= 20; $x++) {
+            $oOperationStatus = $oService->zoneOperations->get($sProjectId, $sZone, $sOperation);
+            if ('DONE' == $oOperationStatus->getStatus()) {
+                return 0;
+            }
+            sleep((2 * $x));
+        }
+        return 1;
     }
 }
