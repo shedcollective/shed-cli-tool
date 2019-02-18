@@ -24,12 +24,22 @@ final class Amazon extends Auth
     // --------------------------------------------------------------------------
 
     /**
+     * Show help on how to generate credentials
+     */
+    protected function help(): void
+    {
+        //  @todo (Pablo - 2019-02-18) - Write help
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Verify a token is valid
      *
      * @param string $sToken The token to validate
      */
     protected function testToken(string $sToken): void
     {
-        //  @todo (Pablo - 2019-02-14) - Validate token
+        Api\Amazon::test($sToken);
     }
 }

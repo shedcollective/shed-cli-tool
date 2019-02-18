@@ -87,4 +87,20 @@ final class Directory
 
         return $sPath;
     }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Resolve a file path
+     *
+     * @param string $sPath The path to resolve
+     *
+     * @return string
+     */
+    public static function resolvePath(string $sPath): string
+    {
+        $sDir  = static::resolve(dirname($sPath));
+        $sFile = basename($sPath);
+        return $sDir . $sFile;
+    }
 }

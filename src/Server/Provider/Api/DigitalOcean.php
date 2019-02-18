@@ -6,15 +6,16 @@ use DigitalOceanV2\Adapter\BuzzAdapter;
 use DigitalOceanV2\Api;
 use DigitalOceanV2\Entity;
 use DigitalOceanV2\DigitalOceanV2;
+use Shed\Cli\Entity\Provider\Account;
 
 final class DigitalOcean
 {
     /**
-     * The access token to use
+     * The account to use
      *
-     * @var string
+     * @var Account
      */
-    private $sAccessToken = '';
+    private $oAccount;
 
     /**
      * The Digital Ocean API
@@ -28,25 +29,25 @@ final class DigitalOcean
     /**
      * Auth constructor.
      *
-     * @param string $sAccessToken The access token to use
+     * @param Account $oAccount The account to use
      */
-    public function __construct($sAccessToken = '')
+    public function __construct(Account $oAccount)
     {
-        $this->sAccessToken = $sAccessToken;
-        $oAdapter           = new BuzzAdapter($sAccessToken);
-        $this->oApi         = new DigitalOceanV2($oAdapter);
+        $this->oAccount = $oAccount;
+        $oAdapter       = new BuzzAdapter($this->oAccount->getToken());
+        $this->oApi     = new DigitalOceanV2($oAdapter);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Return the access token being used
+     * Return the account being used
      *
-     * @return string
+     * @return Account
      */
-    public function getAccessToken(): string
+    public function getAccount(): Account
     {
-        return $this->sAccessToken;
+        return $this->oAccount;
     }
 
     // --------------------------------------------------------------------------
@@ -59,6 +60,19 @@ final class DigitalOcean
     public function getApi(): DigitalOceanV2
     {
         return $this->oApi;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Test the connection
+     *
+     * @param string $sToken The token to test
+     */
+    public static function test(string $sToken)
+    {
+        $oApi = new self($sToken);
+        $oApi->getUserInformation();
     }
 
     // --------------------------------------------------------------------------
