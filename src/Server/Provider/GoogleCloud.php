@@ -22,21 +22,21 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     const IMAGES = [
         [
-            'slug'  => 'shed-hosting-docker',
+            'slug'  => 'google-linux-docker',
             'label' => 'Docker',
         ],
-        [
-            'slug'  => 'shed-hosting-lamp',
-            'label' => 'LAMP',
-        ],
-        [
-            'slug'  => 'shed-hosting-wordpress',
-            'label' => 'WordPress',
-        ],
-        [
-            'slug'  => 'shed-hosting-mysql',
-            'label' => 'MySQL',
-        ],
+        // [
+        //     'slug'  => 'google-linux-lamp',
+        //     'label' => 'LAMP',
+        // ],
+        // [
+        //     'slug'  => 'google-linux-wordpress',
+        //     'label' => 'WordPress',
+        // ],
+        // [
+        //     'slug'  => 'google-linux-mysql',
+        //     'label' => 'MySQL',
+        // ],
     ];
 
     /**
@@ -51,7 +51,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         ],
         [
             'slug'  => 'n1-standard-1',
-            'label' => 'Standard (3.75Gb)',
+            'label' => 'Medium (3.75Gb)',
         ],
         [
             'slug'  => 'n1-standard-2',
@@ -59,21 +59,85 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         ],
     ];
 
-    // --------------------------------------------------------------------------
-
     /**
-     * The Google Cloud API
-     *
-     * @var Api\GoogleCloud
-     */
-    private $oGoogleCloud;
-
-    /**
-     * The returned regions
+     * The available Google Cloud regions
      *
      * @var array
      */
-    private $aRegions;
+    const REGIONS = [
+        [
+            'slug'  => 'europe-west2-a',
+            'label' => 'London, England, UK',
+        ],
+        [
+            'slug'  => 'us-west2-a',
+            'label' => 'Los Angeles, California, USA',
+        ],
+        [
+            'slug'  => 'asia-east1-a',
+            'label' => 'Changhua County, Taiwan',
+        ],
+        [
+            'slug'  => 'asia-east2-a',
+            'label' => 'Hong Kong',
+        ],
+        [
+            'slug'  => 'asia-north-a',
+            'label' => 'Tokyo, Japan',
+        ],
+        [
+            'slug'  => 'asia-south-a',
+            'label' => 'Mumbai, India',
+        ],
+        [
+            'slug'  => 'asia-south-a',
+            'label' => 'Jurong West, Singapore',
+        ],
+        [
+            'slug'  => 'australia-south-a',
+            'label' => 'Sydney, Australia',
+        ],
+        [
+            'slug'  => 'europe-north-a',
+            'label' => 'Hamina, Finland',
+        ],
+        [
+            'slug'  => 'europe-west1-b',
+            'label' => 'St. Ghislain, Belgium',
+        ],
+        [
+            'slug'  => 'europe-west3-a',
+            'label' => 'Frankfurt, Germany',
+        ],
+        [
+            'slug'  => 'europe-west4-a',
+            'label' => 'Eemshaven, Netherlands',
+        ],
+        [
+            'slug'  => 'northamerica-north-a',
+            'label' => 'Montréal, Québec, Canada',
+        ],
+        [
+            'slug'  => 'southamerica-east1-a',
+            'label' => 'São Paulo, Brazil',
+        ],
+        [
+            'slug'  => 'us-centr-a',
+            'label' => 'Council Bluffs, Iowa, USA',
+        ],
+        [
+            'slug'  => 'us-east1-b',
+            'label' => 'Moncks Corner, South Carolina, USA',
+        ],
+        [
+            'slug'  => 'us-east4-a',
+            'label' => 'Ashburn, Northern Virginia, USA',
+        ],
+        [
+            'slug'  => 'us-west1-a',
+            'label' => 'The Dalles, Oregon, USA',
+        ],
+    ];
 
     // --------------------------------------------------------------------------
 
@@ -118,15 +182,10 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     public function getRegions(Account $oAccount): array
     {
-        $this->fetchRegions($oAccount);
         $aOut = [];
-        foreach ($this->aRegions as $oRegion) {
-            foreach ($oRegion->zones as $sZone) {
-                $sZone        = preg_replace('/^.*\/([a-z0-9\-]+)$/', '$1', $sZone);
-                $aOut[$sZone] = new Region($oRegion->name, $sZone);
-            }
+        foreach (static::REGIONS as $aSize) {
+            $aOut[$aSize['slug']] = new Region($aSize['label'], $aSize['slug']);
         }
-
         return $aOut;
     }
 
@@ -206,6 +265,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      * @param array   $aKeywords    The configured keywords
      *
      * @return Entity\Server
+     * @throws \Exception
      */
     public function create(
         string $sDomain,
@@ -219,8 +279,11 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         array $aKeywords
     ): Entity\Server {
 
+        $oApi = new Api\GoogleCloud($oAccount);
+
         //  Prep variables
-        $sProjectId = $this->oGoogleCloud->getKeyObject()->project_id;
+        $sProjectId = $oApi->getKeyObject()->project_id;
+        $sZone      = $oRegion->getSlug();
         $sName      = implode(
             '-',
             array_map(
@@ -235,86 +298,151 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 ]
             )
         );
+        $sDiskName  = $sName . '-disk';
 
-        // --------------------------------------------------------------------------
+        try {
 
-        //  Disks
-        //  https://github.com/PaulRashidi/compute-getting-started-php/blob/master/app.php#L209
-        //  @todo (Pablo - 2019-02-18) - Create a disk
-        $oDisk = new \Google_Service_Compute_Disk();
-        $oDisk->setName($sName . '-disk');
-        $oDisk->setSourceImage('/global/images/' . $oImage->getSlug());
-        $oDisk->setSizeGb(50);
+            //  Disks
+            //  https://github.com/PaulRashidi/compute-getting-started-php/blob/master/app.php#L209
+            //  Create a new boot disks
+            $oDisk = new \Google_Service_Compute_Disk();
+            $oDisk->setName($sDiskName);
+            $oDisk->setSourceImage('projects/debian-cloud/global/images/debian-9-stretch-v20190213');
+            $oDisk->setSizeGb(10);
 
-        //  Insert disk
-        //  Wait
+            //  Insert disk
+            $oInsertDiskOperation = $oApi
+                ->getApi()
+                ->disks
+                ->insert(
+                    $sProjectId,
+                    $sZone,
+                    $oDisk
+                );
 
-        //  Fetch the disk
-        //  @todo (Pablo - 2019-02-18) - Fetch the boot disk
+            //  Wait
+            if (!$oApi::wait($oApi->getApi(), $sProjectId, $sZone, $oInsertDiskOperation->getName())) {
+                throw new CliException('Failed to create disk');
+            }
 
-        // --------------------------------------------------------------------------
+            //  Fetch the disk
+            $oBootDisk = $oApi->getApi()->disks->get($sProjectId, $sZone, $sDiskName);
+            if ($oBootDisk->getStatus() !== 'READY') {
+                throw new CliException('Failed to fetch boot disk');
+            }
 
-        //  Define the Networks
-        $oNetworks = new \Google_Service_Compute_NetworkInterface();
-        $oNetworks->setNetwork('/global/networks/default');
+            $oPrimaryDisk = new \Google_Service_Compute_AttachedDisk();
+            $oPrimaryDisk->setBoot('TRUE');
+            $oPrimaryDisk->setDeviceName('primary');
+            $oPrimaryDisk->setMode('READ_WRITE');
+            $oPrimaryDisk->setSource($oBootDisk->getSelfLink());
+            $oPrimaryDisk->setType('PERSISTENT');
 
-        // --------------------------------------------------------------------------
+            // --------------------------------------------------------------------------
 
-        //  Define the tags
-        $oTags = new \Google_Service_Compute_Tags();
-        $oTags->setItems($aKeywords);
+            //  Define meta data
+            $oBlockKeys = new \Google_Service_Compute_MetadataItems();
+            $oBlockKeys->setKey('block-project-ssh-keys');
+            $oBlockKeys->setValue(true);
 
-        // --------------------------------------------------------------------------
+            $oStartupScript = new \Google_Service_Compute_MetadataItems();
+            $oStartupScript->setKey('startup-script');
+            $oStartupScript->setValue(implode(' && ', [
+                'curl "https://raw.githubusercontent.com/shedcollective/startup-scripts/master/' . $oImage->getSlug() . '.sh?v=$(date +%s)" > ~/startup-script.sh',
+                'chmod +x ~/startup-script.sh',
+                '~/startup-script.sh',
+            ]));
 
-        //  Make the request
-        $oRequestBody = new \Google_Service_Compute_Instance();
+            $oMetadata = new \Google_Service_Compute_Metadata();
+            $oMetadata->setItems([$oBlockKeys, $oStartupScript]);
 
-        //  Request Body
-        //  https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
-        $oRequestBody->setName($sName);
-        $oRequestBody->setMachineType('zones/' . $oRegion->getSlug() . '/machineTypes/' . $oSize->getSlug());
-        $oRequestBody->setTags($oTags);
-        $oRequestBody->setNetworkInterfaces([$oNetworks]);
-        $oRequestBody->setDisks([$oDisk]);
+            // --------------------------------------------------------------------------
 
-        //  @todo (Pablo - 2019-02-07) - Fetch local key + global keys from account
+            //  Define the Networks
+            $oAccessConfig = new \Google_Service_Compute_AccessConfig();
+            $oAccessConfig->setName('External NAT');
+            $oAccessConfig->setType('ONE_TO_ONE_NAT');
 
-        $oResponse = $this
-            ->oGoogleCloud
-            ->getApi()
-            ->instances
-            ->insert(
-                $sProjectId,
-                $oRegion->getSlug(),
-                $oRequestBody
-            );
+            $oNetwork = new \Google_Service_Compute_NetworkInterface();
+            $oNetwork->setNetwork('/global/networks/default');
+            $oNetwork->setAccessConfigs([$oAccessConfig]);
 
-        //  Wait
-        //  Get instance
-        $oInstance = $this
-            ->oGoogleCloud
-            ->getApi()
-            ->instances
-            ->get(
-                $sProjectId,
-                $oRegion->getSlug(),
-                $sName
-            );
+            // --------------------------------------------------------------------------
 
-        Debug::dd($oResponse);
+            //  Define the tags
+            $aKeywords[] = 'https-server';
+            $aKeywords[] = 'http-server';
 
-        $oServer = new Entity\Server();
-        $oDisk   = new Entity\Provider\Disk($oInstance->disk, $oInstance->disk);
-        return $oServer
-            ->setLabel($oInstance->name)
-            ->setSlug($oInstance->name)
-            ->setId($oInstance->id)
-            ->setIp($oInstance->networks[0]->ipAddress)
-            ->setDomain($sDomain)
-            ->setDisk($oDisk)
-            ->setImage($oImage)
-            ->setRegion($oRegion)
-            ->setSize($oSize);
+            $oTags = new \Google_Service_Compute_Tags();
+            $oTags->setItems($aKeywords);
+
+            // --------------------------------------------------------------------------
+
+            //  Make the request
+            $oRequestBody = new \Google_Service_Compute_Instance();
+
+            //  Request Body
+            $oRequestBody->setName($sName);
+            $oRequestBody->setMachineType('zones/' . $sZone . '/machineTypes/' . $oSize->getSlug());
+            $oRequestBody->setTags($oTags);
+            $oRequestBody->setNetworkInterfaces([$oNetwork]);
+            $oRequestBody->setDisks([$oPrimaryDisk]);
+            $oRequestBody->setMetadata($oMetadata);
+
+            $oInsertInstanceOperation = $oApi
+                ->getApi()
+                ->instances
+                ->insert(
+                    $sProjectId,
+                    $sZone,
+                    $oRequestBody
+                );
+
+            //  Wait
+            if (!$oApi::wait($oApi->getApi(), $sProjectId, $sZone, $oInsertInstanceOperation->getName())) {
+                throw new CliException('Failed to create instance');
+            }
+
+            //  Get instance
+            $oInstance = $oApi
+                ->getApi()
+                ->instances
+                ->get(
+                    $sProjectId,
+                    $sZone,
+                    $sName
+                );
+
+            $oServer = new Entity\Server();
+            $oDisk   = new Entity\Provider\Disk($sDiskName, $sDiskName);
+
+            $aNetworkInterfaces = $oInstance->getNetworkInterfaces();
+            $oNetworkInterface  = reset($aNetworkInterfaces);
+            $aAccessConfigs     = $oNetworkInterface->getAccessConfigs();
+            $oAccessConfig      = reset($aAccessConfigs);
+
+            return $oServer
+                ->setLabel($oInstance->name)
+                ->setSlug($oInstance->name)
+                ->setId($oInstance->id)
+                ->setIp($oAccessConfig->getNatIP())
+                ->setDomain($sDomain)
+                ->setDisk($oDisk)
+                ->setImage($oImage)
+                ->setRegion($oRegion)
+                ->setSize($oSize);
+
+        } catch (\Exception $e) {
+
+            if (!empty($oBootDisk)) {
+                $oApi
+                    ->getApi()
+                    ->disks
+                    ->delete($sProjectId, $sZone, $sDiskName);
+            }
+
+            throw $e;
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -324,20 +452,5 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     public function destroy(): void
     {
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Fetch and cache regions from Google Cloud
-     *
-     * @param Account $oAccount The account to use
-     */
-    private function fetchRegions(Account $oAccount)
-    {
-        if (empty($this->aRegions)) {
-            $this->oGoogleCloud = new Api\GoogleCloud($oAccount);
-            $this->aRegions     = $this->oGoogleCloud->getRegions();
-        }
     }
 }

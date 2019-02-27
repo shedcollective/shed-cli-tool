@@ -147,7 +147,7 @@ final class GoogleCloud
      * @param string                  $sZone      The Zone
      * @param string                  $sOperation The operation to wait for
      *
-     * @return int
+     * @return bool
      */
     public static function wait(
         \Google_Service_Compute $oService,
@@ -158,10 +158,10 @@ final class GoogleCloud
         for ($x = 0; $x <= 20; $x++) {
             $oOperationStatus = $oService->zoneOperations->get($sProjectId, $sZone, $sOperation);
             if ('DONE' == $oOperationStatus->getStatus()) {
-                return 0;
+                return true;
             }
             sleep((2 * $x));
         }
-        return 1;
+        return false;
     }
 }
