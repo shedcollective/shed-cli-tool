@@ -9,14 +9,14 @@ final class Config
      *
      * @var string
      */
-    const CONFIG_DIR = '~' . DIRECTORY_SEPARATOR;
+    const CONFIG_DIR = '~' . DIRECTORY_SEPARATOR . '.shedrc' . DIRECTORY_SEPARATOR;
 
     /**
      * The config file
      *
      * @var string
      */
-    const CONFIG_FILE = '.shedrc';
+    const CONFIG_FILE = 'config.json';
 
     // --------------------------------------------------------------------------
 
@@ -36,7 +36,13 @@ final class Config
      */
     private static function getConfigPath(): string
     {
-        return Directory::resolve(static::CONFIG_DIR) . static::CONFIG_FILE;
+        $sPath = Directory::resolve(static::CONFIG_DIR);
+
+        if (!is_dir($sPath)) {
+            mkdir($sPath, 0700, true);
+        }
+
+        return $sPath . static::CONFIG_FILE;
     }
 
     // --------------------------------------------------------------------------

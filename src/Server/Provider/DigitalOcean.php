@@ -18,7 +18,7 @@ use Shed\Cli\Server\Provider\Api;
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
     /**
-     * The available Auth images
+     * The available Digital Ocean images
      *
      * @var array
      */
@@ -42,7 +42,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     ];
 
     /**
-     * The available Auth droplet sizes
+     * The available Digital Ocean droplet sizes
      *
      * @var array
      */
@@ -68,7 +68,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
-     * The digital ocean API
+     * The Digital Ocean API
      *
      * @var Api\DigitalOcean
      */
@@ -299,18 +299,17 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
-     * Fetch and cache regions from Auth
+     * Fetch and cache regions from Digital Ocean
      *
      * @param Account $oAccount The account to use
      */
     private function fetchRegions(Account $oAccount)
     {
         if (empty($this->aRegions)) {
-            $this->oDigitalOcean = new Api\DigitalOcean($oAccount->getToken());
-            $this->aRegions      = $this->oDigitalOcean->getRegionApi()->getAll();
+            $this->oDigitalOcean = new Api\DigitalOcean($oAccount);
             $this->aRegions      = array_values(
                 array_filter(
-                    $this->aRegions,
+                    $this->oDigitalOcean->getRegionApi()->getAll(),
                     function ($oRegion) {
                         return $oRegion->available;
                     }

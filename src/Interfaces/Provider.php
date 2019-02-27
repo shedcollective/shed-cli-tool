@@ -35,12 +35,11 @@ interface Provider
      *
      * @return array
      */
+     public function getRegions(Account $oAccount): array;
+
+    // --------------------------------------------------------------------------
+
     /**
-     * public function getRegions(Account $oAccount): array;
-     *
-     * // --------------------------------------------------------------------------
-     *
-     * /**
      * Return an array of supported sizes
      *
      * @param Account $oAccount The selected provider account

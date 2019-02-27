@@ -1,15 +1,14 @@
 {
     "main": "bin/main.php",
     "output": "dist/shed",
-    "directories": [
-        "src",
-        "vendor"
-    ],
     "exclude-composer-files": false,
     "files": [
         "composer.json"
     ],
     "finder": [
+        {
+            "in": "src"
+        },
         {
             "notName": "/LICENSE|.*\\.md|.*\\.dist|Makefile|composer\\.json|composer\\.lock/",
             "exclude": [
@@ -19,9 +18,17 @@
                 "test_old",
                 "tests",
                 "Test",
-                "Tests"
+                "Tests",
+                "google/apiclient-services"
             ],
             "in": "vendor"
+        },
+        {
+            "in": "vendor/google/apiclient-services/src/Google/Service",
+            "path": "Compute"
         }
+    ],
+    "compactors": [
+        "KevinGH\\Box\\Compactor\\Php"
     ]
 }

@@ -26,6 +26,22 @@ abstract class Auth extends Command
      */
     const LABEL = '';
 
+
+    /**
+     * The question for asking the account label
+     *
+     * @var string
+     */
+    const QUESTION_LABEL = 'Account Label';
+
+
+    /**
+     * The question for asking the account token
+     *
+     * @var string
+     */
+    const QUESTION_TOKEN = 'Account Token';
+
     // --------------------------------------------------------------------------
 
     /**
@@ -52,23 +68,23 @@ abstract class Auth extends Command
         $this
             ->setName('auth:' . static::SLUG)
             ->setDescription('Manage ' . static::LABEL . ' accounts')
-            ->setHelp('This command allows for the configuration of ' . static::LABEL . ' access tokens.')
+            ->setHelp('This command allows for the configuration of ' . static::LABEL . ' credentials.')
             ->addArgument(
                 'action',
                 InputArgument::OPTIONAL,
-                '[view] or [delete] an existing token; use with --label or --token'
+                '[help] for information on how to generate credentials, [add] new credentials, [view] or [delete] existing credentials; use with --label or --token'
             )
             ->addOption(
                 'label',
                 'l',
                 InputOption::VALUE_OPTIONAL,
-                'The label to give the token'
+                'The ' . static::QUESTION_LABEL
             )
             ->addOption(
                 'token',
                 't',
                 InputOption::VALUE_OPTIONAL,
-                'The token'
+                'The ' . static::QUESTION_TOKEN
             );
     }
 
@@ -82,6 +98,9 @@ abstract class Auth extends Command
     protected function go(): int
     {
         switch ($this->oInput->getArgument('action')) {
+            case 'help':
+                $this->help();
+                break;
             case 'view':
                 $this->view();
                 break;
@@ -100,6 +119,13 @@ abstract class Auth extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Show help on how to generate credentials
+     */
+    abstract protected function help(): void;
+
+    // --------------------------------------------------------------------------
+
+    /**
      * View token details
      */
     protected function view(): void
@@ -112,20 +138,20 @@ abstract class Auth extends Command
             if (!empty($sLabel)) {
 
                 $oAccount = self::getAccountByLabel($sLabel);
-                $this->oOutput->writeln('<comment>Label</comment>: ' . $oAccount->getLabel());
-                $this->oOutput->writeln('<comment>Token</comment>: ' . $oAccount->getToken());
+                $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
+                $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
 
             } elseif (!empty($sToken)) {
 
                 $oAccount = self::getAccountByToken($sToken);
-                $this->oOutput->writeln('<comment>Label</comment>: ' . $oAccount->getLabel());
-                $this->oOutput->writeln('<comment>Token</comment>: ' . $oAccount->getToken());
+                $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
+                $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
 
             } else {
                 foreach (static::getAccounts() as $oAccount) {
                     $this->oOutput->writeln('');
-                    $this->oOutput->writeln('<comment>Label</comment>: ' . $oAccount->getLabel());
-                    $this->oOutput->writeln('<comment>Token</comment>: ' . $oAccount->getToken());
+                    $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
+                    $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
                 }
             }
 
@@ -157,13 +183,15 @@ abstract class Auth extends Command
                 $oAccount = self::getAccountByToken($sToken);
 
             } else {
-                throw new CommandFailedException('Must specify an account label or token to look up');
+                throw new CommandFailedException(
+                    'Must specify an ' . static::QUESTION_LABEL . ' or ' . static::QUESTION_TOKEN . ' to look up'
+                );
             }
 
             $this->oOutput->writeln('');
             $this->oOutput->writeln('You are about to delete the following account:');
-            $this->oOutput->writeln('<comment>Label</comment>: ' . $oAccount->getLabel());
-            $this->oOutput->writeln('<comment>Token</comment>: ' . $oAccount->getToken());
+            $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
+            $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
             $this->oOutput->writeln('');
 
             if ($this->confirm('Continue?')) {
@@ -226,7 +254,7 @@ abstract class Auth extends Command
         $sOption = trim($this->oInput->getOption('label'));
         if (empty($sOption)) {
             $this->sLabel = $this->ask(
-                'Account label:',
+                static::QUESTION_LABEL . ':',
                 null,
                 [$this, 'validateLabel']
             );
@@ -235,7 +263,7 @@ abstract class Auth extends Command
                 $this->sLabel = $sOption;
             } else {
                 $this->sLabel = $this->ask(
-                    'Account label:',
+                    static::QUESTION_LABEL . ':',
                     null,
                     [$this, 'validateLabel']
                 );
@@ -257,7 +285,7 @@ abstract class Auth extends Command
         $sOption = trim($this->oInput->getOption('token'));
         if (empty($sOption)) {
             $this->sToken = $this->ask(
-                'Access token:',
+                static::QUESTION_TOKEN . ':',
                 null,
                 [$this, 'validateToken']
             );
@@ -266,7 +294,7 @@ abstract class Auth extends Command
                 $this->sToken = $sOption;
             } else {
                 $this->sToken = $this->ask(
-                    'Access token:',
+                    static::QUESTION_TOKEN . ':',
                     null,
                     [$this, 'validateToken']
                 );
@@ -370,8 +398,8 @@ abstract class Auth extends Command
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>Account Label</comment>: ' . $this->sLabel);
-        $this->oOutput->writeln('<comment>Access Token</comment>:  ' . $this->sToken);
+        $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $this->sLabel);
+        $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $this->sToken);
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
     }
@@ -507,7 +535,9 @@ abstract class Auth extends Command
             }
         }
 
-        throw new AccountNotFoundException('No account with access token "' . $sToken . '"');
+        throw new AccountNotFoundException(
+            'No account with ' . static::QUESTION_TOKEN . ' "' . $sToken . '"'
+        );
     }
 
     // --------------------------------------------------------------------------
