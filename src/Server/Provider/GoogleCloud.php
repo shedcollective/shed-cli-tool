@@ -131,7 +131,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      *
      * @var string
      */
-    const BASE_IMAGE = 'projects/debian-cloud/global/images/ubuntu-1810-cosmic-v20190320';
+    const BASE_IMAGE = 'projects/ubuntu-os-cloud/global/images/ubuntu-1810-cosmic-v20190320';
 
     // --------------------------------------------------------------------------
 
