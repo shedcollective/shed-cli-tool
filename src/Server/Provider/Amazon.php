@@ -127,6 +127,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
      *
      * @return Entity\Server
      */
@@ -139,7 +140,8 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
         Size $oSize,
         Image $oImage,
         array $aOptions,
-        array $aKeywords
+        array $aKeywords,
+        string $sDeployKey
     ): Entity\Server {
         throw new CliException('🚧 Deploying AWS servers is a work in progress');
     }

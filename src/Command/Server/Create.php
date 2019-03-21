@@ -151,6 +151,13 @@ final class Create extends Command
      */
     private $aKeywords = [];
 
+    /**
+     * An SSH key to assign to the deployhq user
+     *
+     * @var string
+     */
+    private $sDeployKey = '';
+
     // --------------------------------------------------------------------------
 
     /**
@@ -216,6 +223,12 @@ final class Create extends Command
                 'k',
                 InputOption::VALUE_OPTIONAL,
                 'Any keywords to add to the server'
+            )
+            ->addOption(
+                'deploy-key',
+                'D',
+                InputOption::VALUE_OPTIONAL,
+                'An optional public key to assign the deployhq user'
             );
     }
 
@@ -240,7 +253,8 @@ final class Create extends Command
             ->setSize()
             ->setImage()
             ->setProviderOptions()
-            ->setKeywords();
+            ->setKeywords()
+            ->setDeployKey();
 
         if ($this->confirmVariables()) {
             $this->createServer();
@@ -352,11 +366,11 @@ final class Create extends Command
      */
     private function setEnvironment(): Create
     {
-        //  @todo (Pablo - 2019-02-13) - Maybe make this a choice input
         $sOption = trim($this->oInput->getOption('environment'));
         if (empty($sOption)) {
-            $this->sEnvironment = $this->ask(
+            $this->sEnvironment = $this->choose(
                 'Environment:',
+                static::ENVIRONMENTS,
                 null,
                 [$this, 'validateEnvironment']
             );
@@ -365,8 +379,9 @@ final class Create extends Command
                 $this->sEnvironment = $sOption;
                 $this->oOutput->writeln('<comment>Environment</comment>: ' . $this->sEnvironment);
             } else {
-                $this->sEnvironment = $this->ask(
+                $this->sEnvironment = $this->choose(
                     'Environment:',
+                    static::ENVIRONMENTS,
                     null,
                     [$this, 'validateEnvironment']
                 );
@@ -417,11 +432,11 @@ final class Create extends Command
      */
     private function setFramework(): Create
     {
-        //  @todo (Pablo - 2019-02-13) - Maybe make this a choice input
         $sOption = trim($this->oInput->getOption('framework'));
         if (empty($sOption)) {
-            $this->sFramework = $this->ask(
+            $this->sFramework = $this->choose(
                 'Framework:',
+                static::FRAMEWORKS,
                 null,
                 [$this, 'validateFramework']
             );
@@ -430,8 +445,9 @@ final class Create extends Command
                 $this->sFramework = $sOption;
                 $this->oOutput->writeln('<comment>Framework</comment>: ' . $this->sFramework);
             } else {
-                $this->sFramework = $this->ask(
+                $this->sFramework = $this->choose(
                     'Framework:',
+                    static::FRAMEWORKS,
                     null,
                     [$this, 'validateFramework']
                 );
@@ -748,6 +764,25 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Sets the deploy-key property
+     *
+     * @return $this
+     */
+    private function setDeployKey(): Create
+    {
+        $sOption = trim($this->oInput->getOption('deploy-key'));
+        if (empty($sOption)) {
+            $this->sDeployKey = $this->ask('Deploy Key:');
+        } else {
+            $this->sDeployKey = $sOption;
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Confirms the selected options
      *
      * @return bool
@@ -758,8 +793,8 @@ final class Create extends Command
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
-        $this->oOutput->writeln('<comment>Environment</comment>: ' . $this->sEnvironment);
-        $this->oOutput->writeln('<comment>Framework</comment>: ' . $this->sFramework);
+        $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$this->sEnvironment]);
+        $this->oOutput->writeln('<comment>Framework</comment>: ' . static::FRAMEWORKS[$this->sFramework]);
         $this->oOutput->writeln('<comment>Provider</comment>: ' . $this->oProvider->getLabel());
         $this->oOutput->writeln('<comment>Account</comment>: ' . $this->oAccount->getLabel());
         $this->oOutput->writeln('<comment>Region</comment>: ' . $this->oRegion->getLabel());
@@ -773,6 +808,7 @@ final class Create extends Command
         }
 
         $this->oOutput->writeln('<comment>Keywords</comment>: ' . implode(', ', $this->aKeywords));
+        $this->oOutput->writeln('<comment>Deploy Key</comment>: ' . ($this->sDeployKey ? 'Set' : 'None'));
 
         $this->oOutput->writeln('');
         return $this->confirm('Continue?');
@@ -792,14 +828,15 @@ final class Create extends Command
 
         $oServer = $this->oProvider->create(
             $this->sDomain,
-            $this->sEnvironment,
-            $this->sFramework,
+            static::ENVIRONMENTS[$this->sEnvironment],
+            static::FRAMEWORKS[$this->sFramework],
             $this->oAccount,
             $this->oRegion,
             $this->oSize,
             $this->oImage,
             $this->aProviderOptions,
-            $this->aKeywords
+            $this->aKeywords,
+            $this->sDeployKey
         );
 
         //  @todo (Pablo - 2019-02-07) - Record server details at shedcollective.com
@@ -813,6 +850,10 @@ final class Create extends Command
         $this->oOutput->writeln('<comment>Image</comment>:      ' . $oServer->getImage()->getLabel());
         $this->oOutput->writeln('<comment>Region</comment>:     ' . $oServer->getRegion()->getLabel());
         $this->oOutput->writeln('<comment>Size</comment>:       ' . $oServer->getSize()->getLabel());
+        $this->oOutput->writeln('');
+        $this->warning(array_filter([
+            'It may take a few minutes before the server is fully configured',
+        ]));
         $this->oOutput->writeln('');
 
         return $this;

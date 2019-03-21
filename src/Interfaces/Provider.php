@@ -35,7 +35,7 @@ interface Provider
      *
      * @return array
      */
-     public function getRegions(Account $oAccount): array;
+    public function getRegions(Account $oAccount): array;
 
     // --------------------------------------------------------------------------
 
@@ -91,6 +91,7 @@ interface Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
      *
      * @return Server
      */
@@ -103,7 +104,8 @@ interface Provider
         Size $oSize,
         Image $oImage,
         array $aOptions,
-        array $aKeywords
+        array $aKeywords,
+        string $sDeployKey
     ): Server;
 
     // --------------------------------------------------------------------------

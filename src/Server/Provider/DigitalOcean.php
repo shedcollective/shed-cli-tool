@@ -24,20 +24,8 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     const IMAGES = [
         [
-            'slug'  => 'docker-18-04',
+            'slug'  => 'digitalocean-linux-docker',
             'label' => 'Docker',
-        ],
-        [
-            'slug'  => 'lamp-18-04',
-            'label' => 'LAMP',
-        ],
-        [
-            'slug'  => 'wordpress-18-04',
-            'label' => 'WordPress',
-        ],
-        [
-            'slug'  => 'mysql-18-04',
-            'label' => 'MySQL',
         ],
     ];
 
@@ -64,6 +52,13 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             'label' => 'Large ($40/m - 8Gb)',
         ],
     ];
+
+    /**
+     * The base image to use for all droplets
+     *
+     * @var string
+     */
+    const BASE_IMAGE = 'ubuntu-18-10-x64';
 
     // --------------------------------------------------------------------------
 
@@ -208,6 +203,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
      *
      * @return Entity\Server
      */
@@ -220,7 +216,8 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         Size $oSize,
         Image $oImage,
         array $aOptions,
-        array $aKeywords
+        array $aKeywords,
+        string $sDeployKey
     ): Entity\Server {
 
         $aData = [
@@ -240,19 +237,17 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             ),
             'region'            => $oRegion->getSlug(),
             'size'              => $oSize->getSlug(),
-            'image'             => $oImage->getSlug(),
+            'image'             => static::BASE_IMAGE,
             'backups'           => $sEnvironment === Create::ENV_PRODUCTION,
             'ipv6'              => false,
             'privateNetworking' => false,
             'sshKeys'           => [],
-            'userData'          => '',
+            'userData'          => $this->generateCloudInitConfig($oImage, $sDeployKey),
             'monitoring'        => true,
             'volumes'           => [],
             'tags'              => $aKeywords,
             'wait'              => true,
         ];
-
-        //  @todo (Pablo - 2019-02-07) - Fetch local key + global keys from account
 
         $oDroplet = $this
             ->oDigitalOcean
@@ -316,5 +311,30 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
                 )
             );
         }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Generates the cloud-init config
+     *
+     * @param Image  $oImage     The image being generated
+     * @param string $sDeployKey The deploy key, if any, to assign to the deployhq user
+     *
+     * @return string
+     */
+    private function generateCloudInitConfig(Image $oImage, string $sDeployKey = null): string
+    {
+        $aLines = array_merge(
+            [
+                '#cloud-config',
+                'runcmd:',
+            ],
+            array_map(function ($sCommand) {
+                return ' - ' . $sCommand;
+            }, static::getStartupCommands($oImage, $sDeployKey))
+        );
+
+        return implode("\n", $aLines);
     }
 }

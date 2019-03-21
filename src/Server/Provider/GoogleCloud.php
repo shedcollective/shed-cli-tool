@@ -9,7 +9,6 @@ use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
 use Shed\Cli\Exceptions\CliException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 
@@ -25,18 +24,6 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             'slug'  => 'google-linux-docker',
             'label' => 'Docker',
         ],
-        // [
-        //     'slug'  => 'google-linux-lamp',
-        //     'label' => 'LAMP',
-        // ],
-        // [
-        //     'slug'  => 'google-linux-wordpress',
-        //     'label' => 'WordPress',
-        // ],
-        // [
-        //     'slug'  => 'google-linux-mysql',
-        //     'label' => 'MySQL',
-        // ],
     ];
 
     /**
@@ -138,6 +125,13 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             'label' => 'The Dalles, Oregon, USA',
         ],
     ];
+
+    /**
+     * The base image to use for all droplets
+     *
+     * @var string
+     */
+    const BASE_IMAGE = 'projects/debian-cloud/global/images/ubuntu-1810-cosmic-v20190320';
 
     // --------------------------------------------------------------------------
 
@@ -263,6 +257,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
      *
      * @return Entity\Server
      * @throws \Exception
@@ -276,7 +271,8 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         Size $oSize,
         Image $oImage,
         array $aOptions,
-        array $aKeywords
+        array $aKeywords,
+        string $sDeployKey
     ): Entity\Server {
 
         $oApi = new Api\GoogleCloud($oAccount);
@@ -307,7 +303,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             //  Create a new boot disks
             $oDisk = new \Google_Service_Compute_Disk();
             $oDisk->setName($sDiskName);
-            $oDisk->setSourceImage('projects/debian-cloud/global/images/debian-9-stretch-v20190213');
+            $oDisk->setSourceImage(static::BASE_IMAGE);
             $oDisk->setSizeGb(10);
 
             //  Insert disk
@@ -347,11 +343,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
 
             $oStartupScript = new \Google_Service_Compute_MetadataItems();
             $oStartupScript->setKey('startup-script');
-            $oStartupScript->setValue(implode(' && ', [
-                'curl "https://raw.githubusercontent.com/shedcollective/startup-scripts/master/' . $oImage->getSlug() . '.sh?v=$(date +%s)" > ~/startup-script.sh',
-                'chmod +x ~/startup-script.sh',
-                '~/startup-script.sh',
-            ]));
+            $oStartupScript->setValue(static::getStartupScript($oImage, $sDeployKey));
 
             $oMetadata = new \Google_Service_Compute_Metadata();
             $oMetadata->setItems([$oBlockKeys, $oStartupScript]);
