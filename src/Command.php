@@ -92,6 +92,35 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     // --------------------------------------------------------------------------
 
     /**
+     * Display a neatly aligned key-value listing
+     *
+     * @param array $aKeyValuePairs
+     *
+     * @return $this
+     */
+    protected function keyValueList(array $aKeyValuePairs): Command
+    {
+        $aKeys    = array_keys($aKeyValuePairs);
+        $aValues  = array_values($aKeyValuePairs);
+        $iKeysMax = max(array_map('strlen', $aKeys)) + 1;
+        $aKeys    = array_map(function ($sKey) use ($iKeysMax) {
+            return '<comment>' . $sKey . '</comment>:' . str_repeat(' ', $iKeysMax - strlen($sKey));
+        }, $aKeys);
+
+        $aKeyValuePairs = array_combine($aKeys, $aValues);
+
+        $this->oOutput->writeln('');
+        foreach ($aKeyValuePairs as $sKey => $sValue) {
+            $this->oOutput->writeln($sKey . $sValue);
+        }
+        $this->oOutput->writeln('');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Renders an error block
      *
      * @param array $aLines The lines to render

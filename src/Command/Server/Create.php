@@ -268,9 +268,9 @@ final class Create extends Command
     /**
      * Validates that the environment is usable
      *
+     * @return $this
      * @throws NotValidException
      *
-     * @return $this
      */
     private function checkEnvironment(): Create
     {
@@ -791,6 +791,7 @@ final class Create extends Command
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
+        //  @todo (Pablo - 2019-04-01) - Use $this->keyValueList() somehow
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
         $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$this->sEnvironment]);

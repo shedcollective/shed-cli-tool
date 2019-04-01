@@ -138,20 +138,25 @@ abstract class Auth extends Command
             if (!empty($sLabel)) {
 
                 $oAccount = self::getAccountByLabel($sLabel);
-                $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
-                $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
+                $this->keyValueList([
+                    static::QUESTION_LABEL => $oAccount->getLabel(),
+                    static::QUESTION_TOKEN => $oAccount->getToken(),
+                ]);
 
             } elseif (!empty($sToken)) {
 
                 $oAccount = self::getAccountByToken($sToken);
-                $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
-                $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
+                $this->keyValueList([
+                    static::QUESTION_LABEL => $oAccount->getLabel(),
+                    static::QUESTION_TOKEN => $oAccount->getToken(),
+                ]);
 
             } else {
                 foreach (static::getAccounts() as $oAccount) {
-                    $this->oOutput->writeln('');
-                    $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
-                    $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
+                    $this->keyValueList([
+                        static::QUESTION_LABEL => $oAccount->getLabel(),
+                        static::QUESTION_TOKEN => $oAccount->getToken(),
+                    ]);
                 }
             }
 
@@ -190,9 +195,10 @@ abstract class Auth extends Command
 
             $this->oOutput->writeln('');
             $this->oOutput->writeln('You are about to delete the following account:');
-            $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $oAccount->getLabel());
-            $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $oAccount->getToken());
-            $this->oOutput->writeln('');
+            $this->keyValueList([
+                static::QUESTION_LABEL => $oAccount->getLabel(),
+                static::QUESTION_TOKEN => $oAccount->getToken(),
+            ]);
 
             if ($this->confirm('Continue?')) {
                 static::deleteAccount($oAccount);
@@ -397,10 +403,10 @@ abstract class Auth extends Command
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>' . static::QUESTION_LABEL . '</comment>: ' . $this->sLabel);
-        $this->oOutput->writeln('<comment>' . static::QUESTION_TOKEN . '</comment>: ' . $this->sToken);
-        $this->oOutput->writeln('');
+        $this->keyValueList([
+            static::QUESTION_LABEL => $this->sLabel,
+            static::QUESTION_TOKEN => $this->sToken,
+        ]);
         return $this->confirm('Continue?');
     }
 
