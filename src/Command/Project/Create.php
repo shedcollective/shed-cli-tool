@@ -146,9 +146,9 @@ final class Create extends Command
     /**
      * Validates that the environment is usable
      *
+     * @return $this
      * @throws NotValidException
      *
-     * @return $this
      */
     private function checkEnvironment(): Create
     {
@@ -323,8 +323,8 @@ final class Create extends Command
         $sOption = trim($this->oInput->getOption('directory'));
         if (empty($sOption)) {
             $this->sDir = $this->ask(
-                'Project Directory <info>(Leave blank for current directory)</info>:',
-                null,
+                'Project Directory:',
+                getcwd(),
                 [$this, 'validateDirectory']
             );
         } else {
@@ -332,8 +332,8 @@ final class Create extends Command
                 $this->sDir = $sOption;
             } else {
                 $this->sDir = $this->ask(
-                    'Project Directory <info>(Leave blank for current directory)</info>:',
-                    null,
+                    'Project Directory:',
+                    getcwd(),
                     [$this, 'validateDirectory']
                 );
             }
