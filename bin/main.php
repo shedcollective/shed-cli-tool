@@ -16,6 +16,10 @@ define('BASEPATH', Directory::normalize(__DIR__ . '/../'));
 
 // --------------------------------------------------------------------------
 
+define('APP_NAME', 'Shed Command Line Tool');
+
+// --------------------------------------------------------------------------
+
 $oApp    = new Application();
 $oFinder = new Finder();
 
@@ -37,6 +41,6 @@ foreach ($oFinder as $oFile) {
     }
 }
 
-$oApp->setName('Shed Command Line Tool');
+$oApp->setName(APP_NAME);
 $oApp->setVersion(Updates::getCurrentVersion());
 $oApp->run();

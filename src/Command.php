@@ -48,14 +48,31 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         $this->oInput  = $oInput;
         $this->oOutput = $oOutput;
 
-        if (Updates::check()) {
-            $this->warning([
-                'An update is available: ' . Updates::getLatestVersion() . ' (you have version ' . Updates::getCurrentVersion() . ')',
-                'To update run: brew update && brew upgrade nails',
-            ]);
-        }
-
         Colors::setStyles($this->oOutput);
+
+        if (Updates::check()) {
+
+            $aLines = [
+                'An update is available: ' . Updates::getLatestVersion() . ' (you have version ' . Updates::getCurrentVersion() . ')',
+            ];
+
+            exec('brew list shedcollective/utilities/shed 2>&1', $aOutput, $iReturnVal);
+            $bInstalledViaBrew     = $iReturnVal === 0;
+            $bInstalledViaComposer = false;
+
+            if (!$bInstalledViaBrew) {
+                exec('composer global info shedcollective/command-line-tool 2>&1', $aOutput, $iReturnVal);
+                $bInstalledViaComposer = $iReturnVal === 0;
+            }
+
+            if ($bInstalledViaBrew) {
+                $aLines[] = 'To update run: brew update && brew upgrade shed';
+            } elseif ($bInstalledViaComposer) {
+                $aLines[] = 'To update run: composer global update shed/command-line-tool';
+            }
+
+            $this->warning($aLines);
+        }
 
         return $this->go();
     }

@@ -216,6 +216,5 @@ final class Webpack extends Base implements Framework
      */
     private function installWordPress($sZipPath, $sPath): void
     {
-        //  @todo (Pablo - 2018-12-19) - Who knows
     }
 }
