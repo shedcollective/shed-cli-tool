@@ -7,11 +7,11 @@ final class Directory
     /**
      * Normalizes *nix style forward slashes with the system's DIRECTORY_SEPARATOR
      *
-     * @param $sPath
+     * @param string $sPath The path to normalise
      *
      * @return string
      */
-    public static function normalize($sPath)
+    public static function normalize(string $sPath): string
     {
         return str_replace('/', DIRECTORY_SEPARATOR, $sPath);
     }
@@ -25,7 +25,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function exists($sPath)
+    public static function exists(string $sPath): bool
     {
         return is_dir($sPath);
     }
@@ -39,7 +39,7 @@ final class Directory
      *
      * @return bool
      */
-    public static function isEmpty($sPath)
+    public static function isEmpty(string $sPath): bool
     {
         if (!is_dir($sPath)) {
             return true;
@@ -62,9 +62,9 @@ final class Directory
      *
      * @param string $sPath the path to resolve
      *
-     * @return string|string[]|null
+     * @return string
      */
-    public static function resolve($sPath)
+    public static function resolve(string $sPath): string
     {
         $sPath = trim($sPath);
 
@@ -86,5 +86,21 @@ final class Directory
         }
 
         return $sPath;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Resolve a file path
+     *
+     * @param string $sPath The path to resolve
+     *
+     * @return string
+     */
+    public static function resolvePath(string $sPath): string
+    {
+        $sDir  = static::resolve(dirname($sPath));
+        $sFile = basename($sPath);
+        return $sDir . $sFile;
     }
 }

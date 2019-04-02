@@ -38,4 +38,5 @@ jobs:
       - run: composer test
 
       # Build
+      - run: rm -rf vendor-bin/box/vendor
       - run: composer build

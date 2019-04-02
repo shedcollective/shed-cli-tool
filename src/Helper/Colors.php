@@ -12,7 +12,7 @@ final class Colors
      *
      * @param OutputInterface $oOutput The output interface
      */
-    public static function setStyles(OutputInterface $oOutput)
+    public static function setStyles(OutputInterface $oOutput): void
     {
         $oWarningStyle = new OutputFormatterStyle('white', 'yellow');
         $oOutput->getFormatter()->setStyle('warning', $oWarningStyle);

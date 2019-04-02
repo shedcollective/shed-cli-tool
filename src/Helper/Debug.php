@@ -9,7 +9,7 @@ final class Debug
      *
      * @param mixed $mValue The value to dump
      */
-    public static function d($mValue)
+    public static function d($mValue): void
     {
         echo "\n";
         print_r($mValue);
@@ -23,7 +23,7 @@ final class Debug
      *
      * @param mixed $mValue The value to dump
      */
-    public static function dd($mValue)
+    public static function dd($mValue): void
     {
         self::d($mValue);
         die();

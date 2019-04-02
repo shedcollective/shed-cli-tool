@@ -12,7 +12,7 @@ final class None extends Base implements Framework
      *
      * @return string
      */
-    public function getName()
+    public function getLabel(): string
     {
         return 'None';
     }
@@ -24,7 +24,7 @@ final class None extends Base implements Framework
      *
      * @return array
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return [];
     }
@@ -38,7 +38,7 @@ final class None extends Base implements Framework
      *
      * @return array
      */
-    public function getEnvVars(Framework $oBackendFramework)
+    public function getEnvVars(Framework $oBackendFramework): array
     {
         return [];
     }
@@ -53,7 +53,7 @@ final class None extends Base implements Framework
      * @param Framework $oOtherFramework The other framework being installed
      * @param array     $aInstallOptions The install options
      */
-    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions)
+    public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         //  Silence is golden
     }
