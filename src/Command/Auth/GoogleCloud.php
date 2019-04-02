@@ -39,7 +39,15 @@ final class GoogleCloud extends Auth
      */
     protected function help(): void
     {
-        //  @todo (Pablo - 2019-02-18) - Write help
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('To generate a new Service Account Key:');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>1:</comment> Generate a new Service Account Key here: <comment>https://console.cloud.google.com/apis/credentials/serviceaccountkey</comment>');
+        $this->oOutput->writeln('<comment>2:</comment> Download the key file');
+        $this->oOutput->writeln('<comment>3:</comment> Run: <comment>shed auth:googlecloud</comment>');
+        $this->oOutput->writeln('<comment>4:</comment> Specify a label for the account');
+        $this->oOutput->writeln('<comment>5:</comment> Specify the path to the key file');
+        $this->oOutput->writeln('');
     }
 
     // --------------------------------------------------------------------------

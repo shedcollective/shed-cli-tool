@@ -28,7 +28,14 @@ final class DigitalOcean extends Auth
      */
     protected function help(): void
     {
-        //  @todo (Pablo - 2019-02-18) - Write help
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('To generate a new Personal Access Token:');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>1:</comment> Generate a Personal Access Token here: <comment>https://cloud.digitalocean.com/account/api/tokens</comment>');
+        $this->oOutput->writeln('<comment>2:</comment> Run: <comment>shed auth:digitalocean</comment>');
+        $this->oOutput->writeln('<comment>3:</comment> Specify a label for the account');
+        $this->oOutput->writeln('<comment>4:</comment> Specify the access token');
+        $this->oOutput->writeln('');
     }
 
     // --------------------------------------------------------------------------
