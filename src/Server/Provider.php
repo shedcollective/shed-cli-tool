@@ -64,13 +64,12 @@ abstract class Provider
     protected static function getStartupCommands(Image $oImage, string $sDeployKey): array
     {
         $aCommands = array_filter([
-            'rm -f ~/.startup-commands',
-            'apt-get update &>> ~/.startup-commands',
-            'apt-get -y install unzip make &>> ~/.startup-commands',
+            'apt-get update',
+            'apt-get -y install unzip make',
             'curl -L "https://github.com/shedcollective/startup-scripts/archive/master.zip" > /startup-scripts.zip',
-            'unzip /startup-scripts.zip &>> ~/.startup-commands',
-            'mv /startup-scripts-master /startup-scripts &>> ~/.startup-commands',
-            'rm -rf /startup-scripts-master /startup-scripts.zip &>> ~/.startup-commands',
+            'unzip /startup-scripts.zip',
+            'mv /startup-scripts-master /startup-scripts',
+            'rm -rf /startup-scripts-master /startup-scripts.zip',
         ]);
 
         if ($sDeployKey) {
