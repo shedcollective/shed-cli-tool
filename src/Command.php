@@ -71,6 +71,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
                 $aLines[] = 'To update run: composer global update shed/command-line-tool';
             }
 
+            $this->oOutput->writeln('');
             $this->warning($aLines);
         }
 
