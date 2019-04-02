@@ -577,7 +577,7 @@ final class Create extends Command
     private function createProjectDir(): Create
     {
         $this->oOutput->write('📁 Creating directory <comment>' . $this->sDir . '</comment>... ');
-        if (!mkdir($this->sDir)) {
+        if (!is_dir($this->sDir) && !mkdir($this->sDir)) {
             throw new FailedToCreateException();
         }
         System::exec('cd "' . $this->sDir . '"');
