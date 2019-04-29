@@ -71,7 +71,7 @@ final class DigitalOcean
      */
     public static function test(string $sToken)
     {
-        $oApi = new self($sToken);
+        $oApi = new self(new Account('', $sToken));
         $oApi->getUserInformation();
     }
 
