@@ -512,9 +512,10 @@ final class Create extends Command
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
         $this->oOutput->writeln('');
+        //  @todo (Pablo - 2019-04-01) - Use $this->keyValueList() somehow
         $this->oOutput->writeln('<comment>Project Name</comment>:  ' . $this->sProjectName);
         $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
-        $this->oOutput->writeln('<comment>Directory</comment>:  ' . $this->sDir);
+        $this->oOutput->writeln('<comment>Directory</comment>:     ' . $this->sDir);
 
         $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getLabel());
         foreach ($this->oBackendFramework->getOptions() as $sKey => $oOption) {

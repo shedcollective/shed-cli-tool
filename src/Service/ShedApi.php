@@ -2,9 +2,9 @@
 
 namespace Shed\Cli\Service;
 
-use Exception;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Server;
+use Shed\Cli\Exceptions\CliException;
 
 /**
  * Class ShedApi
@@ -27,7 +27,7 @@ final class ShedApi
      *
      * @param string $sToken The token to test
      *
-     * @throws Exception
+     * @throws CliException
      */
     public static function testToken(string $sToken)
     {
@@ -59,9 +59,9 @@ final class ShedApi
         curl_close($oCurl);
 
         if ($sError) {
-            throw new Exception($sError);
+            throw new CliException($sError);
         } elseif ($iCode !== 200) {
-            throw new Exception('Invalid access token');
+            throw new CliException('Invalid access token');
         }
     }
 
@@ -73,7 +73,7 @@ final class ShedApi
      * @param Account $oAccount The shedcollective.com account to authenticate with
      * @param Server  $oServer  The server to create
      *
-     * @throws Exception
+     * @throws CliException
      */
     public static function createServer(Account $oAccount, Server $oServer)
     {
@@ -117,9 +117,9 @@ final class ShedApi
         curl_close($oCurl);
 
         if ($sError) {
-            throw new Exception($sError);
+            throw new CliException($sError);
         } elseif ($iCode !== 200) {
-            throw new Exception('Invalid access token');
+            throw new CliException('Invalid access token');
         }
     }
 }

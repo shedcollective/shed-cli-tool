@@ -3,15 +3,13 @@
 namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command;
-use Shed\Cli\Entity\Server;
-use Shed\Cli\Exceptions\Environment\NotValidException;
-use Shed\Cli\Helper\Debug;
-use Shed\Cli\Helper\System;
-use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Helper\System;
+use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Service\ShedApi;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
@@ -822,6 +820,7 @@ final class Create extends Command
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
+        //  @todo (Pablo - 2019-04-01) - Use $this->keyValueList() somehow
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
         $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$this->sEnvironment]);

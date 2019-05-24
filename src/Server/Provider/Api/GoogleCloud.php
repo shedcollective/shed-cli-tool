@@ -4,7 +4,6 @@ namespace Shed\Cli\Server\Provider\Api;
 
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Exceptions\Auth\AccountNotFoundException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\Updates;
 
