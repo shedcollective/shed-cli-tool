@@ -6,6 +6,7 @@ use Exception;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Helper\Debug;
 use Shed\Cli\Server\Provider\Api;
+use Shed\Cli\Service\ShedApi;
 
 final class Shed extends Auth
 {
@@ -51,38 +52,6 @@ final class Shed extends Auth
      */
     protected function testToken(string $sToken): void
     {
-
-        $oCurl = curl_init();
-
-        curl_setopt_array(
-            $oCurl,
-            [
-                CURLOPT_URL            => 'https://localhost/api/auth/me',
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING       => 'utf-8',
-                CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 30,
-                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST  => 'GET',
-                CURLOPT_HTTPHEADER     => [
-                    'X-Access-Token: ' . $sToken,
-                    'cache-control: no-cache',
-                ],
-            ]
-        );
-
-        curl_exec($oCurl);
-
-        $sError = curl_error($oCurl);
-        $iCode  = curl_getinfo($oCurl, CURLINFO_HTTP_CODE);
-
-        curl_close($oCurl);
-
-        if ($sError) {
-            throw new Exception($sError);
-        } elseif ($iCode !== 200) {
-            throw new Exception('Invalid access token');
-        }
+        ShedApi::testToken($sToken);
     }
 }

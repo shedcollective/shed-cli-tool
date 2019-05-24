@@ -10,6 +10,7 @@ use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Service\ShedApi;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
@@ -268,9 +269,9 @@ final class Create extends Command
     /**
      * Validates that the environment is usable
      *
+     * @return $this
      * @throws NotValidException
      *
-     * @return $this
      */
     private function checkEnvironment(): Create
     {
@@ -283,6 +284,21 @@ final class Create extends Command
             if (!System::commandExists($sRequiredCommand)) {
                 throw new NotValidException($sRequiredCommand . ' is not installed');
             }
+        }
+
+        $aAccounts = Command\Auth\Shed::getAccounts();
+        if (empty($aAccounts)) {
+            throw new NotValidException('No shedcollective.com accounts detected');
+        }
+        $oAccount = reset($aAccounts);
+        try {
+
+            ShedApi::testToken($oAccount->getToken());
+
+        } catch (\Exception $e) {
+            throw new NotValidException(
+                'Access token for shedcollective.com account "' . $oAccount->getLabel() . '" is invalid'
+            );
         }
 
         return $this;
@@ -555,7 +571,6 @@ final class Create extends Command
     }
 
     // --------------------------------------------------------------------------
-
 
     /**
      * Set the account property
@@ -839,7 +854,7 @@ final class Create extends Command
             $this->sDeployKey
         );
 
-        //  @todo (Pablo - 2019-02-07) - Record server details at shedcollective.com
+        ShedApi::createServer($oServer);
 
         $this->oOutput->writeln('<info>done!</info>');
         $this->oOutput->writeln('');
