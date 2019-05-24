@@ -323,8 +323,8 @@ final class Create extends Command
         $sOption = trim($this->oInput->getOption('directory'));
         if (empty($sOption)) {
             $this->sDir = $this->ask(
-                'Project Directory <info>(Leave blank for current directory)</info>:',
-                null,
+                'Project Directory:',
+                getcwd(),
                 [$this, 'validateDirectory']
             );
         } else {
@@ -332,8 +332,8 @@ final class Create extends Command
                 $this->sDir = $sOption;
             } else {
                 $this->sDir = $this->ask(
-                    'Project Directory <info>(Leave blank for current directory)</info>:',
-                    null,
+                    'Project Directory:',
+                    getcwd(),
                     [$this, 'validateDirectory']
                 );
             }
@@ -578,7 +578,7 @@ final class Create extends Command
     private function createProjectDir(): Create
     {
         $this->oOutput->write('📁 Creating directory <comment>' . $this->sDir . '</comment>... ');
-        if (!mkdir($this->sDir)) {
+        if (!is_dir($this->sDir) && !mkdir($this->sDir)) {
             throw new FailedToCreateException();
         }
         System::exec('cd "' . $this->sDir . '"');

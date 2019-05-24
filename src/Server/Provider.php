@@ -64,24 +64,19 @@ abstract class Provider
     protected static function getStartupCommands(Image $oImage, string $sDeployKey): array
     {
         $aCommands = array_filter([
-            //  Get what we need
-            'apt install unzip make',
+            'apt-get update',
+            'apt-get -y install unzip make',
             'curl -L "https://github.com/shedcollective/startup-scripts/archive/master.zip" > /startup-scripts.zip',
             'unzip /startup-scripts.zip',
             'mv /startup-scripts-master /startup-scripts',
             'rm -rf /startup-scripts-master /startup-scripts.zip',
-            //  Do the magic :sparkle:
-            '/startup-scripts/' . $oImage->getslug() . '.sh',
         ]);
 
         if ($sDeployKey) {
-            $aCommands[] = implode(' && ', [
-                'echo "' . $sDeployKey . '" >> /startup-scripts/resources/deployhq.key',
-                'export USER_NAME="deployhq"',
-                'export KEY_PATH="/startup-scripts/resources/deployhq.key"',
-                '/startup-scripts/scripts/add-ssh-key.sh',
-            ]);
+            $aCommands[] = 'echo "' . $sDeployKey . '" >> /startup-scripts/resources/deployhq.key';
         }
+
+        $aCommands[] = '/startup-scripts/' . $oImage->getslug() . '.sh';
 
         return $aCommands;
     }
