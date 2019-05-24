@@ -1,0 +1,189 @@
+<?php
+
+namespace Shed\Cli\Command\Project\Backup;
+
+use Exception;
+use Shed\Cli\Exceptions\CliException;
+use Shed\Cli\Exceptions\Directory\FailedToCreateException;
+use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Exceptions\Zip\CannotOpenException;
+use Shed\Cli\Project\Backup;
+use Symfony\Component\Console\Input\InputOption;
+
+final class Directories extends Backup
+{
+    /**
+     * The directory to backup
+     *
+     * @var string[]
+     */
+    protected $aDirectories = [];
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Configure the command
+     */
+    protected function configure(): void
+    {
+        parent::configure();
+        $this
+            ->setName('project:backup:directories')
+            ->setDescription('Back up a project\'s directories')
+            ->setHelp('This command will backup project directories to S3')
+            ->addOption(
+                'directory',
+                'd',
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
+                'The directory to backup',
+                $this->aDirectories
+            );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Execute the command
+     *
+     * @return int
+     * @throws Exception
+     */
+    protected function go(): int
+    {
+        $this
+            ->banner('Backup a project\'s directories')
+            ->checkEnvironment()
+            ->setVariables();
+
+        if ($this->confirmVariables()) {
+            $this->backupProject();
+        }
+
+        return static::EXIT_CODE_SUCCESS;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validates that the environment is usable
+     *
+     * @param array $aCommands Any commands to require
+     *
+     * @return $this
+     * @throws NotValidException
+     *
+     */
+    protected function checkEnvironment(array $aCommands = []): Backup
+    {
+        parent::checkEnvironment(['tar']);
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the variables
+     *
+     * @return $this
+     */
+    protected function setVariables(): Backup
+    {
+        parent::setVariables();
+
+        $this->aDirectories = $this->oInput->getOption('directory');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Confirms the selected options
+     *
+     * @return bool
+     */
+    private function confirmVariables()
+    {
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('Does this all look OK?');
+        $aOptions = [
+            'Domain'    => $this->sDomain,
+            'S3 Key'    => $this->sS3Key,
+            'S3 Secret' => $this->sS3Secret ? '<info>set</info>' : '',
+            'S3 Bucket' => $this->sS3Bucket,
+        ];
+        $iCounter = 0;
+        foreach ($this->aDirectories as $sDirectory) {
+            $aOptions['Directory ' . ++$iCounter] = $sDirectory;
+        }
+        $this->keyValueList($aOptions);
+        return $this->confirm('Continue?');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Backs up the project
+     *
+     * @return $this
+     * @throws CannotOpenException
+     * @throws CommandFailedException
+     * @throws FailedToCreateException
+     * @throws CliException
+     * @throws Exception
+     */
+    private function backupProject(): Directories
+    {
+        foreach ($this->aDirectories as $sDirectory) {
+
+            try {
+
+                $aFiles = [];
+                $this->oOutput->writeln('');
+                $this->oOutput->writeln('Backing up <comment>' . $sDirectory . '</comment>...');
+
+                $sSafeDirectory = ltrim(str_replace(DIRECTORY_SEPARATOR, '_', $sDirectory), '_');
+
+                //  Compress the file
+                $this->oOutput->write('↳ Compressing... ');
+                $aFiles['COMPRESSED'] = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . '.tar.gz';
+                $this->exec('tar -czf ' . $aFiles['COMPRESSED'] . ' -C ' . $sDirectory . ' .');
+                $this->oOutput->writeln('<info>done</info>');
+
+                //  Push to S3s
+                $this->pushToS3($aFiles['COMPRESSED'], 'dir/' . $sSafeDirectory);
+
+            } catch (CliException $e) {
+
+                $this->oOutput->writeln('');
+                $this->error(
+                    array_merge(
+                        ['An error occurred:'],
+                        [$e->getMessage()],
+                        $e->getDetails()
+                    )
+                );
+
+                //  @todo (Pablo - 2019-05-24) - Contact someone about this?
+
+            } finally {
+
+                if (!empty($aFiles)) {
+                    $this->oOutput->write('↳ Cleaning up... ');
+                    foreach ($aFiles as $sFile) {
+                        if (is_file($sFile)) {
+                            unlink($sFile);
+                        }
+                    }
+                    $this->oOutput->writeln('<info>done</info>');
+                }
+            }
+        }
+
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('🎉 Completed backup job');
+        $this->oOutput->writeln('');
+        return $this;
+    }
+}

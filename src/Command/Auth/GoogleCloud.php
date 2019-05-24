@@ -5,7 +5,6 @@ namespace Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Helper\Config;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Server\Provider\Api;
 

@@ -71,6 +71,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
                 $aLines[] = 'To update run: composer global update shed/command-line-tool';
             }
 
+            $this->oOutput->writeln('');
             $this->warning($aLines);
         }
 
@@ -101,6 +102,35 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<info>' . $sTitle . '</info>');
         $this->oOutput->writeln('<info>' . str_repeat('-', strlen($sTitle)) . '</info>');
+        $this->oOutput->writeln('');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Display a neatly aligned key-value listing
+     *
+     * @param array $aKeyValuePairs
+     *
+     * @return $this
+     */
+    protected function keyValueList(array $aKeyValuePairs): Command
+    {
+        $aKeys    = array_keys($aKeyValuePairs);
+        $aValues  = array_values($aKeyValuePairs);
+        $iKeysMax = max(array_map('strlen', $aKeys)) + 1;
+        $aKeys    = array_map(function ($sKey) use ($iKeysMax) {
+            return '<comment>' . $sKey . '</comment>:' . str_repeat(' ', $iKeysMax - strlen($sKey));
+        }, $aKeys);
+
+        $aKeyValuePairs = array_combine($aKeys, $aValues);
+
+        $this->oOutput->writeln('');
+        foreach ($aKeyValuePairs as $sKey => $sValue) {
+            $this->oOutput->writeln($sKey . $sValue);
+        }
         $this->oOutput->writeln('');
 
         return $this;
@@ -140,17 +170,21 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      */
     protected function outputBlock(array $aLines, $sType): void
     {
-        $aLines     = array_map(function ($sLine) {
+        $aLines   = array_map(function ($sLine) {
             return ' ' . $sLine . ' ';
         }, $aLines);
-        $aLengths   = array_map('strlen', $aLines);
-        $iMaxLength = max($aLengths);
+        $aLengths = array_map('strlen', $aLines);
 
-        $this->oOutput->writeln('<' . $sType . '> ' . str_pad('', $iMaxLength, ' ') . ' </' . $sType . '>');
-        foreach ($aLines as $sLine) {
-            $this->oOutput->writeln('<' . $sType . '> ' . str_pad($sLine, $iMaxLength, ' ') . ' </' . $sType . '>');
+        if (!empty($aLengths)) {
+
+            $iMaxLength = max($aLengths);
+
+            $this->oOutput->writeln('<' . $sType . '> ' . str_pad('', $iMaxLength, ' ') . ' </' . $sType . '>');
+            foreach ($aLines as $sLine) {
+                $this->oOutput->writeln('<' . $sType . '> ' . str_pad($sLine, $iMaxLength, ' ') . ' </' . $sType . '>');
+            }
+            $this->oOutput->writeln('<' . $sType . '> ' . str_pad('', $iMaxLength, ' ') . ' </' . $sType . '>');
         }
-        $this->oOutput->writeln('<' . $sType . '> ' . str_pad('', $iMaxLength, ' ') . ' </' . $sType . '>');
     }
 
     // --------------------------------------------------------------------------
