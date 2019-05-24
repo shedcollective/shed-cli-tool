@@ -2,11 +2,12 @@
 
 namespace Shed\Cli\Command\Project\Backup;
 
+use Exception;
+use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
-use Shed\Cli\Helper\System;
 use Shed\Cli\Project\Backup;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -17,26 +18,26 @@ final class Database extends Backup
      *
      * @var string
      */
-    protected $sMysqlHost = '';
+    protected $sMysqlHost = '127.0.0.1';
 
     /**
      * The MySQL User to use for the backup
      *
      * @var string
      */
-    protected $sMysqlUser = '';
+    protected $sMysqlUser = null;
 
     /**
      * The MySQL Password to use for the backup
      *
      * @var string
      */
-    protected $sMysqlPassword = '';
+    protected $sMysqlPassword = null;
 
     /**
      * The Database to backup
      *
-     * @var array
+     * @var string[]
      */
     protected $aMysqlDatabases = [];
 
@@ -47,6 +48,7 @@ final class Database extends Backup
      */
     protected function configure(): void
     {
+        parent::configure();
         $this
             ->setName('project:backup:db')
             ->setDescription('Back up a project\'s database')
@@ -55,25 +57,29 @@ final class Database extends Backup
                 'mysql-host',
                 'H',
                 InputOption::VALUE_REQUIRED,
-                'The MySQL Host to use'
+                'The MySQL Host to use',
+                $this->sMysqlHost
             )
             ->addOption(
                 'mysql-user',
                 'u',
                 InputOption::VALUE_REQUIRED,
-                'The MySQL User to use'
+                'The MySQL User to use',
+                $this->sMysqlUser
             )
             ->addOption(
                 'mysql-password',
                 'p',
                 InputOption::VALUE_REQUIRED,
-                'The MySQL Password to use'
+                'The MySQL Password to use',
+                $this->sMysqlPassword
             )
             ->addOption(
                 'mysql-database',
                 'd',
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
-                'The MySQL Database to backup'
+                'The MySQL Database to backup',
+                $this->aMysqlDatabases
             );
     }
 
@@ -83,15 +89,12 @@ final class Database extends Backup
      * Execute the command
      *
      * @return int
-     * @throws CannotOpenException
-     * @throws CommandFailedException
-     * @throws NotValidException
-     * @throws FailedToCreateException
+     * @throws Exception
      */
     protected function go(): int
     {
         $this
-            ->banner('Backup a project\'s database')
+            ->banner('Backup a project\'s databases')
             ->checkEnvironment()
             ->setVariables();
 
@@ -107,42 +110,45 @@ final class Database extends Backup
     /**
      * Validates that the environment is usable
      *
+     * @param array $aCommands Any commands to require
+     *
      * @return $this
      * @throws NotValidException
      *
      */
-    private function checkEnvironment(): Database
+    protected function checkEnvironment(array $aCommands = []): Backup
     {
-        if (!function_exists('exec')) {
-            throw new NotValidException('Missing function exec()');
-        }
-
-        $aRequiredCommands = ['mysqldump', 'zip'];
-        foreach ($aRequiredCommands as $sRequiredCommand) {
-            if (!System::commandExists($sRequiredCommand)) {
-                throw new NotValidException($sRequiredCommand . ' is not installed');
-            }
-        }
-
+        parent::checkEnvironment(['mysqldump', 'tar']);
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Configures the create command
+     * Sets the variables
      *
      * @return $this
+     * @throws CliException
      */
-    private function setVariables(): Database
+    protected function setVariables(): Backup
     {
-        //  @todo (Pablo - 2019-04-01) - Set all variables
+        parent::setVariables();
+
+        $this->sMysqlHost      = $this->oInput->getOption('mysql-host');
+        $this->sMysqlUser      = $this->oInput->getOption('mysql-user');
+        $this->sMysqlPassword  = $this->oInput->getOption('mysql-password');
+        $this->aMysqlDatabases = $this->oInput->getOption('mysql-database');
+
+        if (empty($this->sMysqlHost)) {
+            throw new CliException('Missing required option "mysql-host" [--domain]');
+        } elseif (empty($this->sMysqlUser)) {
+            throw new CliException('Missing required option "mysql-user" [--mysql-user]');
+        } elseif (empty($this->sMysqlPassword)) {
+            throw new CliException('Missing required option "mysql-password" [--mysql-password]');
+        }
+
         return $this;
     }
-
-    // --------------------------------------------------------------------------
-
-    //  @todo (Pablo - 2019-04-01) - Variable setting methods
 
     // --------------------------------------------------------------------------
 
@@ -157,12 +163,12 @@ final class Database extends Backup
         $this->oOutput->writeln('Does this all look OK?');
         $aOptions = [
             'Domain'         => $this->sDomain,
-            'S3 Token'       => $this->sS3Token,
-            'S3 Secret'      => 'Set',
+            'S3 Key'         => $this->sS3Key,
+            'S3 Secret'      => $this->sS3Secret ? '<info>set</info>' : '',
             'S3 Bucket'      => $this->sS3Bucket,
             'MySQL Host'     => $this->sMysqlHost,
             'MySQL User'     => $this->sMysqlUser,
-            'MySQL Password' => 'Set',
+            'MySQL Password' => $this->sMysqlPassword ? '<info>set</info>' : '',
         ];
         $iCounter = 0;
         foreach ($this->aMysqlDatabases as $sDatabase) {
@@ -181,15 +187,77 @@ final class Database extends Backup
      * @throws CannotOpenException
      * @throws CommandFailedException
      * @throws FailedToCreateException
+     * @throws CliException
+     * @throws Exception
      */
     private function backupProject(): Database
     {
-        $this->oOutput->writeln('');
+        foreach ($this->aMysqlDatabases as $sMysqlDatabase) {
 
-        //  @todo (Pablo - 2019-04-01) - Perform backup and sync
+            try {
+
+                $aFiles = [];
+                $this->oOutput->writeln('');
+                $this->oOutput->writeln('Backing up <comment>' . $sMysqlDatabase . '</comment>...');
+
+                //  Dump the DB
+                $this->oOutput->write('↳ Dumping... ');
+                $aFiles['TEMP'] = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . DIRECTORY_SEPARATOR . $sMysqlDatabase . '.sql';
+                mkdir(dirname($aFiles['TEMP']));
+
+                $sDumpCommand = implode(' ', [
+                    'mysqldump',
+                    '-h' . $this->sMysqlHost,
+                    '-u' . $this->sMysqlUser,
+                    '-p' . $this->sMysqlPassword,
+                    $sMysqlDatabase,
+                    '> ' . $aFiles['TEMP'],
+                ]);
+
+                $this->exec($sDumpCommand);
+                $this->oOutput->writeln('<info>done</info>');
+
+                //  Compress the file
+                $this->oOutput->write('↳ Compressing... ');
+                $aFiles['COMPRESSED'] = $aFiles['TEMP'] . '.tar.gz';
+                $this->exec(implode(' ', [
+                    'tar -czf ' . $aFiles['COMPRESSED'],
+                    ' -C ' . dirname($aFiles['TEMP']) . ' .',
+                ]));
+                $this->oOutput->writeln('<info>done</info>');
+
+                //  Push to S3
+                $this->pushToS3($aFiles['COMPRESSED'], 'db/' . $sMysqlDatabase);
+
+            } catch (CliException $e) {
+
+                $this->oOutput->writeln('');
+                $this->error(
+                    array_merge(
+                        ['An error occurred:'],
+                        [$e->getMessage()],
+                        $e->getDetails()
+                    )
+                );
+
+                //  @todo (Pablo - 2019-05-24) - Contact someone about this?
+
+            } finally {
+
+                if (!empty($aFiles)) {
+                    $this->oOutput->write('↳ Cleaning up... ');
+                    foreach ($aFiles as $sFile) {
+                        if (is_file($sFile)) {
+                            unlink($sFile);
+                        }
+                    }
+                    $this->oOutput->writeln('<info>done</info>');
+                }
+            }
+        }
 
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('🎉 Project has been backed up to <comment>~~~bucket-name/domain/database/backup-file~~~</comment>');
+        $this->oOutput->writeln('🎉 Completed backup job');
         $this->oOutput->writeln('');
         return $this;
     }

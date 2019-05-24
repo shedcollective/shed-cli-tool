@@ -2,11 +2,12 @@
 
 namespace Shed\Cli\Command\Project\Backup;
 
+use Exception;
+use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
-use Shed\Cli\Helper\System;
 use Shed\Cli\Project\Backup;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -15,9 +16,9 @@ final class Directories extends Backup
     /**
      * The directory to backup
      *
-     * @var array
+     * @var string[]
      */
-    protected $aDirectories = ['/var/www/1', '/var/www/2'];
+    protected $aDirectories = [];
 
     // --------------------------------------------------------------------------
 
@@ -26,6 +27,7 @@ final class Directories extends Backup
      */
     protected function configure(): void
     {
+        parent::configure();
         $this
             ->setName('project:backup:directories')
             ->setDescription('Back up a project\'s directories')
@@ -34,7 +36,8 @@ final class Directories extends Backup
                 'directory',
                 'd',
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
-                'The directory to backup'
+                'The directory to backup',
+                $this->aDirectories
             );
     }
 
@@ -44,10 +47,7 @@ final class Directories extends Backup
      * Execute the command
      *
      * @return int
-     * @throws CannotOpenException
-     * @throws CommandFailedException
-     * @throws NotValidException
-     * @throws FailedToCreateException
+     * @throws Exception
      */
     protected function go(): int
     {
@@ -68,42 +68,33 @@ final class Directories extends Backup
     /**
      * Validates that the environment is usable
      *
+     * @param array $aCommands Any commands to require
+     *
      * @return $this
      * @throws NotValidException
      *
      */
-    private function checkEnvironment(): Directories
+    protected function checkEnvironment(array $aCommands = []): Backup
     {
-        if (!function_exists('exec')) {
-            throw new NotValidException('Missing function exec()');
-        }
-
-        $aRequiredCommands = ['zip'];
-        foreach ($aRequiredCommands as $sRequiredCommand) {
-            if (!System::commandExists($sRequiredCommand)) {
-                throw new NotValidException($sRequiredCommand . ' is not installed');
-            }
-        }
-
+        parent::checkEnvironment(['tar']);
         return $this;
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Configures the create command
+     * Sets the variables
      *
      * @return $this
      */
-    private function setVariables(): Directories
+    protected function setVariables(): Backup
     {
-        //  @todo (Pablo - 2019-04-01) - Set all variables
+        parent::setVariables();
+
+        $this->aDirectories = $this->oInput->getOption('directory');
+
         return $this;
     }
-
-    // --------------------------------------------------------------------------
-
-    //  @todo (Pablo - 2019-04-01) - Variable setting methods
 
     // --------------------------------------------------------------------------
 
@@ -118,8 +109,8 @@ final class Directories extends Backup
         $this->oOutput->writeln('Does this all look OK?');
         $aOptions = [
             'Domain'    => $this->sDomain,
-            'S3 Token'  => $this->sS3Token,
-            'S3 Secret' => 'Set',
+            'S3 Key'    => $this->sS3Key,
+            'S3 Secret' => $this->sS3Secret ? '<info>set</info>' : '',
             'S3 Bucket' => $this->sS3Bucket,
         ];
         $iCounter = 0;
@@ -139,15 +130,59 @@ final class Directories extends Backup
      * @throws CannotOpenException
      * @throws CommandFailedException
      * @throws FailedToCreateException
+     * @throws CliException
+     * @throws Exception
      */
     private function backupProject(): Directories
     {
-        $this->oOutput->writeln('');
+        foreach ($this->aDirectories as $sDirectory) {
 
-        //  @todo (Pablo - 2019-04-01) - Perform backup and sync
+            try {
+
+                $aFiles = [];
+                $this->oOutput->writeln('');
+                $this->oOutput->writeln('Backing up <comment>' . $sDirectory . '</comment>...');
+
+                $sSafeDirectory = ltrim(str_replace(DIRECTORY_SEPARATOR, '_', $sDirectory), '_');
+
+                //  Compress the file
+                $this->oOutput->write('↳ Compressing... ');
+                $aFiles['COMPRESSED'] = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . '.tar.gz';
+                $this->exec('tar -czf ' . $aFiles['COMPRESSED'] . ' -C ' . $sDirectory . ' .');
+                $this->oOutput->writeln('<info>done</info>');
+
+                //  Push to S3s
+                $this->pushToS3($aFiles['COMPRESSED'], 'dir/' . $sSafeDirectory);
+
+            } catch (CliException $e) {
+
+                $this->oOutput->writeln('');
+                $this->error(
+                    array_merge(
+                        ['An error occurred:'],
+                        [$e->getMessage()],
+                        $e->getDetails()
+                    )
+                );
+
+                //  @todo (Pablo - 2019-05-24) - Contact someone about this?
+
+            } finally {
+
+                if (!empty($aFiles)) {
+                    $this->oOutput->write('↳ Cleaning up... ');
+                    foreach ($aFiles as $sFile) {
+                        if (is_file($sFile)) {
+                            unlink($sFile);
+                        }
+                    }
+                    $this->oOutput->writeln('<info>done</info>');
+                }
+            }
+        }
 
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('🎉 Project has been backed up to <comment>~~~bucket-name/domain/directories/backup-file~~~</comment>');
+        $this->oOutput->writeln('🎉 Completed backup job');
         $this->oOutput->writeln('');
         return $this;
     }

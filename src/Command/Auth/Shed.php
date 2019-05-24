@@ -2,10 +2,7 @@
 
 namespace Shed\Cli\Command\Auth;
 
-use Exception;
 use Shed\Cli\Command\Auth;
-use Shed\Cli\Helper\Debug;
-use Shed\Cli\Server\Provider\Api;
 use Shed\Cli\Service\ShedApi;
 
 final class Shed extends Auth
@@ -47,8 +44,6 @@ final class Shed extends Auth
      * Verify a token is valid
      *
      * @param string $sToken The token to validate
-     *
-     * @throws Exception
      */
     protected function testToken(string $sToken): void
     {
