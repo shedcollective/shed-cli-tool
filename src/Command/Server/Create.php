@@ -3,7 +3,9 @@
 namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command;
+use Shed\Cli\Entity\Server;
 use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Entity\Provider\Account;
@@ -159,6 +161,13 @@ final class Create extends Command
      */
     private $sDeployKey = '';
 
+    /**
+     * The Shed Account to use
+     *
+     * @var Account
+     */
+    private $oShedAccount;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -286,18 +295,25 @@ final class Create extends Command
             }
         }
 
-        $aAccounts = Command\Auth\Shed::getAccounts();
-        if (empty($aAccounts)) {
-            throw new NotValidException('No shedcollective.com accounts detected');
+        $aShedAccounts = Command\Auth\Shed::getAccounts();
+        if (empty($aShedAccounts)) {
+            throw new NotValidException(
+                'No shedcollective.com accounts detected'
+            );
+        } elseif (count($aShedAccounts) !== 1) {
+            throw new NotValidException(
+                'Only one shedcollective.com account permitted, ' . count($aShedAccounts) . ' detected'
+            );
         }
-        $oAccount = reset($aAccounts);
+        $this->oShedAccount = reset($aShedAccounts);
         try {
 
-            ShedApi::testToken($oAccount->getToken());
+            ShedApi::testToken($this->oShedAccount->getToken());
 
         } catch (\Exception $e) {
             throw new NotValidException(
-                'Access token for shedcollective.com account "' . $oAccount->getLabel() . '" is invalid'
+                'Access token for shedcollective.com account "' . $this->oShedAccount->getLabel() . '" is invalid: ' .
+                $e->getMessage()
             );
         }
 
@@ -853,10 +869,19 @@ final class Create extends Command
             $this->aKeywords,
             $this->sDeployKey
         );
-
-        ShedApi::createServer($oServer);
-
         $this->oOutput->writeln('<info>done!</info>');
+
+        try {
+            $this->oOutput->write('Registering with the Shed API...');
+            ShedApi::createServer($this->oShedAccount, $oServer);
+            $this->oOutput->writeln('<info>done!</info>');
+        } catch (\Exception $e) {
+            $this->warning(array_filter([
+                'Failed to register server with the Shed API',
+                $e->getMessage(),
+            ]));
+        }
+
         $this->oOutput->writeln('');
         $this->oOutput->writeln('<comment>ID</comment>:         ' . $oServer->getId());
         $this->oOutput->writeln('<comment>IP Address</comment>: ' . $oServer->getIp());
