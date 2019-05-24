@@ -36,19 +36,19 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     const SIZES = [
         [
-            'slug'  => '1gb',
+            'slug'  => 's-1vcpu-1gb',
             'label' => 'Micro ($5/m; 1Gb)',
         ],
         [
-            'slug'  => '2gb',
+            'slug'  => 's-1vcpu-2gb',
             'label' => 'Small ($10/m - 2Gb)',
         ],
         [
-            'slug'  => '4gb',
+            'slug'  => 's-2vcpu-4gb',
             'label' => 'Medium ($20/m - 4Gb)',
         ],
         [
-            'slug'  => '8gb',
+            'slug'  => 's-4vcpu-8gb',
             'label' => 'Large ($40/m - 8Gb)',
         ],
     ];
