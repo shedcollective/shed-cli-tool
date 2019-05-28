@@ -21,6 +21,20 @@ final class Amazon extends Auth
      */
     const LABEL = 'Amazon';
 
+    /**
+     * The question for asking the account label
+     *
+     * @var string
+     */
+    const QUESTION_LABEL = 'Access Key';
+
+    /**
+     * The question for asking the account token
+     *
+     * @var string
+     */
+    const QUESTION_TOKEN = 'Access Secret';
+
     // --------------------------------------------------------------------------
 
     /**
@@ -28,7 +42,16 @@ final class Amazon extends Auth
      */
     protected function help(): void
     {
-        //  @todo (Pablo - 2019-02-18) - Write help
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('To generate new access credentials:');
+        $this->oOutput->writeln('');
+        $this->oOutput->writeln('<comment>1:</comment> Generate a new identity here: <comment>https://console.aws.amazon.com/iam/home</comment>');
+        $this->oOutput->writeln('  <comment>a:</comment> Enable programmatic access');
+        $this->oOutput->writeln('  <comment>b:</comment> Add to the <comment>SHED-CLI-TOOL</comment> user group');
+        $this->oOutput->writeln('<comment>2:</comment> Run: <comment>shed auth:amazon</comment>');
+        $this->oOutput->writeln('<comment>3:</comment> Specify the access key');
+        $this->oOutput->writeln('<comment>4:</comment> Specify the access token');
+        $this->oOutput->writeln('');
     }
 
     // --------------------------------------------------------------------------
@@ -40,6 +63,6 @@ final class Amazon extends Auth
      */
     protected function testToken(string $sToken): void
     {
-        Api\Amazon::test($sToken);
+        Api\Amazon::test($this->sLabel, $sToken);
     }
 }

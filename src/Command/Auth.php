@@ -49,14 +49,14 @@ abstract class Auth extends Command
      *
      * @var string
      */
-    private $sLabel = null;
+    protected $sLabel = null;
 
     /**
      * The token
      *
      * @var string
      */
-    private $sToken = null;
+    protected $sToken = null;
 
     // --------------------------------------------------------------------------
 

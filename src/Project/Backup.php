@@ -5,6 +5,7 @@ namespace Shed\Cli\Project;
 use DateTime;
 use Exception;
 use Shed\Cli\Command;
+use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Helper\System;
@@ -137,14 +138,43 @@ abstract class Backup extends Command
 
         if (empty($this->sDomain)) {
             throw new CliException('Missing required option "domain" [--domain]');
-        } elseif (empty($this->sS3Key)) {
-            throw new CliException('Missing required option "s3-key" [--s3-key]');
-        } elseif (empty($this->sS3Secret)) {
-            throw new CliException('Missing required option "s3-secret" [--s3-secret]');
         } elseif (empty($this->sS3Bucket)) {
             throw new CliException('Missing required option "s3-bucket" [--s3-bucket]');
         } elseif (empty($this->sTmpDir)) {
             throw new CliException('Missing required option "tmp-dir" [--tmp-dir]');
+        }
+
+        //  If no access credentials are given, auto-detect from configs
+        if (empty($this->sS3Key)) {
+
+            /** @var Account[] $aAccounts */
+            $aAccounts = Command\Auth\Amazon::getAccounts();
+
+            if (count($aAccounts) === 0) {
+                throw new CliException(
+                    'No Amazon credentials registered, specify details using --s3-key  and --s3-secret'
+                );
+            } elseif (count($aAccounts) === 1) {
+                $oAccount = reset($aAccounts);
+            } else {
+
+                $iAccountIndex = $this->choose(
+                    'Amazon Account',
+                    array_map(function (Account $oAccount) {
+                        return $oAccount->getLabel();
+                    }, $aAccounts)
+                );
+
+                $oAccount = $aAccounts[$iAccountIndex];
+            }
+
+            $this->sS3Key    = $oAccount->getLabel();
+            $this->sS3Secret = $oAccount->getToken();
+
+        } elseif (empty($this->sS3Secret)) {
+            $oAccount        = Command\Auth\Amazon::getAccountByLabel($this->sS3Key);
+            $this->sS3Key    = $oAccount->getLabel();
+            $this->sS3Secret = $oAccount->getToken();
         }
 
         return $this;
