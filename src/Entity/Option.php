@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity;
 
 use Shed\Cli\Entity;
+use stdClass;
 
 final class Option extends Entity
 {
@@ -161,7 +162,7 @@ final class Option extends Entity
      *
      * @param array $aOptions The selected options
      *
-     * @return string
+     * @return stdClass
      */
     public function summarise(array $aOptions = []): string
     {
@@ -174,6 +175,9 @@ final class Option extends Entity
             $sSummary = $this->mValue;
         }
 
-        return '<comment>' . $this->getLabel() . '</comment>: ' . $sSummary;
+        return (object) [
+            'label'   => $this->getLabel(),
+            'summary' => $sSummary,
+        ];
     }
 }

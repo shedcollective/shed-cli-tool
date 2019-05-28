@@ -2,6 +2,7 @@
 
 namespace Shed\Cli\Project\Framework\Frontend;
 
+use Shed\Cli\Entity\Option;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\System;
@@ -58,7 +59,7 @@ final class Webpack extends Base implements Framework
     /**
      * The configurable options for the framework
      *
-     * @return array
+     * @return Option[]
      */
     public function getOptions(): array
     {

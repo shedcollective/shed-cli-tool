@@ -3,9 +3,9 @@
 namespace Shed\Cli\Command\Project;
 
 use Shed\Cli\Command;
-use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\System;
@@ -511,27 +511,27 @@ final class Create extends Command
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
-        $this->oOutput->writeln('');
-        //  @todo (Pablo - 2019-04-01) - Use $this->keyValueList() somehow
-        $this->oOutput->writeln('<comment>Project Name</comment>:  ' . $this->sProjectName);
-        $this->oOutput->writeln('<comment>Project Slug</comment>:  ' . $this->sProjectSlug);
-        $this->oOutput->writeln('<comment>Directory</comment>:     ' . $this->sDir);
 
-        $this->oOutput->writeln('<comment>Backend Framework</comment>:  ' . $this->oBackendFramework->getLabel());
+        $aKeyValues = [
+            'Project Name' => $this->sProjectName,
+            'Project Slug' => $this->sProjectSlug,
+            'Directory'    => $this->sDir,
+        ];
+
+        $aKeyValues['Backend Framework'] = $this->oBackendFramework->getLabel();
         foreach ($this->oBackendFramework->getOptions() as $sKey => $oOption) {
-            $this->oOutput->writeln(
-                $oOption->summarise($this->aBackendFrameworkOptions)
-            );
+            $oSummary                     = $oOption->summarise($this->aBackendFrameworkOptions);
+            $aKeyValues[$oSummary->label] = $oSummary->summary;
         }
 
+        $aKeyValues['Frontend Framework'] = $this->oFrontendFramework->getLabel();
         $this->oOutput->writeln('<comment>Frontend Framework</comment>:  ' . $this->oFrontendFramework->getLabel());
         foreach ($this->oFrontendFramework->getOptions() as $sKey => $oOption) {
-            $this->oOutput->writeln(
-                $oOption->summarise($this->aFrontendFrameworkOptions)
-            );
+            $oSummary                     = $oOption->summarise($this->aFrontendFrameworkOptions);
+            $aKeyValues[$oSummary->label] = $oSummary->summary;
         }
 
-        $this->oOutput->writeln('');
+        $this->keyValueList($aKeyValues);
         return $this->confirm('Continue?');
     }
 
@@ -687,8 +687,8 @@ final class Create extends Command
     public static function updateWebserverEnvVars($sPath, array $aVars): void
     {
         $aConfig = Yaml::parseFile($sPath . 'docker-compose.override.yml');
-        if (empty($aConfig['webserver']['environment'])) {
-            $aConfig['webserver']['environment'] = [];
+        if (empty($aConfig['services']['webserver']['environment'])) {
+            $aConfig['services']['webserver']['environment'] = [];
         }
 
         $aEnvVars = [];
@@ -697,7 +697,7 @@ final class Create extends Command
                 list($sKey, $sValue) = explode('=', $sInput, 2);
                 $aEnvVars[$sKey] = $sValue;
             },
-            $aConfig['webserver']['environment']
+            $aConfig['services']['webserver']['environment']
         );
 
         $aEnvVars = array_merge(
@@ -705,10 +705,9 @@ final class Create extends Command
             $aVars
         );
 
-
-        $aConfig['webserver']['environment'] = [];
+        $aConfig['services']['webserver']['environment'] = [];
         foreach ($aEnvVars as $sKey => $sValue) {
-            $aConfig['webserver']['environment'][] = $sKey . '=' . $sValue;
+            $aConfig['services']['webserver']['environment'][] = $sKey . '=' . $sValue;
         }
 
         file_put_contents(
