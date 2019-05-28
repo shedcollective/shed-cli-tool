@@ -72,6 +72,7 @@ final class Create extends Command
      * The available frameworks
      *
      * @var array
+     * @todo (Pablo - 2019-02-12) - Auto-detect supported backend environments
      */
     const FRAMEWORKS = [
         self::FRAMEWORK_NAILS,
@@ -173,7 +174,6 @@ final class Create extends Command
      */
     protected function configure()
     {
-        //  @todo (Pablo - 2019-02-12) - Auto-detect supported backend environments
         $this
             ->setName('server:create')
             ->setDescription('Create a new server')
@@ -522,7 +522,7 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Looks up and sets the backend framework
+     * Looks up and sets the provider
      *
      * @return $this
      */
@@ -820,27 +820,27 @@ final class Create extends Command
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Does this all look OK?');
-        //  @todo (Pablo - 2019-04-01) - Use $this->keyValueList() somehow
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>Domain</comment>: ' . $this->sDomain);
-        $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$this->sEnvironment]);
-        $this->oOutput->writeln('<comment>Framework</comment>: ' . static::FRAMEWORKS[$this->sFramework]);
-        $this->oOutput->writeln('<comment>Provider</comment>: ' . $this->oProvider->getLabel());
-        $this->oOutput->writeln('<comment>Account</comment>: ' . $this->oAccount->getLabel());
-        $this->oOutput->writeln('<comment>Region</comment>: ' . $this->oRegion->getLabel());
-        $this->oOutput->writeln('<comment>Size</comment>: ' . $this->oSize->getLabel());
-        $this->oOutput->writeln('<comment>Image</comment>: ' . $this->oImage->getLabel());
+
+        $aKeyValues = [
+            'Domain'      => $this->sDomain,
+            'Environment' => static::ENVIRONMENTS[$this->sEnvironment],
+            'Framework'   => static::FRAMEWORKS[$this->sFramework],
+            'Provider'    => $this->oProvider->getLabel(),
+            'Account'     => $this->oAccount->getLabel(),
+            'Region'      => $this->oRegion->getLabel(),
+            'Size'        => $this->oSize->getLabel(),
+            'Image'       => $this->oImage->getLabel(),
+        ];
 
         foreach ($this->aProviderOptions as $sKey => $oOption) {
-            $this->oOutput->writeln(
-                $oOption->summarise($this->aProviderOptions)
-            );
+            $oSummary                     = $oOption->summarise($this->aProviderOptions);
+            $aKeyValues[$oSummary->label] = $oSummary->summary;
         }
 
-        $this->oOutput->writeln('<comment>Keywords</comment>: ' . implode(', ', $this->aKeywords));
-        $this->oOutput->writeln('<comment>Deploy Key</comment>: ' . ($this->sDeployKey ? 'Set' : 'None'));
+        $aKeyValues['Keywords']   = implode(', ', $this->aKeywords);
+        $aKeyValues['Deploy Key'] = $this->sDeployKey ? 'Set' : 'None';
 
-        $this->oOutput->writeln('');
+        $this->keyValueList($aKeyValues);
         return $this->confirm('Continue?');
     }
 

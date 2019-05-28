@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Interfaces;
 
+use Shed\Cli\Entity\Option;
+
 interface Framework
 {
     /**
@@ -16,7 +18,7 @@ interface Framework
     /**
      * The configurable options for the framework
      *
-     * @return array
+     * @return Option[]
      */
     public function getOptions(): array;
 

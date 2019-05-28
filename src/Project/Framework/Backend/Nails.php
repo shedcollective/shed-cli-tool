@@ -3,6 +3,7 @@
 namespace Shed\Cli\Project\Framework\Backend;
 
 use Shed\Cli\Command\Project\Create;
+use Shed\Cli\Entity\Option;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Framework;
 use Shed\Cli\Project\Framework\Base;
@@ -33,7 +34,7 @@ final class Nails extends Base implements Framework
     /**
      * The configurable options for the framework
      *
-     * @return array
+     * @return Option[]
      */
     public function getOptions(): array
     {
