@@ -2,12 +2,14 @@
 
 namespace Shed\Cli\Command\Project\Backup;
 
+use DateTime;
 use Exception;
 use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Exceptions\Directory\FailedToCreateException;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
+use Shed\Cli\Helper\Config;
 use Shed\Cli\Project\Backup;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -50,7 +52,7 @@ final class Database extends Backup
     {
         parent::configure();
         $this
-            ->setName('project:backup:db')
+            ->setName('project:backup:database')
             ->setDescription('Back up a project\'s database')
             ->setHelp('This command will backup a project\'s database to S3')
             ->addOption(
@@ -255,6 +257,9 @@ final class Database extends Backup
                 }
             }
         }
+
+        //  Not the last completed backup time
+        Config::set('project.backup.database', (new DateTime())->format('Y-m-d H:i:s'));
 
         $this->oOutput->writeln('');
         $this->oOutput->writeln('🎉 Completed backup job');

@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Helper;
 
+use stdClass;
+
 final class Config
 {
     /**
@@ -23,7 +25,7 @@ final class Config
     /**
      * The config object
      *
-     * @var \stdClass
+     * @var stdClass
      */
     static $oConfig;
 
