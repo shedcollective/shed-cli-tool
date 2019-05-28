@@ -2,6 +2,15 @@
 
 namespace Shed\Cli\Server\Provider;
 
+use Exception;
+use Google_Service_Compute_AccessConfig;
+use Google_Service_Compute_AttachedDisk;
+use Google_Service_Compute_Disk;
+use Google_Service_Compute_Instance;
+use Google_Service_Compute_Metadata;
+use Google_Service_Compute_MetadataItems;
+use Google_Service_Compute_NetworkInterface;
+use Google_Service_Compute_Tags;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
@@ -260,7 +269,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
      *
      * @return Entity\Server
-     * @throws \Exception
+     * @throws Exception
      */
     public function create(
         string $sDomain,
@@ -301,7 +310,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             //  Disks
             //  https://github.com/PaulRashidi/compute-getting-started-php/blob/master/app.php#L209
             //  Create a new boot disks
-            $oDisk = new \Google_Service_Compute_Disk();
+            $oDisk = new Google_Service_Compute_Disk();
             $oDisk->setName($sDiskName);
             $oDisk->setSourceImage(static::BASE_IMAGE);
             $oDisk->setSizeGb(10);
@@ -327,7 +336,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 throw new CliException('Failed to fetch boot disk');
             }
 
-            $oPrimaryDisk = new \Google_Service_Compute_AttachedDisk();
+            $oPrimaryDisk = new Google_Service_Compute_AttachedDisk();
             $oPrimaryDisk->setBoot('TRUE');
             $oPrimaryDisk->setDeviceName('primary');
             $oPrimaryDisk->setMode('READ_WRITE');
@@ -337,25 +346,25 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             // --------------------------------------------------------------------------
 
             //  Define meta data
-            $oBlockKeys = new \Google_Service_Compute_MetadataItems();
+            $oBlockKeys = new Google_Service_Compute_MetadataItems();
             $oBlockKeys->setKey('block-project-ssh-keys');
             $oBlockKeys->setValue(true);
 
-            $oStartupScript = new \Google_Service_Compute_MetadataItems();
+            $oStartupScript = new Google_Service_Compute_MetadataItems();
             $oStartupScript->setKey('startup-script');
             $oStartupScript->setValue(static::getStartupScript($oImage, $sDeployKey));
 
-            $oMetadata = new \Google_Service_Compute_Metadata();
+            $oMetadata = new Google_Service_Compute_Metadata();
             $oMetadata->setItems([$oBlockKeys, $oStartupScript]);
 
             // --------------------------------------------------------------------------
 
             //  Define the Networks
-            $oAccessConfig = new \Google_Service_Compute_AccessConfig();
+            $oAccessConfig = new Google_Service_Compute_AccessConfig();
             $oAccessConfig->setName('External NAT');
             $oAccessConfig->setType('ONE_TO_ONE_NAT');
 
-            $oNetwork = new \Google_Service_Compute_NetworkInterface();
+            $oNetwork = new Google_Service_Compute_NetworkInterface();
             $oNetwork->setNetwork('/global/networks/default');
             $oNetwork->setAccessConfigs([$oAccessConfig]);
 
@@ -365,13 +374,13 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $aKeywords[] = 'https-server';
             $aKeywords[] = 'http-server';
 
-            $oTags = new \Google_Service_Compute_Tags();
+            $oTags = new Google_Service_Compute_Tags();
             $oTags->setItems($aKeywords);
 
             // --------------------------------------------------------------------------
 
             //  Make the request
-            $oRequestBody = new \Google_Service_Compute_Instance();
+            $oRequestBody = new Google_Service_Compute_Instance();
 
             //  Request Body
             $oRequestBody->setName($sName);
@@ -424,7 +433,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 ->setRegion($oRegion)
                 ->setSize($oSize);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             if (!empty($oBootDisk)) {
                 $oApi

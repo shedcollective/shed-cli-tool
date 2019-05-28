@@ -1,6 +1,6 @@
 {
     "name": "shedcollective/command-line-tool",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "homepage": "https://shedcollective.com",
     "description": "The command line tool for simplifying life at Shed",
     "license": "MIT",
@@ -26,7 +26,8 @@
         "symfony/yaml": "4.2.2",
         "toin0u/digitalocean-v2": "^2.2",
         "kriswallsmith/buzz": "^0.15.2",
-        "google/apiclient": "^2.0"
+        "google/apiclient": "^2.0",
+        "aws/aws-sdk-php": "^3.95"
     },
     "require-dev": {
         "phpunit/phpunit": "7.5.1"

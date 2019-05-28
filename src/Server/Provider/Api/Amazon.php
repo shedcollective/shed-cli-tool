@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Server\Provider\Api;
 
+use Aws\Ec2\Ec2Client;
+use Aws\Sts\StsClient;
 use Shed\Cli\Entity\Provider\Account;
 
 final class Amazon
@@ -16,7 +18,7 @@ final class Amazon
     /**
      * The Digital Ocean API
      *
-     * @var \Google_Service_Compute
+     * @var Ec2Client
      */
     private $oApi;
 
@@ -30,7 +32,15 @@ final class Amazon
     public function __construct($oAccount)
     {
         $this->oAccount = $oAccount;
-        //  @todo (Pablo - 2019-02-18) - Set up API
+
+        $this->oApi = new Ec2Client([
+            'version'     => 'latest',
+            'region'      => 'eu-west-1',
+            'credentials' => [
+                'key'    => $this->oAccount->getLabel(),
+                'secret' => $this->oAccount->getToken(),
+            ],
+        ]);
     }
 
     // --------------------------------------------------------------------------
@@ -50,22 +60,30 @@ final class Amazon
     /**
      * Return the digital Ocean API
      */
-    public function getApi()
+    public function getApi(): Ec2Client
     {
-        //  @todo (Pablo - 2019-02-18) - Define type hints
         return $this->oApi;
     }
 
     // --------------------------------------------------------------------------
 
-
     /**
      * Test the connection
      *
-     * @param string $sToken The token to test
+     * @param string $sAccessKey    The access key to test
+     * @param string $sAccessSecret The access secret to test
      */
-    public static function test(string $sToken)
+    public static function test(string $sAccessKey, string $sAccessSecret)
     {
-        //  @todo (Pablo - 2019-02-18) - test the token
+        $client = new StsClient([
+            'version'     => 'latest',
+            'region'      => 'eu-west-1',
+            'credentials' => [
+                'key'    => $sAccessKey,
+                'secret' => $sAccessSecret,
+            ],
+        ]);
+
+        $client->getCallerIdentity();
     }
 }

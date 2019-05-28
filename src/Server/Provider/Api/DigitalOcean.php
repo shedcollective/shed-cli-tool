@@ -4,8 +4,8 @@ namespace Shed\Cli\Server\Provider\Api;
 
 use DigitalOceanV2\Adapter\BuzzAdapter;
 use DigitalOceanV2\Api;
-use DigitalOceanV2\Entity;
 use DigitalOceanV2\DigitalOceanV2;
+use DigitalOceanV2\Entity;
 use Shed\Cli\Entity\Provider\Account;
 
 final class DigitalOcean
@@ -80,7 +80,7 @@ final class DigitalOcean
     /**
      * Return the DO Account API
      *
-     * @return \DigitalOceanV2\Api\Account
+     * @return Api\Account
      */
     public function getAccountApi(): Api\Account
     {
@@ -92,7 +92,7 @@ final class DigitalOcean
     /**
      * Return the DO Region API
      *
-     * @return \DigitalOceanV2\Api\Region
+     * @return Api\Region
      */
     public function getRegionApi(): Api\Region
     {
@@ -104,7 +104,7 @@ final class DigitalOcean
     /**
      * Return the DO Image API
      *
-     * @return \DigitalOceanV2\Api\Image
+     * @return Api\Image
      */
     public function getImageApi(): Api\Image
     {
@@ -116,7 +116,7 @@ final class DigitalOcean
     /**
      * Return the DO Droplet API
      *
-     * @return \DigitalOceanV2\Api\Droplet
+     * @return Api\Droplet
      */
     public function getDropletApi(): Api\Droplet
     {

@@ -2,10 +2,14 @@
 
 namespace Shed\Cli\Server\Provider\Api;
 
+use Google_Client;
+use Google_Service_Compute;
+use Google_Service_Compute_RegionList;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Exceptions\Auth\AccountNotFoundException;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\Updates;
+use stdClass;
 
 final class GoogleCloud
 {
@@ -19,14 +23,14 @@ final class GoogleCloud
     /**
      * The Google Cloud API Client
      *
-     * @var \Google_Client
+     * @var Google_Client
      */
     private $oClient;
 
     /**
      * The Google Cloud Compute API
      *
-     * @var \Google_Service_Compute
+     * @var Google_Service_Compute
      */
     private $oApi;
 
@@ -43,12 +47,12 @@ final class GoogleCloud
 
         putenv('GOOGLE_APPLICATION_CREDENTIALS=' . $oAccount->getToken());
 
-        $this->oClient = new \Google_Client();
+        $this->oClient = new Google_Client();
         $this->oClient->setApplicationName('Shed CLI Tool ' . Updates::getCurrentVersion());
         $this->oClient->useApplicationDefaultCredentials();
-        $this->oClient->addScope(\Google_Service_Compute::COMPUTE);
+        $this->oClient->addScope(Google_Service_Compute::COMPUTE);
 
-        $this->oApi = new \Google_Service_Compute($this->oClient);
+        $this->oApi = new Google_Service_Compute($this->oClient);
     }
 
     // --------------------------------------------------------------------------
@@ -68,9 +72,9 @@ final class GoogleCloud
     /**
      * Return the Google Cloud Client
      *
-     * @return \Google_Client
+     * @return Google_Client
      */
-    public function getClient(): \Google_Client
+    public function getClient(): Google_Client
     {
         return $this->oClient;
     }
@@ -80,9 +84,9 @@ final class GoogleCloud
     /**
      * Return the Google Cloud Compute API
      *
-     * @return \Google_Service_Compute
+     * @return Google_Service_Compute
      */
-    public function getApi(): \Google_Service_Compute
+    public function getApi(): Google_Service_Compute
     {
         return $this->oApi;
     }
@@ -111,9 +115,9 @@ final class GoogleCloud
     /**
      * Decode the active key
      *
-     * @return \stdClass
+     * @return stdClass
      */
-    public function getKeyObject(): \stdClass
+    public function getKeyObject(): stdClass
     {
         return json_decode(file_get_contents($this->oAccount->getToken()));
     }
@@ -123,9 +127,9 @@ final class GoogleCloud
     /**
      * Return available regions
      *
-     * @return \Google_Service_Compute_RegionList
+     * @return Google_Service_Compute_RegionList
      */
-    public function getRegions(): \Google_Service_Compute_RegionList
+    public function getRegions(): Google_Service_Compute_RegionList
     {
         return $this
             ->getApi()
@@ -141,7 +145,7 @@ final class GoogleCloud
     /**
      * Wait for an operation to complete
      *
-     * @param \Google_Service_Compute $oService   The Compute service
+     * @param Google_Service_Compute $oService   The Compute service
      * @param string                  $sProjectId The Project ID
      * @param string                  $sZone      The Zone
      * @param string                  $sOperation The operation to wait for
@@ -149,7 +153,7 @@ final class GoogleCloud
      * @return bool
      */
     public static function wait(
-        \Google_Service_Compute $oService,
+        Google_Service_Compute $oService,
         string $sProjectId,
         string $sZone,
         string $sOperation
