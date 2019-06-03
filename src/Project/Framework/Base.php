@@ -20,7 +20,7 @@ abstract class Base
     {
         $aConfig = Yaml::parseFile($sPath . 'docker-compose.yml');
 
-        $aConfig['webserver']['build'] = 'docker/webserver/' . $sDesiredDockerFile;
+        $aConfig['services']['webserver']['build'] = 'docker/webserver/' . $sDesiredDockerFile;
 
         file_put_contents(
             $sPath . 'docker-compose.yml',
