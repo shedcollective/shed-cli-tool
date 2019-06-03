@@ -224,7 +224,7 @@ final class Database extends Backup
                 $aFiles['COMPRESSED'] = $aFiles['TEMP'] . '.tar.gz';
                 $this->exec(implode(' ', [
                     'tar -czf ' . $aFiles['COMPRESSED'],
-                    ' -C ' . dirname($aFiles['TEMP']) . ' .',
+                    ' -C ' . dirname($aFiles['TEMP']) . ' ' . basename($aFiles['TEMP']),
                 ]));
                 $this->oOutput->writeln('<info>done</info>');
 
