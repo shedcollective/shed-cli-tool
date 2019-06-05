@@ -209,9 +209,9 @@ final class Database extends Backup
 
                 $sDumpCommand = implode(' ', [
                     'mysqldump',
-                    '-h' . $this->sMysqlHost,
-                    '-u' . $this->sMysqlUser,
-                    '-p' . $this->sMysqlPassword,
+                    '-h\'' . $this->sMysqlHost . '\'',
+                    '-u\'' . $this->sMysqlUser . '\'',
+                    '-p\'' . $this->sMysqlPassword . '\'',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
                 ]);
