@@ -223,7 +223,7 @@ abstract class Backup extends Command
     {
         exec($sCommand . ' 2>&1', $aOutput, $iReturnVar);
         if ($iReturnVar !== 0) {
-            $e = new CliException();
+            $e = new CliException('Command failed: "' . $sCommand . '"');
             $e->setDetails($aOutput);
             throw $e;
         }

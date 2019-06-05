@@ -160,10 +160,12 @@ final class Directories extends Backup
 
                 $this->oOutput->writeln('');
                 $this->error(
-                    array_merge(
-                        ['An error occurred:'],
-                        [$e->getMessage()],
-                        $e->getDetails()
+                    array_filter(
+                        array_merge(
+                            ['An error occurred:'],
+                            [$e->getMessage()],
+                            $e->getDetails()
+                        )
                     )
                 );
 
