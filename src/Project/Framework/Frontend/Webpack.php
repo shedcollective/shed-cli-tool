@@ -92,6 +92,11 @@ final class Webpack extends Base implements Framework
                 'WEBPACK_INPUT_PATH'  => './assets/js/',
                 'WEBPACK_OUTPUT_PATH' => './assets/build/',
             ];
+        } elseif ($oBackendFramework instanceof WordPress) {
+            return [
+                'WEBPACK_INPUT_PATH'  => './assets/js/',
+                'WEBPACK_OUTPUT_PATH' => './assets/build/',
+            ];
         } else {
             return [];
         }
@@ -127,20 +132,14 @@ final class Webpack extends Base implements Framework
 
         //  Install
         if ($oOtherFramework instanceof Laravel) {
-            $this->installLaravel($sZipPath, $sPath);
+            $this->installLaravel($sZipPath, $sPath, $aInstallOptions);
         } elseif ($oOtherFramework instanceof Nails) {
-            $this->installNails($sZipPath, $sPath);
+            $this->installNails($sZipPath, $sPath, $aInstallOptions);
         } elseif ($oOtherFramework instanceof None) {
-            $this->installNone($sZipPath, $sPath);
+            $this->installNone($sZipPath, $sPath, $aInstallOptions);
         } elseif ($oOtherFramework instanceof WordPress) {
-            $this->installWordPress($sZipPath, $sPath);
+            $this->installWordPress($sZipPath, $sPath, $aInstallOptions);
         }
-
-        //  Update package.json
-        $sPackagePath   = $sPath . 'www/package.json';
-        $oPackage       = json_decode(file_get_contents($sPackagePath));
-        $oPackage->name = $aInstallOptions['slug'];
-        file_put_contents($sPackagePath, json_encode($oPackage, JSON_PRETTY_PRINT));
     }
 
     // --------------------------------------------------------------------------
@@ -148,10 +147,11 @@ final class Webpack extends Base implements Framework
     /**
      * Installs for Laravel
      *
-     * @param string $sZipPath The path to the Zip
-     * @param string $sPath    the path to the project
+     * @param string $sZipPath        The path to the Zip
+     * @param string $sPath           The path to the project
+     * @param array  $aInstallOptions The install options
      */
-    private function installLaravel($sZipPath, $sPath): void
+    private function installLaravel($sZipPath, $sPath, array $aInstallOptions = []): void
     {
         Zip::unzip(
             $sZipPath,
@@ -169,6 +169,8 @@ final class Webpack extends Base implements Framework
         $aCommands[] = 'rm -rf ' . $sPath . 'www/resources' . static::FRONTEND_BOOTSTRAPPER_FOLDER;
 
         System::exec($aCommands);
+
+        $this->updatePackageJson($sPath . 'www/package.json', $aInstallOptions['slug']);
     }
 
     // --------------------------------------------------------------------------
@@ -176,10 +178,11 @@ final class Webpack extends Base implements Framework
     /**
      * Installs for Nails
      *
-     * @param string $sZipPath The path to the Zip
-     * @param string $sPath    the path to the project
+     * @param string $sZipPath        The path to the Zip
+     * @param string $sPath           The path to the project
+     * @param array  $aInstallOptions The install options
      */
-    private function installNails($sZipPath, $sPath): void
+    private function installNails($sZipPath, $sPath, array $aInstallOptions = []): void
     {
         Zip::unzip(
             $sZipPath,
@@ -187,6 +190,8 @@ final class Webpack extends Base implements Framework
             static::FRONTEND_BOOTSTRAPPER_FOLDER . '/src'
         );
         System::exec('rm -rf ' . $sPath . 'www/' . static::FRONTEND_BOOTSTRAPPER_FOLDER);
+
+        $this->updatePackageJson($sPath . 'www/package.json', $aInstallOptions['slug']);
     }
 
     // --------------------------------------------------------------------------
@@ -194,10 +199,11 @@ final class Webpack extends Base implements Framework
     /**
      * Installs for None
      *
-     * @param string $sZipPath The path to the Zip
-     * @param string $sPath    the path to the project
+     * @param string $sZipPath        The path to the Zip
+     * @param string $sPath           The path to the project
+     * @param array  $aInstallOptions The install options
      */
-    private function installNone($sZipPath, $sPath): void
+    private function installNone($sZipPath, $sPath, array $aInstallOptions = []): void
     {
         Zip::unzip(
             $sZipPath,
@@ -205,6 +211,8 @@ final class Webpack extends Base implements Framework
             static::FRONTEND_BOOTSTRAPPER_FOLDER . '/src'
         );
         System::exec('rm -rf ' . $sPath . 'www/' . static::FRONTEND_BOOTSTRAPPER_FOLDER);
+
+        $this->updatePackageJson($sPath . 'www/package.json', $aInstallOptions['slug']);
     }
 
     // --------------------------------------------------------------------------
@@ -212,10 +220,38 @@ final class Webpack extends Base implements Framework
     /**
      * Installs for WordPress
      *
-     * @param string $sZipPath The path to the Zip
-     * @param string $sPath    the path to the project
+     * @param string $sZipPath        The path to the Zip
+     * @param string $sPath           The path to the project
+     * @param array  $aInstallOptions The install options
      */
-    private function installWordPress($sZipPath, $sPath): void
+    private function installWordPress($sZipPath, $sPath, array $aInstallOptions = []): void
     {
+        Zip::unzip(
+            $sZipPath,
+            $sPath . 'www/web/app/themes/custom-theme/',
+            static::FRONTEND_BOOTSTRAPPER_FOLDER . '/src'
+        );
+        System::exec('rm -rf ' . $sPath . 'www/web/app/themes/custom-theme/' . static::FRONTEND_BOOTSTRAPPER_FOLDER);
+        System::exec('rm -rf ' . $sPath . 'www/web/app/themes/custom-theme/js');
+        System::exec('rm -rf ' . $sPath . 'www/web/app/themes/custom-theme/sass');
+
+        $this->updatePackageJson($sPath . 'www/web/app/themes/custom-theme/package.json', $aInstallOptions['slug']);
+
+        //  @todo (Pablo - 2019-06-07) - Configure Wordpress to use these assets
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Updates the slug in package.json
+     *
+     * @param string $sPackagePath The path to package.json
+     * @param string $sSlug        The slug
+     */
+    private function updatePackageJson(string $sPackagePath, string $sSlug)
+    {
+        $oPackage       = json_decode(file_get_contents($sPackagePath));
+        $oPackage->name = $sSlug;
+        file_put_contents($sPackagePath, json_encode($oPackage, JSON_PRETTY_PRINT));
     }
 }
