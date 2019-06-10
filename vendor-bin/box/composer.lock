@@ -9,24 +9,25 @@
     "packages-dev": [
         {
             "name": "amphp/amp",
-            "version": "v2.1.1",
+            "version": "v2.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "7075ef7d74dbd32626bfd31c976b23055c3ade6a"
+                "reference": "f824f0df1da2cc042934fa267d7a227fff9276c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/7075ef7d74dbd32626bfd31c976b23055c3ade6a",
-                "reference": "7075ef7d74dbd32626bfd31c976b23055c3ade6a",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/f824f0df1da2cc042934fa267d7a227fff9276c9",
+                "reference": "f824f0df1da2cc042934fa267d7a227fff9276c9",
                 "shasum": ""
             },
             "require": {
                 "php": ">=7"
             },
             "require-dev": {
+                "amphp/php-cs-fixer-config": "dev-master",
                 "amphp/phpunit-util": "^1",
-                "friendsofphp/php-cs-fixer": "^2.3",
+                "ext-json": "*",
                 "phpstan/phpstan": "^0.8.5",
                 "phpunit/phpunit": "^6.0.9",
                 "react/promise": "^2"
@@ -81,7 +82,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2018-12-11T10:31:37+00:00"
+            "time": "2019-05-31T18:42:02+00:00"
         },
         {
             "name": "amphp/byte-stream",
@@ -1360,16 +1361,16 @@
         },
         {
             "name": "humbug/box",
-            "version": "3.7.3",
+            "version": "3.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/humbug/box.git",
-                "reference": "ca265788865bdbedf23d5d2a4efbd8de4bb06e7b"
+                "reference": "e7d8df3e38886bc51ba757ea4717fa60bcb30e48"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/humbug/box/zipball/ca265788865bdbedf23d5d2a4efbd8de4bb06e7b",
-                "reference": "ca265788865bdbedf23d5d2a4efbd8de4bb06e7b",
+                "url": "https://api.github.com/repos/humbug/box/zipball/e7d8df3e38886bc51ba757ea4717fa60bcb30e48",
+                "reference": "e7d8df3e38886bc51ba757ea4717fa60bcb30e48",
                 "shasum": ""
             },
             "require": {
@@ -1379,9 +1380,9 @@
                 "composer/xdebug-handler": "^1.3.2",
                 "ext-phar": "*",
                 "hoa/compiler": "^3.17",
-                "humbug/php-scoper": "^0.11",
+                "humbug/php-scoper": "~0.12",
                 "justinrainbow/json-schema": "^5.2",
-                "nikic/iter": "^1.6",
+                "nikic/iter": "^2.0",
                 "nikic/php-parser": "^4.2",
                 "ocramius/package-versions": "^1.4",
                 "opis/closure": "^3.2",
@@ -1451,27 +1452,27 @@
             "keywords": [
                 "phar"
             ],
-            "time": "2019-05-21T23:07:15+00:00"
+            "time": "2019-06-08T13:58:54+00:00"
         },
         {
             "name": "humbug/php-scoper",
-            "version": "0.11.4",
+            "version": "0.12.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/humbug/php-scoper.git",
-                "reference": "6fcb3ce7dce5b96e17fac2af17e801741f387df5"
+                "reference": "e69999927460a403f8f07bc91b1db2ff2fe934ce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/6fcb3ce7dce5b96e17fac2af17e801741f387df5",
-                "reference": "6fcb3ce7dce5b96e17fac2af17e801741f387df5",
+                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/e69999927460a403f8f07bc91b1db2ff2fe934ce",
+                "reference": "e69999927460a403f8f07bc91b1db2ff2fe934ce",
                 "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "^4.0",
                 "ocramius/package-versions": "^1.1",
-                "php": "^7.1",
-                "roave/better-reflection": "^3.0",
+                "php": "^7.2",
+                "roave/better-reflection": "^3.5",
                 "symfony/console": "^3.2 || ^4.0",
                 "symfony/filesystem": "^3.2 || ^4.0",
                 "symfony/finder": "^3.2 || ^4.0"
@@ -1481,8 +1482,8 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.1",
-                "humbug/box": "^3.1",
-                "phpunit/phpunit": "^7.0"
+                "humbug/box": "^3.8",
+                "phpunit/phpunit": "^8.0"
             },
             "bin": [
                 "bin/php-scoper"
@@ -1524,7 +1525,7 @@
                 }
             ],
             "description": "Prefixes all PHP namespaces in a file or directory.",
-            "time": "2018-11-13T08:46:34+00:00"
+            "time": "2019-06-09T17:44:41+00:00"
         },
         {
             "name": "jetbrains/phpstorm-stubs",
@@ -1633,28 +1634,35 @@
         },
         {
             "name": "nikic/iter",
-            "version": "v1.6.0",
+            "version": "v2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/iter.git",
-                "reference": "fed36b417ea93fe9b4b7cb2e2abf98d91092564c"
+                "reference": "1417341030a43fba0764486f7ad49ccc7b76e73f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/iter/zipball/fed36b417ea93fe9b4b7cb2e2abf98d91092564c",
-                "reference": "fed36b417ea93fe9b4b7cb2e2abf98d91092564c",
+                "url": "https://api.github.com/repos/nikic/iter/zipball/1417341030a43fba0764486f7ad49ccc7b76e73f",
+                "reference": "1417341030a43fba0764486f7ad49ccc7b76e73f",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.5.0"
+                "php": "^7.1"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4.0|~5.0"
+                "phpunit/phpunit": "~7.0"
             },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0-dev"
+                }
+            },
             "autoload": {
                 "files": [
-                    "src/bootstrap.php"
+                    "src/iter.func.php",
+                    "src/iter.php",
+                    "src/iter.rewindable.php"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1673,7 +1681,7 @@
                 "generator",
                 "iterator"
             ],
-            "time": "2017-11-10T22:56:03+00:00"
+            "time": "2019-05-12T20:50:16+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2526,16 +2534,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v4.3.0",
+            "version": "v4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "707b619d2c3bedf0224d56f95f77dabc60102305"
+                "reference": "d50bbeeb0e17e6dd4124ea391eff235e932cbf64"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/707b619d2c3bedf0224d56f95f77dabc60102305",
-                "reference": "707b619d2c3bedf0224d56f95f77dabc60102305",
+                "url": "https://api.github.com/repos/symfony/console/zipball/d50bbeeb0e17e6dd4124ea391eff235e932cbf64",
+                "reference": "d50bbeeb0e17e6dd4124ea391eff235e932cbf64",
                 "shasum": ""
             },
             "require": {
@@ -2597,20 +2605,20 @@
             ],
             "description": "Symfony Console Component",
             "homepage": "https://symfony.com",
-            "time": "2019-05-27T08:16:38+00:00"
+            "time": "2019-06-05T13:25:51+00:00"
         },
         {
             "name": "symfony/filesystem",
-            "version": "v4.3.0",
+            "version": "v4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/filesystem.git",
-                "reference": "988ab7d70c267c34efa85772ca20de3fad11c74b"
+                "reference": "bf2af40d738dec5e433faea7b00daa4431d0a4cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/filesystem/zipball/988ab7d70c267c34efa85772ca20de3fad11c74b",
-                "reference": "988ab7d70c267c34efa85772ca20de3fad11c74b",
+                "url": "https://api.github.com/repos/symfony/filesystem/zipball/bf2af40d738dec5e433faea7b00daa4431d0a4cf",
+                "reference": "bf2af40d738dec5e433faea7b00daa4431d0a4cf",
                 "shasum": ""
             },
             "require": {
@@ -2647,11 +2655,11 @@
             ],
             "description": "Symfony Filesystem Component",
             "homepage": "https://symfony.com",
-            "time": "2019-05-24T12:50:04+00:00"
+            "time": "2019-06-03T20:27:40+00:00"
         },
         {
             "name": "symfony/finder",
-            "version": "v4.3.0",
+            "version": "v4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/finder.git",
@@ -2930,16 +2938,16 @@
         },
         {
             "name": "symfony/process",
-            "version": "v4.3.0",
+            "version": "v4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "a5e3dd4e93a364668034a3cb6efa963d0b33ab45"
+                "reference": "856d35814cf287480465bb7a6c413bb7f5f5e69c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/a5e3dd4e93a364668034a3cb6efa963d0b33ab45",
-                "reference": "a5e3dd4e93a364668034a3cb6efa963d0b33ab45",
+                "url": "https://api.github.com/repos/symfony/process/zipball/856d35814cf287480465bb7a6c413bb7f5f5e69c",
+                "reference": "856d35814cf287480465bb7a6c413bb7f5f5e69c",
                 "shasum": ""
             },
             "require": {
@@ -2975,7 +2983,7 @@
             ],
             "description": "Symfony Process Component",
             "homepage": "https://symfony.com",
-            "time": "2019-05-26T20:47:49+00:00"
+            "time": "2019-05-30T16:10:05+00:00"
         },
         {
             "name": "symfony/service-contracts",
@@ -3037,16 +3045,16 @@
         },
         {
             "name": "symfony/var-dumper",
-            "version": "v4.3.0",
+            "version": "v4.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "2fd2ecf7913fb96f0c2e941ca15bb702184c6574"
+                "reference": "f974f448154928d2b5fb7c412bd23b81d063f34b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/2fd2ecf7913fb96f0c2e941ca15bb702184c6574",
-                "reference": "2fd2ecf7913fb96f0c2e941ca15bb702184c6574",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/f974f448154928d2b5fb7c412bd23b81d063f34b",
+                "reference": "f974f448154928d2b5fb7c412bd23b81d063f34b",
                 "shasum": ""
             },
             "require": {
@@ -3109,7 +3117,7 @@
                 "debug",
                 "dump"
             ],
-            "time": "2019-05-01T12:55:49+00:00"
+            "time": "2019-06-05T02:08:12+00:00"
         },
         {
             "name": "ulrichsg/getopt-php",
