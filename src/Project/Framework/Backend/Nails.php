@@ -94,7 +94,7 @@ final class Nails extends Base implements Framework
             '--app-skeleton="' . static::APP_SKELETON . '"',
             '--no-docker',
         ];
-        System::exec('nails new ' . implode(' ', $aArguments));
+        System::exec('nails new:project ' . implode(' ', $aArguments));
 
         return $this;
     }
