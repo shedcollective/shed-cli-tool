@@ -856,6 +856,8 @@ final class Create extends Command
         $this->oOutput->writeln('');
         $this->oOutput->write('Creating server...');
 
+        //  @todo (Pablo - 2019-08-02) - Register with Shed API, but in a pending state
+
         $oServer = $this->oProvider->create(
             $this->sDomain,
             static::ENVIRONMENTS[$this->sEnvironment],
@@ -871,6 +873,7 @@ final class Create extends Command
         $this->oOutput->writeln('<info>done!</info>');
 
         try {
+            //  @todo (Pablo - 2019-08-02) - Update server state with Shed API
             $this->oOutput->write('Registering with the Shed API...');
             ShedApi::createServer($this->oShedAccount, $oServer);
             $this->oOutput->writeln('<info>done!</info>');
