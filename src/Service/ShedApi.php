@@ -83,6 +83,7 @@ final class ShedApi
             'label'       => $oServer->getLabel(),
             'instance_id' => $oServer->getId(),
             'ip'          => $oServer->getIp(),
+            //  @todo (Pablo - 2019-08-02) - More details, like is_backups_enabled etc
             'domains'     => [
                 ['domain' => $oServer->getDomain()],
             ],

@@ -14,7 +14,6 @@ use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 use Shed\Cli\Server\Provider\Api;
 
-
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
     /**
@@ -37,19 +36,19 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     const SIZES = [
         [
             'slug'  => 's-1vcpu-1gb',
-            'label' => 'Micro ($5/m; 1Gb)',
+            'label' => 'Micro ($5/m; 1Gb, 1 VCPU)',
         ],
         [
             'slug'  => 's-1vcpu-2gb',
-            'label' => 'Small ($10/m - 2Gb)',
+            'label' => 'Small ($10/m - 2Gb, 1 VCPU)',
         ],
         [
             'slug'  => 's-2vcpu-4gb',
-            'label' => 'Medium ($20/m - 4Gb)',
+            'label' => 'Medium ($20/m - 4Gb, 2 VCPU)',
         ],
         [
             'slug'  => 's-4vcpu-8gb',
-            'label' => 'Large ($40/m - 8Gb)',
+            'label' => 'Large ($40/m - 8Gb, 4 VCPU)',
         ],
     ];
 
@@ -58,7 +57,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      *
      * @var string
      */
-    const BASE_IMAGE = 'ubuntu-18-10-x64';
+    const BASE_IMAGE = 'ubuntu-19-04-x64';
 
     // --------------------------------------------------------------------------
 
@@ -138,7 +137,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      *
      * @return array
      */
-    public function getSizes(Account $oAccount): array
+    public function     getSizes(Account $oAccount): array
     {
         $aOut = [];
         foreach (static::SIZES as $aSize) {
