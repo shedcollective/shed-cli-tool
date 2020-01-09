@@ -8,6 +8,7 @@ use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
 use Shed\Cli\Exceptions\Environment\NotValidException;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Service\ShedApi;
@@ -397,6 +398,7 @@ final class Create extends Command
     private function setEnvironment(): Create
     {
         $sOption = trim($this->oInput->getOption('environment'));
+
         if (empty($sOption)) {
             $this->sEnvironment = $this->choose(
                 'Environment:',
@@ -405,9 +407,10 @@ final class Create extends Command
                 [$this, 'validateEnvironment']
             );
         } else {
-            if ($this->validateEnvironment($sOption)) {
-                $this->sEnvironment = $sOption;
-                $this->oOutput->writeln('<comment>Environment</comment>: ' . $this->sEnvironment);
+            $sEnvironmentKey = $this->validateEnvironment($sOption);
+            if ($sEnvironmentKey !== null) {
+                $this->sEnvironment = $sEnvironmentKey;
+                $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$sEnvironmentKey]);
             } else {
                 $this->sEnvironment = $this->choose(
                     'Environment:',
@@ -417,8 +420,6 @@ final class Create extends Command
                 );
             }
         }
-
-        $this->sEnvironment = strtoupper($this->sEnvironment);
 
         return $this;
     }
@@ -430,27 +431,28 @@ final class Create extends Command
      *
      * @param string $sEnvironment The environment to test
      *
-     * @return bool
+     * @return int|null
      */
-    protected function validateEnvironment($sEnvironment): bool
+    protected function validateEnvironment($sEnvironment): ?int
     {
         if (empty($sEnvironment)) {
             $this->error(array_filter([
                 'Environment is required',
                 $sEnvironment,
             ]));
-            return false;
+            return null;
         }
 
-        if (!in_array(strtoupper($sEnvironment), static::ENVIRONMENTS)) {
+        $sEnvironment = strtoupper($sEnvironment);
+        if (!in_array($sEnvironment, static::ENVIRONMENTS)) {
             $this->error(array_filter([
                 '"' . $sEnvironment . '" is not a valid Environment',
                 'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
             ]));
-            return false;
+            return null;
         }
 
-        return true;
+        return array_search($sEnvironment, static::ENVIRONMENTS);
     }
 
     // --------------------------------------------------------------------------
@@ -471,9 +473,10 @@ final class Create extends Command
                 [$this, 'validateFramework']
             );
         } else {
-            if ($this->validateFramework($sOption)) {
-                $this->sFramework = $sOption;
-                $this->oOutput->writeln('<comment>Framework</comment>: ' . $this->sFramework);
+            $sFrameworkKey = $this->validateFramework($sOption);
+            if ($sFrameworkKey !== null) {
+                $this->sFramework = $sFrameworkKey;
+                $this->oOutput->writeln('<comment>Framework</comment>: ' . static::FRAMEWORKS[$sFrameworkKey]);
             } else {
                 $this->sFramework = $this->choose(
                     'Framework:',
@@ -483,8 +486,6 @@ final class Create extends Command
                 );
             }
         }
-
-        $this->sFramework = strtoupper($this->sFramework);
 
         return $this;
     }
@@ -496,27 +497,28 @@ final class Create extends Command
      *
      * @param string $sFramework The framework to test
      *
-     * @return bool
+     * @return int|null
      */
-    protected function validateFramework($sFramework): bool
+    protected function validateFramework($sFramework): ?int
     {
         if (empty($sFramework)) {
             $this->error(array_filter([
                 'Framework is required',
                 $sFramework,
             ]));
-            return false;
+            return null;
         }
 
+        $sFramework = strtoupper($sFramework);
         if (!in_array(strtoupper($sFramework), static::FRAMEWORKS)) {
             $this->error(array_filter([
                 '"' . $sFramework . '" is not a valid Framework',
                 'Should be one of: ' . implode(', ', static::FRAMEWORKS),
             ]));
-            return false;
+            return null;
         }
 
-        return true;
+        return array_search($sFramework, static::FRAMEWORKS);
     }
 
     // --------------------------------------------------------------------------
@@ -671,14 +673,18 @@ final class Create extends Command
         &$oProperty
     ): self {
 
-        if (array_key_exists($sDefault,
-            $aOptions)) {
+        if (array_key_exists($sDefault, $aOptions)) {
+
             $oItem = $aOptions[$sDefault];
             $this->oOutput->writeln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
+
         } elseif (count($aOptions) === 1) {
+
             $oItem = reset($aOptions);
             $this->oOutput->writeln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
+
         } else {
+
             $iChoice = $this->choose(
                 $sLabel . ':',
                 array_values(array_map(function ($oItem) {
@@ -765,9 +771,10 @@ final class Create extends Command
         }
 
         $aKeywords   = explode(',', $sKeywords);
-        $aKeywords[] = $this->sEnvironment;
-        $aKeywords[] = $this->sFramework;
+        $aKeywords[] = static::ENVIRONMENTS[$this->sEnvironment];
+        $aKeywords[] = static::FRAMEWORKS[$this->sFramework];
         $aKeywords[] = $this->oImage->getLabel();
+        $aKeywords[] = 'firewall';  // This key is used to attach account firewalls
         $aKeywords   = array_values(
             array_filter(
                 array_unique(
