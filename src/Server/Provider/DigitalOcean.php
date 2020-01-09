@@ -137,7 +137,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      *
      * @return array
      */
-    public function     getSizes(Account $oAccount): array
+    public function getSizes(Account $oAccount): array
     {
         $aOut = [];
         foreach (static::SIZES as $aSize) {
