@@ -57,7 +57,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      *
      * @var string
      */
-    const BASE_IMAGE = 'ubuntu-19-04-x64';
+    const BASE_IMAGE = 'ubuntu-19-10-x64';
 
     // --------------------------------------------------------------------------
 
