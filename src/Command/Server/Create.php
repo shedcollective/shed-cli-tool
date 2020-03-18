@@ -399,26 +399,24 @@ final class Create extends Command
     {
         $sOption = trim($this->oInput->getOption('environment'));
 
-        if (empty($sOption)) {
+        if (empty($sOption) || !$this->validateEnvironment($sOption)) {
+
             $this->sEnvironment = $this->choose(
                 'Environment:',
                 static::ENVIRONMENTS,
                 null,
                 [$this, 'validateEnvironment']
             );
-        } else {
-            $sEnvironmentKey = $this->validateEnvironment($sOption);
-            if ($sEnvironmentKey !== null) {
-                $this->sEnvironment = $sEnvironmentKey;
-                $this->oOutput->writeln('<comment>Environment</comment>: ' . static::ENVIRONMENTS[$sEnvironmentKey]);
-            } else {
-                $this->sEnvironment = $this->choose(
-                    'Environment:',
-                    static::ENVIRONMENTS,
-                    null,
-                    [$this, 'validateEnvironment']
-                );
-            }
+
+        } elseif ($this->validateEnvironment($sOption)) {
+
+            $this->sEnvironment = array_search($sOption, static::ENVIRONMENTS);
+            $this->oOutput->writeln(
+                sprintf(
+                    '<comment>Environment</comment>: %s',
+                    static::ENVIRONMENTS[$this->sEnvironment]
+                )
+            );
         }
 
         return $this;
@@ -431,16 +429,16 @@ final class Create extends Command
      *
      * @param string $sEnvironment The environment to test
      *
-     * @return int|null
+     * @return bool
      */
-    protected function validateEnvironment($sEnvironment): ?int
+    protected function validateEnvironment($sEnvironment): bool
     {
         if (empty($sEnvironment)) {
             $this->error(array_filter([
                 'Environment is required',
                 $sEnvironment,
             ]));
-            return null;
+            return false;
         }
 
         $sEnvironment = strtoupper($sEnvironment);
@@ -449,10 +447,10 @@ final class Create extends Command
                 '"' . $sEnvironment . '" is not a valid Environment',
                 'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
             ]));
-            return null;
+            return false;
         }
 
-        return array_search($sEnvironment, static::ENVIRONMENTS);
+        return array_search($sEnvironment, static::ENVIRONMENTS) !== false;
     }
 
     // --------------------------------------------------------------------------
@@ -465,26 +463,25 @@ final class Create extends Command
     private function setFramework(): Create
     {
         $sOption = trim($this->oInput->getOption('framework'));
-        if (empty($sOption)) {
+
+        if (empty($sOption) || !$this->validateFramework($sOption)) {
+
             $this->sFramework = $this->choose(
                 'Framework:',
                 static::FRAMEWORKS,
                 null,
                 [$this, 'validateFramework']
             );
+
         } else {
-            $sFrameworkKey = $this->validateFramework($sOption);
-            if ($sFrameworkKey !== null) {
-                $this->sFramework = $sFrameworkKey;
-                $this->oOutput->writeln('<comment>Framework</comment>: ' . static::FRAMEWORKS[$sFrameworkKey]);
-            } else {
-                $this->sFramework = $this->choose(
-                    'Framework:',
-                    static::FRAMEWORKS,
-                    null,
-                    [$this, 'validateFramework']
-                );
-            }
+
+            $this->sFramework = array_search($sOption, static::FRAMEWORKS);
+            $this->oOutput->writeln(
+                sprintf(
+                    '<comment>Framework</comment>: %s',
+                    static::FRAMEWORKS[$this->sFramework]
+                )
+            );
         }
 
         return $this;
@@ -497,16 +494,16 @@ final class Create extends Command
      *
      * @param string $sFramework The framework to test
      *
-     * @return int|null
+     * @return bool
      */
-    protected function validateFramework($sFramework): ?int
+    protected function validateFramework($sFramework): bool
     {
         if (empty($sFramework)) {
             $this->error(array_filter([
                 'Framework is required',
                 $sFramework,
             ]));
-            return null;
+            return false;
         }
 
         $sFramework = strtoupper($sFramework);
@@ -515,10 +512,10 @@ final class Create extends Command
                 '"' . $sFramework . '" is not a valid Framework',
                 'Should be one of: ' . implode(', ', static::FRAMEWORKS),
             ]));
-            return null;
+            return false;
         }
 
-        return array_search($sFramework, static::FRAMEWORKS);
+        return array_search($sFramework, static::FRAMEWORKS) !== false;
     }
 
     // --------------------------------------------------------------------------
