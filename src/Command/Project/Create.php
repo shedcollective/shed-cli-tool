@@ -651,7 +651,7 @@ final class Create extends Command
         $this->oOutput->writeln('👍');
 
         $this->oOutput->write('🧐 Configuring web server environment variables... ');
-        $this->configureWebServerEnvVars($oBackendFramework, $oFrontendFramework);
+        $this->configureWebServerEnvVars($oBackendFramework, $oFrontendFramework, $aInstallOptions);
         $this->oOutput->writeln('👍');
 
         return $this;
@@ -664,14 +664,18 @@ final class Create extends Command
      *
      * @param Framework $oBackendFramework  The backend framework
      * @param Framework $oFrontendFramework The frontend framework
+     * @param array     $aInstallOptions    The install options
      */
-    private function configureWebServerEnvVars($oBackendFramework, $oFrontendFramework): void
-    {
+    private function configureWebServerEnvVars(
+        Framework $oBackendFramework,
+        Framework $oFrontendFramework,
+        array $aInstallOptions
+    ): void {
         static::updateWebserverEnvVars(
             $this->sDir,
             array_merge(
-                $oBackendFramework->getEnvVars($oFrontendFramework),
-                $oFrontendFramework->getEnvVars($oBackendFramework)
+                $oBackendFramework->getEnvVars($oFrontendFramework, $aInstallOptions),
+                $oFrontendFramework->getEnvVars($oBackendFramework, $aInstallOptions)
             )
         );
     }
@@ -694,7 +698,7 @@ final class Create extends Command
         $aEnvVars = [];
         array_map(
             function ($sInput) use (&$aEnvVars) {
-                list($sKey, $sValue) = explode('=', $sInput, 2);
+                [$sKey, $sValue] = explode('=', $sInput, 2);
                 $aEnvVars[$sKey] = $sValue;
             },
             $aConfig['services']['webserver']['environment']
