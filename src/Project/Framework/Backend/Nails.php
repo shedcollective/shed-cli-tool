@@ -47,12 +47,17 @@ final class Nails extends Base implements Framework
      * Returns any ENV vars for the project
      *
      * @param Framework $oFrontendFramework The frontend framework
+     * @param array     $aInstallOptions    The install options
      *
      * @return array
+     * @throws \Exception
      */
-    public function getEnvVars(Framework $oFrontendFramework): array
+    public function getEnvVars(Framework $oFrontendFramework, array $aInstallOptions): array
     {
-        return [];
+        return [
+            'APP_NAME' => $aInstallOptions['name'],
+            'APP_KEY'  => $this->generateRandomString(),
+        ];
     }
 
     // --------------------------------------------------------------------------
@@ -73,9 +78,7 @@ final class Nails extends Base implements Framework
         $this
             ->configureDockerFile($sPath, 'apache-nails-php72')
             ->installAppSkeleton($sPath)
-            ->generatePrivateKey($sPath)
-            ->updateAppConfigConstant($sPath, 'APP_NAME', $aInstallOptions['name'])
-            ->updateAppConfigConstant($sPath, 'APP_KEY', $this->generateRandomString());
+            ->generatePrivateKey($sPath);
     }
 
     // --------------------------------------------------------------------------

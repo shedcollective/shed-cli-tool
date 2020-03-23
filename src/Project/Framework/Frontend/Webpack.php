@@ -72,10 +72,11 @@ final class Webpack extends Base implements Framework
      * Returns any ENV vars for the project
      *
      * @param Framework $oBackendFramework The backend framework
+     * @param array     $aInstallOptions   The install options
      *
      * @return array
      */
-    public function getEnvVars(Framework $oBackendFramework): array
+    public function getEnvVars(Framework $oBackendFramework, array $aInstallOptions): array
     {
         if ($oBackendFramework instanceof Laravel) {
             return [

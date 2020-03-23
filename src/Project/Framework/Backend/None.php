@@ -36,10 +36,11 @@ final class None extends Base implements Framework
      * Returns any ENV vars for the project
      *
      * @param Framework $oFrontendFramework The frontend framework
+     * @param array     $aInstallOptions    The install options
      *
      * @return array
      */
-    public function getEnvVars(Framework $oFrontendFramework): array
+    public function getEnvVars(Framework $oFrontendFramework, array $aInstallOptions): array
     {
         return [];
     }
