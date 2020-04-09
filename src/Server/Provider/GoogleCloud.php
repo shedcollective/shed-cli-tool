@@ -11,6 +11,7 @@ use Google_Service_Compute_Metadata;
 use Google_Service_Compute_MetadataItems;
 use Google_Service_Compute_NetworkInterface;
 use Google_Service_Compute_Tags;
+use phpseclib\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
@@ -266,7 +267,8 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param RSA     $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      * @throws Exception
@@ -281,8 +283,12 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         Image $oImage,
         array $aOptions,
         array $aKeywords,
-        string $sDeployKey
+        string $sDeployKey,
+        RSA $oRootKey
     ): Entity\Server {
+
+        //  @todo (Pablo - 2020-04-08) - Support new deployment process
+        throw new CliException('🚧 Deploying GCP servers is a work in progress');
 
         $oApi = new Api\GoogleCloud($oAccount);
 
