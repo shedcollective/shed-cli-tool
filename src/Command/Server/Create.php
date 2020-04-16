@@ -928,7 +928,8 @@ final class Create extends Command
             $this->sDeployKey,
             $oKey
         );
-        $this->oOutput->writeln('<info>done</info> Server IP is <info>' . $oServer->getIp() . '</info>');
+        $this->oOutput->writeln('<info>done</info>');
+        $this->oOutput->writeln('Server IP is <info>' . $oServer->getIp() . '</info>');
 
         // --------------------------------------------------------------------------
 
@@ -938,9 +939,12 @@ final class Create extends Command
 
         $this
             ->disableRootLogin($oSsh)
+            ->randomiseRootPassword($oSsh)
             ->setDomainEnvVar($oSsh)
+            ->setHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureDatabase($oSsh)
+            ->secureMysql($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer);
 
@@ -1097,6 +1101,23 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Randomise root password
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function randomiseRootPassword(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Randomising root password... ');
+        $oSsh->exec('usermod --password $(openssl rand -base64 32) root');
+        $this->oOutput->writeln('<info>done</info>');
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Sets the domain env var
      *
      * @param SSH2 $oSsh The SSH connection
@@ -1107,6 +1128,26 @@ final class Create extends Command
     {
         $this->oOutput->write('Setting domain as env var... ');
         $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/www/.env');
+        $this->oOutput->writeln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the system's hostname
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function setHostname(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Setting domain as hostname... ');
+        $sHostname = str_replace('.', '-', $this->sDomain);
+        $oSsh->exec('hostname ' . $sHostname);
+        $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $sHostname . ':g" /etc/hosts');
         $this->oOutput->writeln('<info>done</info>');
 
         return $this;
@@ -1180,6 +1221,26 @@ final class Create extends Command
         }
 
         $oSsh->exec('rm -f /root/mysql-setup-db.sh');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Secures MySQL
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     * @throws Exception
+     */
+    private function secureMysql(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Securing MySQL... ');
+        $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
+        $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) &&  mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
+        $this->oOutput->writeln('<info>done</info>');
 
         return $this;
     }
