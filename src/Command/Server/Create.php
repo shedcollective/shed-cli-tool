@@ -946,7 +946,8 @@ final class Create extends Command
             ->configureDatabase($oSsh)
             ->secureMysql($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
-            ->configureSsl($oSsh, $oServer);
+            ->configureSsl($oSsh, $oServer)
+            ->postProvision($oSsh);
 
         // --------------------------------------------------------------------------
 
@@ -1185,6 +1186,7 @@ final class Create extends Command
      */
     private function configureDatabase(SSH2 $oSsh): self
     {
+        //  @todo (Pablo - 2020-05-12) - Detect whether this instance _has_ a db to set up
         $this->oOutput->write('Configuring database... ');
 
         $sConfig = $oSsh->exec(
@@ -1325,6 +1327,40 @@ final class Create extends Command
 
             } while (empty($bResolved));
         }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Executes any post-provision scripts placed by the provisioner
+     *
+     * @param SSH2 $oSsh
+     *
+     * @return $this
+     */
+    private function postProvision(SSH2 $oSsh): self
+    {
+        $sFile    = '/root/install-framework.sh';
+        $sCommand = implode(' ', [
+            $sFile,
+            $this->oDbConfig->host ?? '127.0.0.1',
+            $this->oDbConfig->user,
+            $this->oDbConfig->password,
+            reset($this->oDbConfig->databases),
+            $this->sDomain
+        ]);
+
+        $this->oOutput->write('Running post-install scripts... ');
+        $oSsh->exec(
+            sprintf(
+                'if [[ -f %1$s ]]; then %2$s && rm -f %1$s fi',
+                $sFile,
+                $sCommand
+            )
+        );
+        $this->oOutput->writeln('<info>done</info>');
 
         return $this;
     }
