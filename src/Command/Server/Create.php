@@ -985,15 +985,18 @@ final class Create extends Command
 
         // --------------------------------------------------------------------------
 
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>ID</comment>:              ' . $oServer->getId());
-        $this->oOutput->writeln('<comment>IP Address</comment>:      ' . $oServer->getIp());
-        $this->oOutput->writeln('<comment>Domain</comment>:          ' . $oServer->getDomain());
-        $this->oOutput->writeln('<comment>Disk</comment>:            ' . $oServer->getDisk()->getLabel());
-        $this->oOutput->writeln('<comment>Image</comment>:           ' . $oServer->getImage()->getLabel());
-        $this->oOutput->writeln('<comment>Region</comment>:          ' . $oServer->getRegion()->getLabel());
-        $this->oOutput->writeln('<comment>Size</comment>:            ' . $oServer->getSize()->getLabel());
-        $this->oOutput->writeln('');
+        $this->keyValueList(
+            [
+                'ID'         => $oServer->getId(),
+                'IP Address' => $oServer->getIp(),
+                'Domain'     => $oServer->getDomain(),
+                'Disk'       => $oServer->getDisk()->getLabel(),
+                'Image'      => $oServer->getImage()->getLabel(),
+                'Region'     => $oServer->getRegion()->getLabel(),
+                'Size'       => $oServer->getSize()->getLabel(),
+            ],
+            'Server Details'
+        );
 
         if (!empty($this->oDbConfig->error)) {
             $this->warning(
@@ -1008,10 +1011,15 @@ final class Create extends Command
                 )
             );
         } else {
-            $this->oOutput->writeln('<comment>MySQL host</comment>:      127.0.0.1 (over SSH)');
-            $this->oOutput->writeln('<comment>MySQL user</comment>:      ' . $this->oDbConfig->user);
-            $this->oOutput->writeln('<comment>MySQL pass</comment>:      ' . $this->oDbConfig->password);
-            $this->oOutput->writeln('<comment>MySQL databases</comment>: ' . implode(', ', $this->oDbConfig->databases));
+            $this->keyValueList(
+                [
+                    'MySQL host'      => '127.0.0.1 (over SSH)',
+                    'MySQL user'      => $this->oDbConfig->user,
+                    'MySQL pass'      => $this->oDbConfig->password,
+                    'MySQL databases' => implode(', ', $this->oDbConfig->databases),
+                ],
+                'MySQL Details'
+            );
         }
 
         $this->oOutput->writeln('');
