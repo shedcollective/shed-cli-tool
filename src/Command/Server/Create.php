@@ -190,6 +190,13 @@ final class Create extends Command
     private $oShedAccount;
 
     /**
+     * The Backup Account to use (for production)
+     *
+     * @var Account
+     */
+    private $oBackupAccount;
+
+    /**
      * The database configuration
      *
      * @var stdClass
@@ -477,6 +484,20 @@ final class Create extends Command
                 'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
             ]));
             return false;
+        }
+
+        if ($sEnvironment === static::ENV_PRODUCTION) {
+            $aBackupAccounts = Command\Auth\Backup::getAccounts();
+            if (empty($aBackupAccounts)) {
+                throw new NotValidException(
+                    'No backup accounts available, add one use `auth:backup`'
+                );
+            } elseif (count($aBackupAccounts) !== 1) {
+                throw new NotValidException(
+                    'Only one backup account permitted, ' . count($aBackupAccounts) . ' detected'
+                );
+            }
+            $this->oBackupAccount = reset($aBackupAccounts);
         }
 
         return array_search($sEnvironment, static::ENVIRONMENTS) !== false;
@@ -1263,10 +1284,8 @@ final class Create extends Command
 
             $this->oOutput->write('Configuring backups... ');
             $oSsh->exec('echo \'export DOMAIN="' . $this->sDomain . '"\' >> /root/.backupconfig');
-            //  @todo (Pablo - 2020-04-08) - Set S3 Access Key
-            //  @todo (Pablo - 2020-04-08) - Set S3 Access Secret
-            $oSsh->exec('echo \'export S3_ACCESS_KEY=""\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export S3_ACCESS_SECRET=""\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_BUCKET="shed-backups"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
