@@ -203,6 +203,11 @@ final class Create extends Command
      */
     private $oDbConfig;
 
+    /**
+     * @var stdClass
+     */
+    private $oProvisionOutput;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -1022,7 +1027,12 @@ final class Create extends Command
             );
         }
 
-        $this->oOutput->writeln('');
+        if ($this->oProvisionOutput) {
+            $this->keyValueList(
+                (array) $this->oProvisionOutput,
+                'Framework'
+            );
+        }
 
         // --------------------------------------------------------------------------
 
@@ -1384,22 +1394,33 @@ final class Create extends Command
         $sFile    = '/root/install-framework.sh';
         $sCommand = implode(' ', [
             $sFile,
-            $this->oDbConfig->host ?? '127.0.0.1',
+            $this->oDbConfig->host ?? 'localhost',
             $this->oDbConfig->user,
             $this->oDbConfig->password,
             reset($this->oDbConfig->databases),
-            $this->sDomain
+            $this->sDomain,
         ]);
+        $sCommand = sprintf(
+            'if [[ -f %1$s ]]; then %2$s && rm -f %1$s; fi',
+            $sFile,
+            $sCommand
+        );
 
         $this->oOutput->write('Running post-install scripts... ');
-        $oSsh->exec(
-            sprintf(
-                'if [[ -f %1$s ]]; then %2$s && rm -f %1$s fi',
-                $sFile,
-                $sCommand
-            )
-        );
-        $this->oOutput->writeln('<info>done</info>');
+        $sOutput = $oSsh->exec($sCommand);
+
+        if (!empty($sOutput)) {
+            $this->oProvisionOutput = json_decode($sOutput);
+            if (json_last_error()) {
+                $this->oOutput->writeln('<error>ERROR</error>');
+                $this->oOutput->writeln('<error>Failed to decode output of provisioning script</error>');
+                $this->oOutput->writeln('<error>Output: ' . $sOutput . '</error>');
+            } else {
+                $this->oOutput->writeln('<info>done</info>');
+            }
+        } else {
+            $this->oOutput->writeln('<info>done</info>');
+        }
 
         return $this;
     }
