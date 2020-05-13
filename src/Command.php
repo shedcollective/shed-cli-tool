@@ -116,20 +116,26 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      *
      * @return $this
      */
-    protected function keyValueList(array $aKeyValuePairs): Command
+    protected function keyValueList(array $aKeyValuePairs, string $sHeader = ''): Command
     {
-        $aKeys    = array_keys($aKeyValuePairs);
-        $aValues  = array_values($aKeyValuePairs);
-        $iKeysMax = max(array_map('strlen', $aKeys)) + 1;
-        $aKeys    = array_map(function ($sKey) use ($iKeysMax) {
-            return '<comment>' . $sKey . '</comment>:' . str_repeat(' ', $iKeysMax - strlen($sKey));
-        }, $aKeys);
-
-        $aKeyValuePairs = array_combine($aKeys, $aValues);
+        $aKeys       = array_keys($aKeyValuePairs);
+        $aKeyLengths = array_map('strlen', $aKeys);
+        $iMaxLength  = max($aKeyLengths);
 
         $this->oOutput->writeln('');
+        if ($sHeader) {
+            $this->oOutput->writeln($sHeader);
+            $this->oOutput->writeln(str_pad('', strlen($sHeader), '-'));
+        }
         foreach ($aKeyValuePairs as $sKey => $sValue) {
-            $this->oOutput->writeln($sKey . $sValue);
+            $this->oOutput->writeln(
+                sprintf(
+                    '<comment>%s</comment>: %s%s',
+                    $sKey,
+                    str_pad('', $iMaxLength - strlen($sKey), ' '),
+                    $sValue
+                )
+            );
         }
         $this->oOutput->writeln('');
 
