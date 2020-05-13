@@ -821,7 +821,6 @@ final class Create extends Command
         $aKeywords[] = static::ENVIRONMENTS[$this->sEnvironment];
         $aKeywords[] = static::FRAMEWORKS[$this->sFramework];
         $aKeywords[] = $this->oImage->getLabel();
-        $aKeywords[] = 'firewall';  // This key is used to attach account firewalls
         $aKeywords   = array_values(
             array_filter(
                 array_unique(
