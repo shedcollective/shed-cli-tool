@@ -333,7 +333,7 @@ final class Create extends Command
         $aShedAccounts = Command\Auth\Shed::getAccounts();
         if (empty($aShedAccounts)) {
             throw new NotValidException(
-                'No shedcollective.com accounts detected'
+                'No shedcollective.com accounts available, add one use `auth:shed`'
             );
         } elseif (count($aShedAccounts) !== 1) {
             throw new NotValidException(
@@ -968,7 +968,7 @@ final class Create extends Command
             ->secureMysql($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
-            ->postProvision($oSsh);
+            ->provisionFramework($oSsh);
 
         // --------------------------------------------------------------------------
 
@@ -1299,6 +1299,14 @@ final class Create extends Command
 
     // --------------------------------------------------------------------------
 
+    /**
+     * configures SSL
+     *
+     * @param SSH2   $oSsh    The SSH connection
+     * @param Server $oServer The server which is being configured
+     *
+     * @return $this
+     */
     private function configureSsl(SSH2 $oSsh, Server $oServer): self
     {
         $this->oOutput->writeln('');
@@ -1358,8 +1366,9 @@ final class Create extends Command
      * @param SSH2 $oSsh
      *
      * @return $this
+     * @throws Exception
      */
-    private function postProvision(SSH2 $oSsh): self
+    private function provisionFramework(SSH2 $oSsh): self
     {
         $sFile    = '/root/install-framework.sh';
         $sCommand = implode(' ', [
