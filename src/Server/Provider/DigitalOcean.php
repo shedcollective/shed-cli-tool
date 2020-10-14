@@ -2,6 +2,7 @@
 
 namespace Shed\Cli\Server\Provider;
 
+use DigitalOceanV2\Entity\Network;
 use phpseclib\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Server\Create;
@@ -291,11 +292,17 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         //  Remove the temporary SSH key
         $this->getApi($oAccount)->getApi()->key()->delete($oKey->id);
 
+        //  Get the public IP
+        $aIps = array_filter($oDroplet->networks, function (Network $oNetwork) {
+            return $oNetwork->type === 'public';
+        });
+        $oIp  = reset($aIps);
+
         return $oServer
             ->setLabel($oDroplet->name)
             ->setSlug($oDroplet->name)
             ->setId($oDroplet->id)
-            ->setIp($oDroplet->networks[0]->ipAddress)
+            ->setIp($oIp->ipAddress)
             ->setDomain($sDomain)
             ->setDisk($oDisk)
             ->setImage($oImage)
