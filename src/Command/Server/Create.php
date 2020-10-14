@@ -14,7 +14,6 @@ use Shed\Cli\Entity\Server;
 use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\Server\KeyNotGeneratedException;
 use Shed\Cli\Exceptions\Server\TimeoutException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Service\ShedApi;
@@ -1183,10 +1182,17 @@ final class Create extends Command
      */
     private function setHostname(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Setting domain as hostname... ');
-        $sHostname = str_replace('.', '-', $this->sDomain);
+        $this->oOutput->write('Setting {domain}-{environment} as hostname... ');
+        $sHostname = strtolower(
+            sprintf(
+                '%s-%s',
+                str_replace('.', '-', $this->sDomain),
+                static::ENVIRONMENTS[$this->sEnvironment]
+            )
+        );
         $oSsh->exec('hostname ' . $sHostname);
         $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $sHostname . ':g" /etc/hosts');
+        //  @todo (Pablo - 2020-05-13) - /etc/hostname
         $this->oOutput->writeln('<info>done</info>');
 
         return $this;
