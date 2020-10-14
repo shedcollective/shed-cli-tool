@@ -12,25 +12,12 @@ use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
 use Shed\Cli\Exceptions\CliException;
-use Shed\Cli\Helper\Debug;
 use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 use Shed\Cli\Server\Provider\Api;
 
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
-    /**
-     * The available Digital Ocean images
-     *
-     * @var array
-     */
-    const IMAGES = [
-        [
-            'slug'  => 'digitalocean-linux-docker',
-            'label' => 'Docker',
-        ],
-    ];
-
     /**
      * The available Digital Ocean droplet sizes
      *
@@ -360,8 +347,8 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
                             'type'    => 'snapshot',
                             'private' => true,
                         ]),
-                    function ($oRegion) {
-                        return $oRegion->type === 'snapshot';
+                    function ($oImage) {
+                        return $oImage->type === 'snapshot';
                     }
                 )
             );
