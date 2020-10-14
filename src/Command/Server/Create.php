@@ -968,8 +968,8 @@ final class Create extends Command
             ->setDomainEnvVar($oSsh)
             ->setHostname($oSsh)
             ->addDeployKey($oSsh)
-            ->configureDatabase($oSsh)
-            ->secureMysql($oSsh)
+            ->configureMySQL($oSsh)
+            ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
             ->provisionFramework($oSsh);
@@ -1215,6 +1215,18 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Whether mySQL needs configured
+     *
+     * @return bool
+     */
+    private function shouldConfigureMySQL(): bool
+    {
+        return preg_match('/-mysql(57|80)/', $this->oImage->getLabel());
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Configures the database
      *
      * @param SSH2 $oSsh The SSH connection
@@ -1222,9 +1234,12 @@ final class Create extends Command
      * @return $this
      * @throws Exception
      */
-    private function configureDatabase(SSH2 $oSsh): self
+    private function configureMySQL(SSH2 $oSsh): self
     {
-        //  @todo (Pablo - 2020-05-12) - Detect whether this instance _has_ a db to set up
+        if (!$this->shouldConfigureMySQL()) {
+            return $this;
+        }
+
         $this->oOutput->write('Configuring database... ');
 
         $sConfig = $oSsh->exec(
@@ -1275,8 +1290,12 @@ final class Create extends Command
      * @return $this
      * @throws Exception
      */
-    private function secureMysql(SSH2 $oSsh): self
+    private function secureMySQL(SSH2 $oSsh): self
     {
+        if (!$this->shouldConfigureMySQL()) {
+            return $this;
+        }
+
         $this->oOutput->write('Securing MySQL... ');
         $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
         $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) &&  mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
@@ -1391,16 +1410,17 @@ final class Create extends Command
      */
     private function provisionFramework(SSH2 $oSsh): self
     {
-        $sFile    = '/root/install-framework.sh';
-        $sCommand = implode(' ', [
+        $sFile      = '/root/install-framework.sh';
+        $aDatabases = $this->oDbConfig->databases ?? [];
+        $sCommand   = implode(' ', [
             $sFile,
             $this->oDbConfig->host ?? 'localhost',
-            $this->oDbConfig->user,
-            $this->oDbConfig->password,
-            reset($this->oDbConfig->databases),
+            $this->oDbConfig->user ?? '',
+            $this->oDbConfig->password ?? '',
+            reset($aDatabases) ?: '',
             $this->sDomain,
         ]);
-        $sCommand = sprintf(
+        $sCommand   = sprintf(
             'if [[ -f %1$s ]]; then %2$s && rm -f %1$s; fi',
             $sFile,
             $sCommand
