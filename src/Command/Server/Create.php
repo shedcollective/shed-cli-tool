@@ -1002,28 +1002,30 @@ final class Create extends Command
             'Server Details'
         );
 
-        if (!empty($this->oDbConfig->error)) {
-            $this->warning(
-                array_filter(
-                    array_merge(
-                        ['There was an error configuring MySQL:'],
-                        (array) $this->oDbConfig->error,
-                        $bEnableBackups
-                            ? ['Additionally, you will have to configure backups manually']
-                            : [null]
+        if ($this->shouldConfigureMySQL()) {
+            if (!empty($this->oDbConfig->error)) {
+                $this->warning(
+                    array_filter(
+                        array_merge(
+                            ['There was an error configuring MySQL:'],
+                            (array) $this->oDbConfig->error,
+                            $bEnableBackups
+                                ? ['Additionally, you will have to configure backups manually']
+                                : [null]
+                        )
                     )
-                )
-            );
-        } else {
-            $this->keyValueList(
-                [
-                    'MySQL host'      => '127.0.0.1 (over SSH)',
-                    'MySQL user'      => $this->oDbConfig->user,
-                    'MySQL pass'      => $this->oDbConfig->password,
-                    'MySQL databases' => implode(', ', $this->oDbConfig->databases),
-                ],
-                'MySQL Details'
-            );
+                );
+            } else {
+                $this->keyValueList(
+                    [
+                        'MySQL host'      => '127.0.0.1 (over SSH)',
+                        'MySQL user'      => $this->oDbConfig->user,
+                        'MySQL pass'      => $this->oDbConfig->password,
+                        'MySQL databases' => implode(', ', $this->oDbConfig->databases),
+                    ],
+                    'MySQL Details'
+                );
+            }
         }
 
         if ($this->oProvisionOutput) {
@@ -1192,7 +1194,7 @@ final class Create extends Command
         );
         $oSsh->exec('hostname ' . $sHostname);
         $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $sHostname . ':g" /etc/hosts');
-        //  @todo (Pablo - 2020-05-13) - /etc/hostname
+        $oSsh->exec('echo "' . $sHostname . '" > /etc/hostname');
         $this->oOutput->writeln('<info>done</info>');
 
         return $this;
