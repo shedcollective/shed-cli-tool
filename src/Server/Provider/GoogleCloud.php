@@ -132,13 +132,6 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     const PROJECT_ID = 'shed-hosting';
 
-    /**
-     * The base image to use for all instances
-     *
-     * @var string
-     */
-    const BASE_IMAGE = 'projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20201014';
-
     // --------------------------------------------------------------------------
 
     /**
@@ -238,7 +231,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         $aOut = [];
         /** @var Google_Service_Compute_Image $oImage */
         foreach ($this->oImages as $oImage) {
-            $aOut[$oImage->id] = new Image($oImage->name, $oImage->id);
+            $aOut[$oImage->selfLink] = new Image($oImage->name, $oImage->selfLink);
         }
 
         sort($aOut);
@@ -332,7 +325,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             //  Create a new boot disks
             $oDisk = new Google_Service_Compute_Disk();
             $oDisk->setName($sDiskName);
-            $oDisk->setSourceImage(static::BASE_IMAGE);
+            $oDisk->setSourceImage($oImage->getSlug());
             $oDisk->setSizeGb(25);
 
             //  Insert disk
@@ -368,7 +361,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             //  Define meta data
             $oBlockKeys = new Google_Service_Compute_MetadataItems();
             $oBlockKeys->setKey('block-project-ssh-keys');
-            $oBlockKeys->setValue(true);
+            $oBlockKeys->setValue('true');
 
             $oSshKeys = new Google_Service_Compute_MetadataItems();
             $oSshKeys->setKey('ssh-keys');
