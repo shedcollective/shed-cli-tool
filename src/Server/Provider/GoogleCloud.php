@@ -6,6 +6,7 @@ use Exception;
 use Google_Service_Compute_AccessConfig;
 use Google_Service_Compute_AttachedDisk;
 use Google_Service_Compute_Disk;
+use Google_Service_Compute_Image;
 use Google_Service_Compute_Instance;
 use Google_Service_Compute_Metadata;
 use Google_Service_Compute_MetadataItems;
@@ -24,18 +25,6 @@ use Shed\Cli\Server;
 
 final class GoogleCloud extends Server\Provider implements Interfaces\Provider
 {
-    /**
-     * The available Google Cloud images
-     *
-     * @var array
-     */
-    const IMAGES = [
-        [
-            'slug'  => 'google-linux-docker',
-            'label' => 'Docker',
-        ],
-    ];
-
     /**
      * The available Google Cloud compute sizes
      *
@@ -137,11 +126,34 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
     ];
 
     /**
-     * The base image to use for all droplets
+     * The Google Cloud Project ID
      *
      * @var string
      */
-    const BASE_IMAGE = 'projects/ubuntu-os-cloud/global/images/ubuntu-1910-eoan-v20200317';
+    const PROJECT_ID = 'shed-hosting';
+
+    /**
+     * The base image to use for all instances
+     *
+     * @var string
+     */
+    const BASE_IMAGE = 'projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20201014';
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * The Digital Ocean API
+     *
+     * @var Api\GoogleCloud
+     */
+    private $oGoogleCloud;
+
+    /**
+     * The returned images
+     *
+     * @var array
+     */
+    private $oImages;
 
     // --------------------------------------------------------------------------
 
@@ -222,10 +234,15 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     public function getImages(Account $oAccount): array
     {
+        $this->fetchImages($oAccount);
         $aOut = [];
-        foreach (static::IMAGES as $aImage) {
-            $aOut[$aImage['slug']] = new Image($aImage['label'], $aImage['slug']);
+        /** @var Google_Service_Compute_Image $oImage */
+        foreach ($this->oImages as $oImage) {
+            $aOut[$oImage->id] = new Image($oImage->name, $oImage->id);
         }
+
+        sort($aOut);
+
         return $aOut;
     }
 
@@ -287,10 +304,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         RSA $oRootKey
     ): Entity\Server {
 
-        //  @todo (Pablo - 2020-04-08) - Support new deployment process
-        throw new CliException('🚧 Deploying GCP servers is a work in progress');
-
-        $oApi = new Api\GoogleCloud($oAccount);
+        $oApi = $this->getApi($oAccount);
 
         //  Prep variables
         $sProjectId = $oApi->getKeyObject()->project_id;
@@ -319,7 +333,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $oDisk = new Google_Service_Compute_Disk();
             $oDisk->setName($sDiskName);
             $oDisk->setSourceImage(static::BASE_IMAGE);
-            $oDisk->setSizeGb(10);
+            $oDisk->setSizeGb(25);
 
             //  Insert disk
             $oInsertDiskOperation = $oApi
@@ -356,12 +370,12 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $oBlockKeys->setKey('block-project-ssh-keys');
             $oBlockKeys->setValue(true);
 
-            $oStartupScript = new Google_Service_Compute_MetadataItems();
-            $oStartupScript->setKey('startup-script');
-            $oStartupScript->setValue(static::getStartupScript($oImage, $sDeployKey));
+            $oSshKeys = new Google_Service_Compute_MetadataItems();
+            $oSshKeys->setKey('ssh-keys');
+            $oSshKeys->setValue('root:' . $oRootKey->getPublicKey(RSA::PUBLIC_FORMAT_OPENSSH));
 
             $oMetadata = new Google_Service_Compute_Metadata();
-            $oMetadata->setItems([$oBlockKeys, $oStartupScript]);
+            $oMetadata->setItems([$oBlockKeys, $oSshKeys]);
 
             // --------------------------------------------------------------------------
 
@@ -459,5 +473,42 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     public function destroy(): void
     {
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Fetch and cache images from Google Cloud
+     *
+     * @param Account $oAccount The account to use
+     */
+    private function fetchImages(Account $oAccount)
+    {
+        if (empty($this->oImages)) {
+            $oApi          = $this->getApi($oAccount);
+            $this->oImages = $oApi
+                ->getApi()
+                ->images
+                ->listImages(static::PROJECT_ID)
+                ->getItems();
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the DO API
+     *
+     * @param Account $oAccount The account to use
+     *
+     * @return Api\GoogleCloud
+     */
+    private function getApi(Account $oAccount): Api\GoogleCloud
+    {
+        if (empty($this->oGoogleCloud)) {
+            $this->oGoogleCloud = new Api\GoogleCloud($oAccount);
+        }
+
+        return $this->oGoogleCloud;
     }
 }
