@@ -1402,9 +1402,9 @@ final class Create extends Command
 
             } while (empty($bResolved));
         } else {
-            $this->oOutput->writeln(
-                'Execute `ssl-create` as root when you are ready to deploy SSL certificates for this server.'
-            );
+            $this->warning([
+                'Execute `ssl-create` as root when you are ready to deploy SSL certificates for this server.',
+            ]);
         }
 
         return $this;
