@@ -1096,6 +1096,8 @@ final class Create extends Command
         //  Make initial sleep 20 seconds to give the Os some time to start sshd
         sleep(10);
 
+        $iPreviousErrorReporting = error_reporting(0);
+
         do {
 
             sleep(10);
@@ -1113,6 +1115,8 @@ final class Create extends Command
             }
 
         } while (!$bConnected);
+
+        error_reporting($iPreviousErrorReporting);
 
         $this->oOutput->writeln('<info>done</info>');
 
