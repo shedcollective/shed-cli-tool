@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Server\Provider;
 
+use DigitalOceanV2\Entity\Network;
+use phpseclib\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Server\Create;
 use Shed\Cli\Entity;
@@ -16,18 +18,6 @@ use Shed\Cli\Server\Provider\Api;
 
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
-    /**
-     * The available Digital Ocean images
-     *
-     * @var array
-     */
-    const IMAGES = [
-        [
-            'slug'  => 'digitalocean-linux-docker',
-            'label' => 'Docker',
-        ],
-    ];
-
     /**
      * The available Digital Ocean droplet sizes
      *
@@ -52,13 +42,6 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         ],
     ];
 
-    /**
-     * The base image to use for all droplets
-     *
-     * @var string
-     */
-    const BASE_IMAGE = 'ubuntu-19-10-x64';
-
     // --------------------------------------------------------------------------
 
     /**
@@ -74,6 +57,13 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @var array
      */
     private $aRegions;
+
+    /**
+     * The returned images
+     *
+     * @var array
+     */
+    private $aImages;
 
     // --------------------------------------------------------------------------
 
@@ -137,7 +127,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      *
      * @return array
      */
-    public function     getSizes(Account $oAccount): array
+    public function getSizes(Account $oAccount): array
     {
         $aOut = [];
         foreach (static::SIZES as $aSize) {
@@ -157,10 +147,14 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     public function getImages(Account $oAccount): array
     {
+        $this->fetchImages($oAccount);
         $aOut = [];
-        foreach (static::IMAGES as $aImage) {
-            $aOut[$aImage['slug']] = new Image($aImage['label'], $aImage['slug']);
+        foreach ($this->aImages as $oImage) {
+            $aOut[$oImage->id] = new Image($oImage->name, $oImage->id);
         }
+
+        sort($aOut);
+
         return $aOut;
     }
 
@@ -202,7 +196,8 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param RSA     $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      */
@@ -216,8 +211,19 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         Image $oImage,
         array $aOptions,
         array $aKeywords,
-        string $sDeployKey
+        string $sDeployKey,
+        RSA $oRootKey
     ): Entity\Server {
+
+        //  Add key to DO temporarily
+        $oKey = $this
+            ->getApi($oAccount)
+            ->getApi()
+            ->key()
+            ->create(
+                'temp-key-' . uniqid(),
+                $oRootKey->getPublicKey(RSA::PUBLIC_FORMAT_OPENSSH)
+            );
 
         $aData = [
             'name'              => implode(
@@ -236,12 +242,12 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             ),
             'region'            => $oRegion->getSlug(),
             'size'              => $oSize->getSlug(),
-            'image'             => static::BASE_IMAGE,
+            'image'             => $oImage->getSlug(),
             'backups'           => $sEnvironment === Create::ENV_PRODUCTION,
             'ipv6'              => false,
             'privateNetworking' => false,
-            'sshKeys'           => [],
-            'userData'          => $this->generateCloudInitConfig($oImage, $sDeployKey),
+            'sshKeys'           => [$oKey->id],
+            'userData'          => '',
             'monitoring'        => true,
             'volumes'           => [],
             'tags'              => $aKeywords,
@@ -249,7 +255,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         ];
 
         $oDroplet = $this
-            ->oDigitalOcean
+            ->getApi($oAccount)
             ->getDropletApi()
             ->create(
                 $aData['name'],
@@ -269,11 +275,21 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 
         $oServer = new Entity\Server();
         $oDisk   = new Entity\Provider\Disk($oDroplet->disk, $oDroplet->disk);
+
+        //  Remove the temporary SSH key
+        $this->getApi($oAccount)->getApi()->key()->delete($oKey->id);
+
+        //  Get the public IP
+        $aIps = array_filter($oDroplet->networks, function (Network $oNetwork) {
+            return $oNetwork->type === 'public';
+        });
+        $oIp  = reset($aIps);
+
         return $oServer
             ->setLabel($oDroplet->name)
             ->setSlug($oDroplet->name)
             ->setId($oDroplet->id)
-            ->setIp($oDroplet->networks[0]->ipAddress)
+            ->setIp($oIp->ipAddress)
             ->setDomain($sDomain)
             ->setDisk($oDisk)
             ->setImage($oImage)
@@ -300,10 +316,10 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     private function fetchRegions(Account $oAccount)
     {
         if (empty($this->aRegions)) {
-            $this->oDigitalOcean = new Api\DigitalOcean($oAccount);
-            $this->aRegions      = array_values(
+            $oApi           = $this->getApi($oAccount);
+            $this->aRegions = array_values(
                 array_filter(
-                    $this->oDigitalOcean->getRegionApi()->getAll(),
+                    $oApi->getRegionApi()->getAll(),
                     function ($oRegion) {
                         return $oRegion->available;
                     }
@@ -315,25 +331,45 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
-     * Generates the cloud-init config
+     * Fetch and cache images from Digital Ocean
      *
-     * @param Image  $oImage     The image being generated
-     * @param string $sDeployKey The deploy key, if any, to assign to the deployhq user
-     *
-     * @return string
+     * @param Account $oAccount The account to use
      */
-    private function generateCloudInitConfig(Image $oImage, string $sDeployKey = null): string
+    private function fetchImages(Account $oAccount)
     {
-        $aLines = array_merge(
-            [
-                '#cloud-config',
-                'runcmd:',
-            ],
-            array_map(function ($sCommand) {
-                return ' - ' . $sCommand;
-            }, static::getStartupCommands($oImage, $sDeployKey))
-        );
+        if (empty($this->aImages)) {
+            $oApi          = $this->getApi($oAccount);
+            $this->aImages = array_values(
+                array_filter(
+                    $oApi
+                        ->getImageApi()
+                        ->getAll([
+                            'type'    => 'snapshot',
+                            'private' => true,
+                        ]),
+                    function ($oImage) {
+                        return $oImage->type === 'snapshot';
+                    }
+                )
+            );
+        }
+    }
 
-        return implode("\n", $aLines);
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the DO API
+     *
+     * @param Account $oAccount The account to use
+     *
+     * @return Api\DigitalOcean
+     */
+    private function getApi(Account $oAccount): Api\DigitalOcean
+    {
+        if (empty($this->oDigitalOcean)) {
+            $this->oDigitalOcean = new Api\DigitalOcean($oAccount);
+        }
+
+        return $this->oDigitalOcean;
     }
 }

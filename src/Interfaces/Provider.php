@@ -2,6 +2,7 @@
 
 namespace Shed\Cli\Interfaces;
 
+use phpseclib\Crypt\RSA;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
@@ -92,6 +93,7 @@ interface Provider
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
      * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
+     * @param RSA     $oRootKey     Temporary root ssh key
      *
      * @return Server
      */
@@ -105,7 +107,8 @@ interface Provider
         Image $oImage,
         array $aOptions,
         array $aKeywords,
-        string $sDeployKey
+        string $sDeployKey,
+        RSA $oRootKey
     ): Server;
 
     // --------------------------------------------------------------------------

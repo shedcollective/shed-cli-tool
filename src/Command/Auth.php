@@ -434,7 +434,7 @@ abstract class Auth extends Command
         $aAccounts = (array) Config::get(static::getConfigKey()) ?: [];
         $aOut      = [];
         foreach ($aAccounts as $sLabel => $sToken) {
-            $aOut[] = new Account($sLabel, $sToken);
+            $aOut[$sLabel] = new Account($sLabel, $sToken);
         }
         return $aOut;
     }

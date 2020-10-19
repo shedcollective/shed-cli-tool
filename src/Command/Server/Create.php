@@ -2,16 +2,22 @@
 
 namespace Shed\Cli\Command\Server;
 
+use Exception;
+use phpseclib\Crypt\RSA;
+use phpseclib\Net\SSH2;
 use Shed\Cli\Command;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
+use Shed\Cli\Entity\Server;
 use Shed\Cli\Exceptions\Environment\NotValidException;
-use Shed\Cli\Helper\Debug;
+use Shed\Cli\Exceptions\Server\KeyNotGeneratedException;
+use Shed\Cli\Exceptions\Server\TimeoutException;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Service\ShedApi;
+use stdClass;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
@@ -81,6 +87,20 @@ final class Create extends Command
         self::FRAMEWORK_WORDPRESS,
         self::FRAMEWORK_STATIC,
     ];
+
+    /**
+     * How long to wait for the SSH connection to be established
+     *
+     * @var int
+     */
+    const SSH_TIMEOUT = 120;
+
+    /**
+     * How long to wait for the SSL DNS to resolve
+     *
+     * @var int
+     */
+    const SSL_TIMEOUT = 300;
 
     // --------------------------------------------------------------------------
 
@@ -155,7 +175,7 @@ final class Create extends Command
     private $aKeywords = [];
 
     /**
-     * An SSH key to assign to the deployhq user
+     * An SSH key to assign to the deploy user
      *
      * @var string
      */
@@ -167,6 +187,25 @@ final class Create extends Command
      * @var Account
      */
     private $oShedAccount;
+
+    /**
+     * The Backup Account to use (for production)
+     *
+     * @var Account
+     */
+    private $oBackupAccount;
+
+    /**
+     * The database configuration
+     *
+     * @var stdClass
+     */
+    private $oDbConfig;
+
+    /**
+     * @var stdClass
+     */
+    private $oProvisionOutput;
 
     // --------------------------------------------------------------------------
 
@@ -237,7 +276,7 @@ final class Create extends Command
                 'deploy-key',
                 'D',
                 InputOption::VALUE_OPTIONAL,
-                'An optional public key to assign the deployhq user'
+                'An optional public key to assign the deploy user'
             );
     }
 
@@ -247,6 +286,7 @@ final class Create extends Command
      * Execute the command
      *
      * @return int
+     * @throws Exception
      */
     protected function go(): int
     {
@@ -265,7 +305,7 @@ final class Create extends Command
             ->setKeywords()
             ->setDeployKey();
 
-        if ($this->confirmVariables()) {
+        if ($this->confirmVariables() && $this->confirmVpn()) {
             $this->createServer();
         }
 
@@ -297,7 +337,7 @@ final class Create extends Command
         $aShedAccounts = Command\Auth\Shed::getAccounts();
         if (empty($aShedAccounts)) {
             throw new NotValidException(
-                'No shedcollective.com accounts detected'
+                'No shedcollective.com accounts available, add one use `auth:shed`'
             );
         } elseif (count($aShedAccounts) !== 1) {
             throw new NotValidException(
@@ -309,7 +349,7 @@ final class Create extends Command
 
             ShedApi::testToken($this->oShedAccount->getToken());
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new NotValidException(
                 'Access token for shedcollective.com account "' . $this->oShedAccount->getLabel() . '" is invalid: ' .
                 $e->getMessage()
@@ -448,6 +488,20 @@ final class Create extends Command
                 'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
             ]));
             return false;
+        }
+
+        if ($sEnvironment === static::ENV_PRODUCTION) {
+            $aBackupAccounts = Command\Auth\Backup::getAccounts();
+            if (empty($aBackupAccounts)) {
+                throw new NotValidException(
+                    'No backup accounts available, add one use `auth:backup`'
+                );
+            } elseif (count($aBackupAccounts) !== 1) {
+                throw new NotValidException(
+                    'Only one backup account permitted, ' . count($aBackupAccounts) . ' detected'
+                );
+            }
+            $this->oBackupAccount = reset($aBackupAccounts);
         }
 
         return array_search($sEnvironment, static::ENVIRONMENTS) !== false;
@@ -771,14 +825,13 @@ final class Create extends Command
         $aKeywords[] = static::ENVIRONMENTS[$this->sEnvironment];
         $aKeywords[] = static::FRAMEWORKS[$this->sFramework];
         $aKeywords[] = $this->oImage->getLabel();
-        $aKeywords[] = 'firewall';  // This key is used to attach account firewalls
         $aKeywords   = array_values(
             array_filter(
                 array_unique(
                     array_map(
                         function ($sKeyword) {
                             $sKeyword = strtolower($sKeyword);
-                            $sKeyword = preg_replace('/[^a-z0-0 \-]/', '', $sKeyword);
+                            $sKeyword = preg_replace('/[^a-z0-9 \-]/', '', $sKeyword);
                             $sKeyword = str_replace(' ', '-', $sKeyword);
                             $sKeyword = trim($sKeyword);
                             return $sKeyword;
@@ -823,7 +876,7 @@ final class Create extends Command
     private function confirmVariables()
     {
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('Does this all look OK?');
+        $this->oOutput->writeln('A new server will be provisioned with the following details:');
 
         $aKeyValues = [
             'Domain'      => $this->sDomain,
@@ -845,7 +898,19 @@ final class Create extends Command
         $aKeyValues['Deploy Key'] = $this->sDeployKey ? 'Set' : 'None';
 
         $this->keyValueList($aKeyValues);
-        return $this->confirm('Continue?');
+        return $this->confirm('Continue? [default: <info>yes</info>]');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Confirms the user is on their VPN
+     *
+     * @return bool
+     */
+    private function confirmVpn()
+    {
+        return $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
     }
 
     // --------------------------------------------------------------------------
@@ -854,11 +919,23 @@ final class Create extends Command
      * Creates a new project
      *
      * @return $this
+     * @throws Exception
      */
     private function createServer(): Create
     {
+        $bEnableBackups = static::ENVIRONMENTS[$this->sEnvironment] === static::ENV_PRODUCTION;
+
         $this->oOutput->writeln('');
-        $this->oOutput->write('Creating server...');
+
+        // --------------------------------------------------------------------------
+
+        $this->oOutput->write('Generating temporary SSH key... ');
+        $oKey = $this->generateSshKey();
+        $this->oOutput->writeln('<info>' . $oKey->getPublicKeyFingerprint() . '</info>');
+
+        // --------------------------------------------------------------------------
+
+        $this->oOutput->write('Creating server... ');
 
         //  @todo (Pablo - 2019-08-02) - Register with Shed API, but in a pending state
 
@@ -872,35 +949,510 @@ final class Create extends Command
             $this->oImage,
             $this->aProviderOptions,
             $this->aKeywords,
-            $this->sDeployKey
+            $this->sDeployKey,
+            $oKey
         );
-        $this->oOutput->writeln('<info>done!</info>');
+        $this->oOutput->writeln('<info>done</info>');
+        $this->oOutput->writeln('Server IP is <info>' . $oServer->getIp() . '</info>');
+
+        // --------------------------------------------------------------------------
+
+        $oSsh = $this->waitForSsh($oServer, $oKey);
+
+        // --------------------------------------------------------------------------
+
+        $this
+            ->disableRootLogin($oSsh)
+            ->randomiseRootPassword($oSsh)
+            ->setDomainEnvVar($oSsh)
+            ->setHostname($oSsh)
+            ->addDeployKey($oSsh)
+            ->configureMySQL($oSsh)
+            ->secureMySQL($oSsh)
+            ->configureBackups($oSsh, $bEnableBackups)
+            ->configureSsl($oSsh, $oServer)
+            ->provisionFramework($oSsh);
+
+        // --------------------------------------------------------------------------
 
         try {
             //  @todo (Pablo - 2019-08-02) - Update server state with Shed API
-            $this->oOutput->write('Registering with the Shed API...');
+            $this->oOutput->write('Registering with the Shed API... ');
             ShedApi::createServer($this->oShedAccount, $oServer);
-            $this->oOutput->writeln('<info>done!</info>');
-        } catch (\Exception $e) {
+            $this->oOutput->writeln('<info>done</info>');
+        } catch (Exception $e) {
             $this->warning(array_filter([
                 'Failed to register server with the Shed API',
                 $e->getMessage(),
             ]));
         }
 
+        // --------------------------------------------------------------------------
+
+        $this->keyValueList(
+            [
+                'ID'         => $oServer->getId(),
+                'IP Address' => $oServer->getIp(),
+                'Domain'     => $oServer->getDomain(),
+                'Disk'       => $oServer->getDisk()->getLabel(),
+                'Image'      => $oServer->getImage()->getLabel(),
+                'Region'     => $oServer->getRegion()->getLabel(),
+                'Size'       => $oServer->getSize()->getLabel(),
+            ],
+            'Server Details'
+        );
+
+        if ($this->shouldConfigureMySQL()) {
+            if (!empty($this->oDbConfig->error)) {
+                $this->warning(
+                    array_filter(
+                        array_merge(
+                            ['There was an error configuring MySQL:'],
+                            (array) $this->oDbConfig->error,
+                            $bEnableBackups
+                                ? ['Additionally, you will have to configure backups manually']
+                                : [null]
+                        )
+                    )
+                );
+            } else {
+                $this->keyValueList(
+                    [
+                        'MySQL host'      => '127.0.0.1 (over SSH)',
+                        'MySQL user'      => $this->oDbConfig->user,
+                        'MySQL pass'      => $this->oDbConfig->password,
+                        'MySQL databases' => implode(', ', $this->oDbConfig->databases),
+                    ],
+                    'MySQL Details'
+                );
+            }
+        }
+
+        if ($this->oProvisionOutput) {
+            $this->keyValueList(
+                (array) $this->oProvisionOutput,
+                'Framework'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Generates a temporary RSA key
+     *
+     * @return RSA
+     */
+    private function generateSshKey(): RSA
+    {
+        $sKeyPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid();
+
+        exec(
+            sprintf(
+                'ssh-keygen -q -b 4096 -C "generated-ssh-key" -f "%s" -N "" -t rsa',
+                $sKeyPath
+            ),
+            $aOutput,
+            $iExitCode
+        );
+
+        if ($iExitCode || !file_exists($sKeyPath)) {
+            throw new KeyNotGeneratedException(
+                sprintf(
+                    'Failed to generate SSH key (exit code: %s)',
+                    $iExitCode
+                )
+            );
+        }
+
+        $oKey = new RSA();
+        $oKey->loadKey(file_get_contents($sKeyPath));
+
+        unlink($sKeyPath);
+        unlink($sKeyPath . '.pub');
+
+        return $oKey;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Waits for an SSH connection to be established
+     *
+     * @param Server $oServer The server to connect to
+     * @param RSA    $oKey    The key to use
+     *
+     * @return SSH2
+     */
+    private function waitForSsh(Server $oServer, RSA $oKey): SSH2
+    {
+        $this->oOutput->write('Waiting for SSH access... ');
+        $iStart = time();
+
+        //  Make initial sleep 20 seconds to give the Os some time to start sshd
+        sleep(10);
+
+        $iPreviousErrorReporting = error_reporting(0);
+
+        do {
+
+            sleep(10);
+
+            if (time() - $iStart >= static::SSH_TIMEOUT) {
+                throw new TimeoutException(
+                    sprintf(
+                        'Timed out waiting for server to allow SSH access (timeout: %s seconds)',
+                        static::SSH_TIMEOUT
+                    )
+                );
+            } else {
+                $oSsh       = new SSH2($oServer->getIp());
+                $bConnected = $oSsh->login('root', $oKey);
+            }
+
+        } while (!$bConnected);
+
+        error_reporting($iPreviousErrorReporting);
+
+        $this->oOutput->writeln('<info>done</info>');
+
+        return $oSsh;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Disables the root login
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function disableRootLogin(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Disabling root login... ');
+        $oSsh->exec('rm -f /root/.ssh/authorized_keys');
+        $oSsh->exec('echo \'PermitRootLogin no\' >> /etc/ssh/sshd_config');
+        $oSsh->exec('service ssh restart');
+        $this->oOutput->writeln('<info>done</info>');
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Randomise root password
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function randomiseRootPassword(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Randomising root password... ');
+        $oSsh->exec('usermod --password $(openssl rand -base64 32) root');
+        $this->oOutput->writeln('<info>done</info>');
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the domain env var
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function setDomainEnvVar(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Setting domain as env var... ');
+        $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/www/.env');
+        $this->oOutput->writeln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the system's hostname
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function setHostname(SSH2 $oSsh): self
+    {
+        $this->oOutput->write('Setting {domain}-{environment} as hostname... ');
+        $sHostname = strtolower(
+            sprintf(
+                '%s-%s',
+                str_replace('.', '-', $this->sDomain),
+                static::ENVIRONMENTS[$this->sEnvironment]
+            )
+        );
+        $oSsh->exec('hostname ' . $sHostname);
+        $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $sHostname . ':g" /etc/hosts');
+        $oSsh->exec('echo "' . $sHostname . '" > /etc/hostname');
+        $this->oOutput->writeln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Adds the deploy key
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function addDeployKey(SSH2 $oSsh): self
+    {
+        if ($this->sDeployKey) {
+            $this->oOutput->write('Adding deploy key... ');
+            $oSsh->exec('echo "' . $this->sDeployKey . '" >> /home/deploy/.ssh/authorized_keys');
+            $this->oOutput->writeln('<info>done</info>');
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Whether mySQL needs configured
+     *
+     * @return bool
+     */
+    private function shouldConfigureMySQL(): bool
+    {
+        return preg_match('/-mysql(57|80)/', $this->oImage->getLabel());
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Configures the database
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     * @throws Exception
+     */
+    private function configureMySQL(SSH2 $oSsh): self
+    {
+        if (!$this->shouldConfigureMySQL()) {
+            return $this;
+        }
+
+        $this->oOutput->write('Configuring database... ');
+
+        $sConfig = $oSsh->exec(
+            sprintf(
+                '/root/mysql-setup-db.sh %s %s',
+                strtolower(static::ENVIRONMENTS[$this->sEnvironment]),
+                strtolower(
+                    sprintf(
+                        '%s_%s',
+                        str_replace('.', '_', preg_replace('/[^a-zA-Z0-9.]/', '', $this->sDomain)),
+                        static::ENVIRONMENTS[$this->sEnvironment]
+                    )
+                )
+            )
+        );
+
+        $this->oDbConfig = json_decode($sConfig);
+
+        if (empty($this->oDbConfig)) {
+            $this->oDbConfig = (object) [
+                'error' => [
+                    'Failed to decode config. ',
+                    json_last_error_msg(),
+                    $sConfig,
+                ],
+            ];
+        }
+
+        if (!empty($this->oDbConfig->error)) {
+            $sError = is_array($this->oDbConfig->error) ? implode(' ', $this->oDbConfig->error) : $this->oDbConfig->error;
+            $this->oOutput->writeln('<error>' . $sError . '</error>');
+        } else {
+            $this->oOutput->writeln('<info>done</info>');
+        }
+
+        $oSsh->exec('rm -f /root/mysql-setup-db.sh');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Secures MySQL
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     * @throws Exception
+     */
+    private function secureMySQL(SSH2 $oSsh): self
+    {
+        if (!$this->shouldConfigureMySQL()) {
+            return $this;
+        }
+
+        $this->oOutput->write('Securing MySQL... ');
+        $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
+        $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) &&  mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
+        $this->oOutput->writeln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Configures backups
+     *
+     * @param SSH2 $oSsh           The SSH connection
+     * @param bool $bEnableBackups Whether to enable backups or not
+     *
+     * @return $this
+     */
+    private function configureBackups(SSH2 $oSsh, bool $bEnableBackups): self
+    {
+        if ($bEnableBackups && empty($this->oDbConfig->error)) {
+
+            $this->oOutput->write('Configuring backups... ');
+            $oSsh->exec('echo \'export DOMAIN="' . $this->sDomain . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export S3_BUCKET="shed-backups"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /root/.backupconfig');
+            $this->oOutput->writeln('<info>done</info>');
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * configures SSL
+     *
+     * @param SSH2   $oSsh    The SSH connection
+     * @param Server $oServer The server which is being configured
+     *
+     * @return $this
+     */
+    private function configureSsl(SSH2 $oSsh, Server $oServer): self
+    {
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>ID</comment>:         ' . $oServer->getId());
-        $this->oOutput->writeln('<comment>IP Address</comment>: ' . $oServer->getIp());
-        $this->oOutput->writeln('<comment>Domain</comment>:     ' . $oServer->getDomain());
-        $this->oOutput->writeln('<comment>Disk</comment>:       ' . $oServer->getDisk()->getLabel());
-        $this->oOutput->writeln('<comment>Image</comment>:      ' . $oServer->getImage()->getLabel());
-        $this->oOutput->writeln('<comment>Region</comment>:     ' . $oServer->getRegion()->getLabel());
-        $this->oOutput->writeln('<comment>Size</comment>:       ' . $oServer->getSize()->getLabel());
-        $this->oOutput->writeln('');
-        $this->warning(array_filter([
-            'It may take a few minutes before the server is fully configured',
-        ]));
-        $this->oOutput->writeln('');
+        if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>yes</info>]')) {
+
+            $this->oOutput->writeln('');
+            $this->oOutput->writeln('Ensure DNS records have been deployed for:');
+            $this->oOutput->writeln('- A <info>' . $oServer->getIp() . '</info> ' . $this->sDomain);
+            $this->oOutput->writeln('- A <info>' . $oServer->getIp() . '</info> www.' . $this->sDomain . ' <comment>(optional)</comment>');
+            $this->oOutput->writeln('');
+
+            $this->oOutput->write('Waiting for DNS to propagate... ');
+            $iStart = time();
+
+            do {
+
+                sleep(10);
+
+                if (time() - $iStart >= static::SSL_TIMEOUT) {
+
+                    $this->oOutput->writeln('<error>timeout</error>');
+                    $this->warning([
+                        'Timed out waiting for DNS to propagate (timeout: ' . static::SSL_TIMEOUT . ' seconds)',
+                        'You will need to manually configure SSL: SSH in as root and execute `ssl-create`',
+                    ]);
+                    $bResolved = true;
+
+                } else {
+
+                    $aRecords  = array_filter((array) dns_get_record($this->sDomain, DNS_A));
+                    $aRecord   = reset($aRecords);
+                    $bResolved = !empty($aRecord['ip']) && $aRecord['ip'] == $oServer->getIp();
+
+                    if ($bResolved) {
+
+                        $this->oOutput->writeln('<info>done</info>');
+                        $this->oOutput->write('Generating certificates... ');
+                        $oSsh->exec('ssl-create');
+                        $this->oOutput->writeln('<info>done</info>');
+                        $this->oOutput->write('Restarting Apache... ');
+                        $oSsh->exec('service apache2 restart');
+                        $this->oOutput->writeln('<info>done</info>');
+                    }
+                }
+
+            } while (empty($bResolved));
+        } else {
+            $this->warning([
+                'Execute `ssl-create` as root when you are ready to deploy SSL certificates for this server.',
+            ]);
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Executes any post-provision scripts placed by the provisioner
+     *
+     * @param SSH2 $oSsh
+     *
+     * @return $this
+     * @throws Exception
+     */
+    private function provisionFramework(SSH2 $oSsh): self
+    {
+        $sFile      = '/root/install-framework.sh';
+        $aDatabases = $this->oDbConfig->databases ?? [];
+        $sCommand   = implode(' ', [
+            $sFile,
+            $this->oDbConfig->host ?? 'localhost',
+            $this->oDbConfig->user ?? '',
+            $this->oDbConfig->password ?? '',
+            reset($aDatabases) ?: '',
+            $this->sDomain,
+        ]);
+        $sCommand   = sprintf(
+            'if [[ -f %1$s ]]; then %2$s && rm -f %1$s; fi',
+            $sFile,
+            $sCommand
+        );
+
+        $this->oOutput->write('Running post-install scripts... ');
+        $sOutput = $oSsh->exec($sCommand);
+
+        if (!empty($sOutput)) {
+            $this->oProvisionOutput = json_decode($sOutput);
+            if (json_last_error()) {
+                $this->oOutput->writeln('<error>ERROR</error>');
+                $this->oOutput->writeln('<error>Failed to decode output of provisioning script</error>');
+                $this->oOutput->writeln('<error>Output: ' . $sOutput . '</error>');
+            } else {
+                $this->oOutput->writeln('<info>done</info>');
+            }
+        } else {
+            $this->oOutput->writeln('<info>done</info>');
+        }
 
         return $this;
     }
