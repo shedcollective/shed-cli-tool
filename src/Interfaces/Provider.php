@@ -84,6 +84,7 @@ interface Provider
      * Create the server
      *
      * @param string  $sDomain      The configured domain name
+     * @param string  $sHostname    The configured hostname name
      * @param string  $sEnvironment The configured environment
      * @param string  $sFramework   The configured framework
      * @param Account $oAccount     The configured account
@@ -92,13 +93,14 @@ interface Provider
      * @param Image   $oImage       The configured image
      * @param array   $aOptions     The configured options
      * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deployhq user
+     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
      * @param RSA     $oRootKey     Temporary root ssh key
      *
      * @return Server
      */
     public function create(
         string $sDomain,
+        string $sHostname,
         string $sEnvironment,
         string $sFramework,
         Account $oAccount,

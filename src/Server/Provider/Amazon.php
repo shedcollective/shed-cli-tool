@@ -120,6 +120,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
      * Create the server
      *
      * @param string  $sDomain      The configured domain name
+     * @param string  $sHostname    The configured hostname name
      * @param string  $sEnvironment The configured environment
      * @param string  $sFramework   The configured framework
      * @param Account $oAccount     The configured account
@@ -135,6 +136,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
      */
     public function create(
         string $sDomain,
+        string $sHostname,
         string $sEnvironment,
         string $sFramework,
         Account $oAccount,

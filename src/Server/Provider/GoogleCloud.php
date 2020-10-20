@@ -14,7 +14,6 @@ use Google_Service_Compute_NetworkInterface;
 use Google_Service_Compute_Tags;
 use phpseclib\Crypt\RSA;
 use Shed\Cli\Command\Auth;
-use Shed\Cli\Command\Server\Create;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
@@ -225,7 +224,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         $aOut = [];
         /** @var Google_Service_Compute_Image $oImage */
         foreach ($this->oImages as $oImage) {
-            $aOut[$oImage->selfLink] = new Image($oImage->name, $oImage->selfLink);
+            $aOut[$oImage->name] = new Image($oImage->name, $oImage->selfLink);
         }
 
         sort($aOut);
@@ -263,6 +262,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      * Create the server
      *
      * @param string  $sDomain      The configured domain name
+     * @param string  $sHostname    The configured hostname name
      * @param string  $sEnvironment The configured environment
      * @param string  $sFramework   The configured framework
      * @param Account $oAccount     The configured account
@@ -279,6 +279,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
      */
     public function create(
         string $sDomain,
+        string $sHostname,
         string $sEnvironment,
         string $sFramework,
         Account $oAccount,
@@ -296,23 +297,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         //  Prep variables
         $sProjectId = $oApi->getKeyObject()->project_id;
         $sZone      = $oRegion->getSlug();
-        $sName      = implode(
-            '-',
-            array_map(
-                function ($sBit) {
-                    return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
-                },
-                array_filter([
-                    $sDomain,
-                    $oImage->getLabel(),
-                    $sEnvironment,
-                    $sFramework !== Create::FRAMEWORK_NONE
-                        ? $sFramework
-                        : null,
-                ])
-            )
-        );
-        $sDiskName  = $sName . '-disk';
+        $sDiskName  = $sHostname . '-disk';
 
         try {
 
@@ -392,7 +377,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $oRequestBody = new Google_Service_Compute_Instance();
 
             //  Request Body
-            $oRequestBody->setName($sName);
+            $oRequestBody->setName($sHostname);
             $oRequestBody->setMachineType('zones/' . $sZone . '/machineTypes/' . $oSize->getSlug());
             $oRequestBody->setTags($oTags);
             $oRequestBody->setNetworkInterfaces([$oNetwork]);
@@ -420,7 +405,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 ->get(
                     $sProjectId,
                     $sZone,
-                    $sName
+                    $sHostname
                 );
 
             $oServer = new Entity\Server();
