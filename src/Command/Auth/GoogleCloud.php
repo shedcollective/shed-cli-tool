@@ -29,6 +29,13 @@ final class GoogleCloud extends Auth
      *
      * @var string
      */
+    const QUESTION_LABEL = 'Project ID';
+
+    /**
+     * The question for asking the account label
+     *
+     * @var string
+     */
     const QUESTION_TOKEN = 'Key file';
 
     // --------------------------------------------------------------------------
