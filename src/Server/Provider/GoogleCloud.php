@@ -227,8 +227,6 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $aOut[$oImage->name] = new Image($oImage->name, $oImage->selfLink);
         }
 
-        sort($aOut);
-
         return $aOut;
     }
 
