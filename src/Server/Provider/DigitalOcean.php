@@ -153,8 +153,6 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             $aOut[$oImage->id] = new Image($oImage->name, $oImage->id);
         }
 
-        sort($aOut);
-
         return $aOut;
     }
 
