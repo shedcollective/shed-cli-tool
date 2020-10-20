@@ -182,6 +182,13 @@ final class Create extends Command
     private $sDeployKey = '';
 
     /**
+     * The hostname to use
+     *
+     * @var string
+     */
+    private $sHostname = '';
+
+    /**
      * The Shed Account to use
      *
      * @var Account
@@ -223,6 +230,12 @@ final class Create extends Command
                 'd',
                 InputOption::VALUE_OPTIONAL,
                 'The domain name'
+            )
+            ->addOption(
+                'hostname',
+                'h',
+                InputOption::VALUE_OPTIONAL,
+                'The hostname'
             )
             ->addOption(
                 'environment',
@@ -303,7 +316,8 @@ final class Create extends Command
             ->setImage()
             ->setProviderOptions()
             ->setKeywords()
-            ->setDeployKey();
+            ->setDeployKey()
+            ->setHostname();
 
         if ($this->confirmVariables() && $this->confirmVpn()) {
             $this->createServer();
@@ -869,6 +883,40 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Sets the hostname to use, or generates one if not provided
+     *
+     * @return Create
+     */
+    private function setHostname(): Create
+    {
+        $sOption = trim($this->oInput->getOption('hostname'));
+        if (empty($sOption)) {
+            $this->sHostname = implode(
+                '-',
+                array_map(
+                    function ($sBit) {
+                        return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
+                    },
+                    array_filter([
+                        $this->sDomain,
+                        $this->oImage->getLabel(),
+                        $this->sEnvironment,
+                        $this->sFramework !== Create::FRAMEWORK_NONE
+                            ? $this->sFramework
+                            : null,
+                    ])
+                )
+            );
+        } else {
+            $this->sHostname = $sOption;
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Confirms the selected options
      *
      * @return bool
@@ -880,6 +928,7 @@ final class Create extends Command
 
         $aKeyValues = [
             'Domain'      => $this->sDomain,
+            'Hostname'    => $this->sHostname,
             'Environment' => static::ENVIRONMENTS[$this->sEnvironment],
             'Framework'   => static::FRAMEWORKS[$this->sFramework],
             'Provider'    => $this->oProvider->getLabel(),
@@ -941,6 +990,7 @@ final class Create extends Command
 
         $oServer = $this->oProvider->create(
             $this->sDomain,
+            $this->sHostname,
             static::ENVIRONMENTS[$this->sEnvironment],
             static::FRAMEWORKS[$this->sFramework],
             $this->oAccount,
@@ -965,7 +1015,7 @@ final class Create extends Command
             ->disableRootLogin($oSsh)
             ->randomiseRootPassword($oSsh)
             ->setDomainEnvVar($oSsh)
-            ->setHostname($oSsh)
+            ->configureHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
@@ -1186,19 +1236,12 @@ final class Create extends Command
      *
      * @return $this
      */
-    private function setHostname(SSH2 $oSsh): self
+    private function configureHostname(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Setting {domain}-{environment} as hostname... ');
-        $sHostname = strtolower(
-            sprintf(
-                '%s-%s',
-                str_replace('.', '-', $this->sDomain),
-                static::ENVIRONMENTS[$this->sEnvironment]
-            )
-        );
-        $oSsh->exec('hostname ' . $sHostname);
-        $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $sHostname . ':g" /etc/hosts');
-        $oSsh->exec('echo "' . $sHostname . '" > /etc/hostname');
+        $this->oOutput->write('Setting hostname... ');
+        $oSsh->exec('hostname ' . $this->sHostname);
+        $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts');
+        $oSsh->exec('echo "' . $this->sHostname . '" > /etc/hostname');
         $this->oOutput->writeln('<info>done</info>');
 
         return $this;

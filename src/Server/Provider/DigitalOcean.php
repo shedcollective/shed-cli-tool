@@ -188,6 +188,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * Create the server
      *
      * @param string  $sDomain      The configured domain name
+     * @param string  $sHostname    The configured hostname name
      * @param string  $sEnvironment The configured environment
      * @param string  $sFramework   The configured framework
      * @param Account $oAccount     The configured account
@@ -203,6 +204,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     public function create(
         string $sDomain,
+        string $sHostname,
         string $sEnvironment,
         string $sFramework,
         Account $oAccount,
@@ -226,22 +228,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             );
 
         $aData = [
-            'name'              => implode(
-                '-',
-                array_map(
-                    function ($sBit) {
-                        return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
-                    },
-                    array_filter([
-                        $sDomain,
-                        $oImage->getLabel(),
-                        $sEnvironment,
-                        $sFramework !== Create::FRAMEWORK_NONE
-                            ? $sFramework
-                            : null,
-                    ])
-                )
-            ),
+            'name'              => $sHostname,
             'region'            => $oRegion->getSlug(),
             'size'              => $oSize->getSlug(),
             'image'             => $oImage->getSlug(),
