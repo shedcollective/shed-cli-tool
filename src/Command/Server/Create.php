@@ -1384,10 +1384,13 @@ final class Create extends Command
             $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_BUCKET="shed-backups"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /root/.backupconfig');
+
+            if ($this->shouldConfigureMySQL()) {
+                $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
+                $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
+                $oSsh->exec('echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /root/.backupconfig');
+                $oSsh->exec('echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /root/.backupconfig');
+            }
             $this->oOutput->writeln('<info>done</info>');
         }
 
