@@ -233,7 +233,7 @@ final class Create extends Command
             )
             ->addOption(
                 'hostname',
-                'h',
+                'H',
                 InputOption::VALUE_OPTIONAL,
                 'The hostname'
             )
