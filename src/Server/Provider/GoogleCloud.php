@@ -224,7 +224,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         $aOut = [];
         /** @var Google_Service_Compute_Image $oImage */
         foreach ($this->oImages as $oImage) {
-            $aOut[$oImage->name] = new Image($oImage->name, $oImage->selfLink);
+            $aOut[$oImage->name] = new Image($oImage->name, $oImage->name);
         }
 
         return $aOut;
@@ -299,12 +299,18 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
 
         try {
 
+            $sImage = sprintf(
+                'https://www.googleapis.com/compute/v1/projects/%s/global/images/%s',
+                $oAccount->getLabel(),
+                $oImage->getSlug()
+            );
+
             //  Disks
             //  https://github.com/PaulRashidi/compute-getting-started-php/blob/master/app.php#L209
             //  Create a new boot disks
             $oDisk = new Google_Service_Compute_Disk();
             $oDisk->setName($sDiskName);
-            $oDisk->setSourceImage($oImage->getSlug());
+            $oDisk->setSourceImage($sImage);
             $oDisk->setSizeGb(25);
 
             //  Insert disk
