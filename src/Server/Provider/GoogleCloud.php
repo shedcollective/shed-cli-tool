@@ -125,13 +125,6 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         ],
     ];
 
-    /**
-     * The Google Cloud Project ID
-     *
-     * @var string
-     */
-    const PROJECT_ID = 'shed-hosting';
-
     // --------------------------------------------------------------------------
 
     /**
@@ -482,7 +475,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $this->oImages = $oApi
                 ->getApi()
                 ->images
-                ->listImages(static::PROJECT_ID)
+                ->listImages($oAccount->getLabel())
                 ->getItems();
         }
     }
