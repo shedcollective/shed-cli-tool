@@ -73,7 +73,7 @@ final class Create extends Command
      *
      * @var string
      */
-    const FRAMEWORK_STATIC = 'STATIC';
+    const FRAMEWORK_NONE = 'NONE';
 
     /**
      * The available frameworks
@@ -85,7 +85,7 @@ final class Create extends Command
         self::FRAMEWORK_NAILS,
         self::FRAMEWORK_LARAVEL,
         self::FRAMEWORK_WORDPRESS,
-        self::FRAMEWORK_STATIC,
+        self::FRAMEWORK_NONE,
     ];
 
     /**

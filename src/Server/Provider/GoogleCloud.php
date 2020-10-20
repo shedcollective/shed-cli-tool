@@ -14,6 +14,7 @@ use Google_Service_Compute_NetworkInterface;
 use Google_Service_Compute_Tags;
 use phpseclib\Crypt\RSA;
 use Shed\Cli\Command\Auth;
+use Shed\Cli\Command\Server\Create;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
@@ -301,12 +302,14 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 function ($sBit) {
                     return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
                 },
-                [
+                array_filter([
                     $sDomain,
                     $oImage->getLabel(),
                     $sEnvironment,
-                    $sFramework,
-                ]
+                    $sFramework !== Create::FRAMEWORK_NONE
+                        ? $sFramework
+                        : null,
+                ])
             )
         );
         $sDiskName  = $sName . '-disk';

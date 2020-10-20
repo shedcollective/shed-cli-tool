@@ -232,12 +232,14 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
                     function ($sBit) {
                         return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
                     },
-                    [
+                    array_filter([
                         $sDomain,
                         $oImage->getLabel(),
                         $sEnvironment,
-                        $sFramework,
-                    ]
+                        $sFramework !== Create::FRAMEWORK_NONE
+                            ? $sFramework
+                            : null,
+                    ])
                 )
             ),
             'region'            => $oRegion->getSlug(),
