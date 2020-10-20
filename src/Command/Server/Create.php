@@ -841,7 +841,9 @@ final class Create extends Command
 
         $aKeywords   = explode(',', $sKeywords);
         $aKeywords[] = static::ENVIRONMENTS[$this->sEnvironment];
-        $aKeywords[] = static::FRAMEWORKS[$this->sFramework];
+        $aKeywords[] = static::FRAMEWORKS[$this->sFramework] !== static::FRAMEWORK_NONE
+            ? static::FRAMEWORKS[$this->sFramework]
+            : null;
         $aKeywords[] = $this->oImage->getLabel();
         $aKeywords   = array_values(
             array_filter(
