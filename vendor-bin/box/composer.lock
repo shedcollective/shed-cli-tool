@@ -932,12 +932,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JetBrains/phpstorm-stubs.git",
-                "reference": "5c2d08318c95ce2d8e6badbbb18fa2c726b9fadd"
+                "reference": "fe615d4f035d6f80790128781dff91190da23d8f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/5c2d08318c95ce2d8e6badbbb18fa2c726b9fadd",
-                "reference": "5c2d08318c95ce2d8e6badbbb18fa2c726b9fadd",
+                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/fe615d4f035d6f80790128781dff91190da23d8f",
+                "reference": "fe615d4f035d6f80790128781dff91190da23d8f",
                 "shasum": ""
             },
             "require-dev": {
@@ -973,7 +973,7 @@
             "support": {
                 "source": "https://github.com/JetBrains/phpstorm-stubs/tree/master"
             },
-            "time": "2021-03-17T16:38:46+00:00"
+            "time": "2021-03-18T21:53:29+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
