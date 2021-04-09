@@ -9,23 +9,26 @@ use Symfony\Component\Yaml\Yaml;
 abstract class Base
 {
     /**
-     * Re-writes the docker-compose.yml file, replacing the web server build definition
+     * Updates the contents of docker/webserver/Dockerfile to use the specified tag
      *
-     * @param string $sPath              The path where the project is being installed
-     * @param string $sDesiredDockerFile The desired web server Dockerfile
+     * @param string $sPath       The path where the project is being installed
+     * @param string $sDesiredTag The desired Docker tag
      *
      * @return $this
      */
-    protected function configureDockerFile($sPath, $sDesiredDockerFile): Base
+    protected function configureDockerFile(string $sPath, string $sDesiredTag): Base
     {
-        $aConfig = Yaml::parseFile($sPath . 'docker-compose.yml');
+        $sDockerFile = implode(DIRECTORY_SEPARATOR, [
+            rtrim($sPath, DIRECTORY_SEPARATOR),
+            'docker',
+            'webserver',
+            'Dockerfile',
+        ]);
 
-        $aConfig['services']['webserver']['build'] = 'docker/webserver/' . $sDesiredDockerFile;
+        $sConfig = file_get_contents($sDockerFile);
+        $sConfig = preg_replace('/^FROM (.+):.*$/', 'FROM $1:' . $sDesiredTag, $sConfig);
 
-        file_put_contents(
-            $sPath . 'docker-compose.yml',
-            Yaml::dump($aConfig, 100)
-        );
+        file_put_contents($sDockerFile, $sConfig);
 
         return $this;
     }
