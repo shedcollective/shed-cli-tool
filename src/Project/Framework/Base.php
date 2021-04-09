@@ -32,26 +32,4 @@ abstract class Base
 
         return $this;
     }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Installs the framework
-     *
-     * @param string $sPath              The path where the project is being installed
-     * @param string $sDesiredDockerFile The name of the Dockerfile where the install-framework.sh file is located
-     *
-     * @return $this
-     * @throws CommandFailedException
-     */
-    protected function installFramework($sPath, $sDesiredDockerFile): Base
-    {
-        System::exec([
-            'cd "' . $sPath . '"',
-            'mkdir -p www',
-            $sDesiredDockerFile ? './docker/webserver/' . $sDesiredDockerFile . '/templates/install-framework.sh' : null,
-        ]);
-
-        return $this;
-    }
 }

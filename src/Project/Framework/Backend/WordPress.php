@@ -60,8 +60,7 @@ final class WordPress extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
-            ->configureDockerFile($sPath, 'apache-php74-wordpress')
-            ->installFramework($sPath, 'apache-wordpress-php72');
+            ->configureDockerFile($sPath, 'apache-php74-wordpress');
 
         //  Rewrite scripts/build.sh
         file_put_contents(

@@ -60,7 +60,6 @@ final class None extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
-            ->configureDockerFile($sPath, 'apache-php74')
-            ->installFramework($sPath, 'apache-php72');
+            ->configureDockerFile($sPath, 'apache-php74');
     }
 }
