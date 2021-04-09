@@ -98,6 +98,7 @@ final class Nails extends Base implements Framework
             '--no-docker',
         ];
         System::exec('nails new:project ' . implode(' ', $aArguments));
+        System::exec('rm -rf ' .$sPath. 'www/.circleci');
 
         return $this;
     }
