@@ -24,7 +24,7 @@
         "symfony/console": "^5.2",
         "symfony/finder": "^5.2",
         "symfony/yaml": "^5.2",
-        "toin0u/digitalocean-v2": "^2.2",
+        "toin0u/digitalocean-v2": "^3.2",
         "kriswallsmith/buzz": "^1.2",
         "google/apiclient": "^2.0",
         "aws/aws-sdk-php": "^3.95",

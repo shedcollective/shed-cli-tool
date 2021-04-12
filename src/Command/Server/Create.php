@@ -3,8 +3,9 @@
 namespace Shed\Cli\Command\Server;
 
 use Exception;
-use phpseclib\Crypt\RSA;
-use phpseclib\Net\SSH2;
+use phpseclib3\Crypt\RSA;
+use phpseclib3\Net\SSH2;
+use RuntimeException;
 use Shed\Cli\Command;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
@@ -241,13 +242,13 @@ final class Create extends Command
                 'environment',
                 'e',
                 InputOption::VALUE_OPTIONAL,
-                'The environment (one of: ' . implode(', ', static::ENVIRONMENTS) . ')'
+                'The environment (one of: ' . implode(', ', self::ENVIRONMENTS) . ')'
             )
             ->addOption(
                 'framework',
                 'f',
                 InputOption::VALUE_OPTIONAL,
-                'The framework (one of: ' . implode(', ', static::ENVIRONMENTS) . ')'
+                'The framework (one of: ' . implode(', ', self::ENVIRONMENTS) . ')'
             )
             ->addOption(
                 'provider',
@@ -323,7 +324,7 @@ final class Create extends Command
             $this->createServer();
         }
 
-        return static::EXIT_CODE_SUCCESS;
+        return self::EXIT_CODE_SUCCESS;
     }
 
     // --------------------------------------------------------------------------
@@ -414,7 +415,7 @@ final class Create extends Command
      *
      * @return bool
      */
-    protected function validateDomain($sDomain): bool
+    protected function validateDomain(string $sDomain): bool
     {
         if (empty($sDomain)) {
             $this->error(array_filter([
@@ -457,18 +458,18 @@ final class Create extends Command
 
             $this->sEnvironment = $this->choose(
                 'Environment:',
-                static::ENVIRONMENTS,
+                self::ENVIRONMENTS,
                 null,
                 [$this, 'validateEnvironment']
             );
 
         } elseif ($this->validateEnvironment($sOption)) {
 
-            $this->sEnvironment = array_search($sOption, static::ENVIRONMENTS);
+            $this->sEnvironment = array_search($sOption, self::ENVIRONMENTS);
             $this->oOutput->writeln(
                 sprintf(
                     '<comment>Environment</comment>: %s',
-                    static::ENVIRONMENTS[$this->sEnvironment]
+                    self::ENVIRONMENTS[$this->sEnvironment]
                 )
             );
         }
@@ -485,7 +486,7 @@ final class Create extends Command
      *
      * @return bool
      */
-    protected function validateEnvironment($sEnvironment): bool
+    protected function validateEnvironment(string $sEnvironment): bool
     {
         if (empty($sEnvironment)) {
             $this->error(array_filter([
@@ -496,19 +497,19 @@ final class Create extends Command
         }
 
         $sEnvironment = strtoupper($sEnvironment);
-        if (!in_array($sEnvironment, static::ENVIRONMENTS)) {
+        if (!in_array($sEnvironment, self::ENVIRONMENTS)) {
             $this->error(array_filter([
                 '"' . $sEnvironment . '" is not a valid Environment',
-                'Should be one of: ' . implode(', ', static::ENVIRONMENTS),
+                'Should be one of: ' . implode(', ', self::ENVIRONMENTS),
             ]));
             return false;
         }
 
-        if ($sEnvironment === static::ENV_PRODUCTION) {
+        if ($sEnvironment === self::ENV_PRODUCTION) {
             $aBackupAccounts = Command\Auth\Backup::getAccounts();
             if (empty($aBackupAccounts)) {
                 throw new NotValidException(
-                    'No backup accounts available, add one use `auth:backup`'
+                    'No backup accounts available, add one using `auth:backup`'
                 );
             } elseif (count($aBackupAccounts) !== 1) {
                 throw new NotValidException(
@@ -518,7 +519,7 @@ final class Create extends Command
             $this->oBackupAccount = reset($aBackupAccounts);
         }
 
-        return array_search($sEnvironment, static::ENVIRONMENTS) !== false;
+        return array_search($sEnvironment, self::ENVIRONMENTS) !== false;
     }
 
     // --------------------------------------------------------------------------
@@ -536,18 +537,18 @@ final class Create extends Command
 
             $this->sFramework = $this->choose(
                 'Framework:',
-                static::FRAMEWORKS,
+                self::FRAMEWORKS,
                 null,
                 [$this, 'validateFramework']
             );
 
         } else {
 
-            $this->sFramework = array_search($sOption, static::FRAMEWORKS);
+            $this->sFramework = array_search($sOption, self::FRAMEWORKS);
             $this->oOutput->writeln(
                 sprintf(
                     '<comment>Framework</comment>: %s',
-                    static::FRAMEWORKS[$this->sFramework]
+                    self::FRAMEWORKS[$this->sFramework]
                 )
             );
         }
@@ -564,7 +565,7 @@ final class Create extends Command
      *
      * @return bool
      */
-    protected function validateFramework($sFramework): bool
+    protected function validateFramework(string $sFramework): bool
     {
         if (empty($sFramework)) {
             $this->error(array_filter([
@@ -575,15 +576,15 @@ final class Create extends Command
         }
 
         $sFramework = strtoupper($sFramework);
-        if (!in_array(strtoupper($sFramework), static::FRAMEWORKS)) {
+        if (!in_array(strtoupper($sFramework), self::FRAMEWORKS)) {
             $this->error(array_filter([
                 '"' . $sFramework . '" is not a valid Framework',
-                'Should be one of: ' . implode(', ', static::FRAMEWORKS),
+                'Should be one of: ' . implode(', ', self::FRAMEWORKS),
             ]));
             return false;
         }
 
-        return array_search($sFramework, static::FRAMEWORKS) !== false;
+        return array_search($sFramework, self::FRAMEWORKS) !== false;
     }
 
     // --------------------------------------------------------------------------
@@ -625,7 +626,7 @@ final class Create extends Command
         }
 
         if (count($aProviders) === 0) {
-            throw new \RuntimeException('No providers available');
+            throw new RuntimeException('No providers available');
         } elseif ($this->oInput->getOption('provider')) {
 
             $sOption = trim($this->oInput->getOption('provider'));
@@ -724,10 +725,10 @@ final class Create extends Command
     /**
      * Sets a provider property
      *
-     * @param string $sLabel    The user-facing name of the property
-     * @param array  $aOptions  The options to choose from
-     * @param string $sDefault  The default value
-     * @param mixed  $oProperty The property to assign the selected value to
+     * @param string      $sLabel    The user-facing name of the property
+     * @param array       $aOptions  The options to choose from
+     * @param string|null $sDefault  The default value
+     * @param mixed       $oProperty The property to assign the selected value to
      *
      * @return $this
      */
@@ -782,7 +783,7 @@ final class Create extends Command
     {
         $this->aProviderOptions = $this->oProvider->getOptions();
 
-        foreach ($this->aProviderOptions as $sKey => $oOption) {
+        foreach ($this->aProviderOptions as $oOption) {
 
             $sType       = $oOption->getType();
             $sLabel      = $oOption->getLabel();
@@ -840,9 +841,9 @@ final class Create extends Command
         }
 
         $aKeywords   = explode(',', $sKeywords);
-        $aKeywords[] = static::ENVIRONMENTS[$this->sEnvironment];
-        $aKeywords[] = static::FRAMEWORKS[$this->sFramework] !== static::FRAMEWORK_NONE
-            ? static::FRAMEWORKS[$this->sFramework]
+        $aKeywords[] = self::ENVIRONMENTS[$this->sEnvironment];
+        $aKeywords[] = self::FRAMEWORKS[$this->sFramework] !== self::FRAMEWORK_NONE
+            ? self::FRAMEWORKS[$this->sFramework]
             : null;
         $aKeywords[] = $this->oImage->getLabel();
         $aKeywords   = array_values(
@@ -850,11 +851,11 @@ final class Create extends Command
                 array_unique(
                     array_map(
                         function ($sKeyword) {
+
                             $sKeyword = strtolower($sKeyword);
                             $sKeyword = preg_replace('/[^a-z0-9 \-]/', '', $sKeyword);
                             $sKeyword = str_replace(' ', '-', $sKeyword);
-                            $sKeyword = trim($sKeyword);
-                            return $sKeyword;
+                            return trim($sKeyword);
                         },
                         $aKeywords
                     )
@@ -927,7 +928,7 @@ final class Create extends Command
      *
      * @return bool
      */
-    private function confirmVariables()
+    private function confirmVariables(): bool
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('A new server will be provisioned with the following details:');
@@ -935,8 +936,8 @@ final class Create extends Command
         $aKeyValues = [
             'Domain'      => $this->sDomain,
             'Hostname'    => $this->sHostname,
-            'Environment' => static::ENVIRONMENTS[$this->sEnvironment],
-            'Framework'   => static::FRAMEWORKS[$this->sFramework],
+            'Environment' => self::ENVIRONMENTS[$this->sEnvironment],
+            'Framework'   => self::FRAMEWORKS[$this->sFramework],
             'Provider'    => $this->oProvider->getLabel(),
             'Account'     => $this->oAccount->getLabel(),
             'Region'      => $this->oRegion->getLabel(),
@@ -944,7 +945,7 @@ final class Create extends Command
             'Image'       => $this->oImage->getLabel(),
         ];
 
-        foreach ($this->aProviderOptions as $sKey => $oOption) {
+        foreach ($this->aProviderOptions as $oOption) {
             $oSummary                     = $oOption->summarise($this->aProviderOptions);
             $aKeyValues[$oSummary->label] = $oSummary->summary;
         }
@@ -963,7 +964,7 @@ final class Create extends Command
      *
      * @return bool
      */
-    private function confirmVpn()
+    private function confirmVpn(): bool
     {
         return $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
     }
@@ -978,15 +979,15 @@ final class Create extends Command
      */
     private function createServer(): Create
     {
-        $bEnableBackups = static::ENVIRONMENTS[$this->sEnvironment] === static::ENV_PRODUCTION;
+        $bEnableBackups = self::ENVIRONMENTS[$this->sEnvironment] === self::ENV_PRODUCTION;
 
         $this->oOutput->writeln('');
 
         // --------------------------------------------------------------------------
 
         $this->oOutput->write('Generating temporary SSH key... ');
-        $oKey = $this->generateSshKey();
-        $this->oOutput->writeln('<info>' . $oKey->getPublicKeyFingerprint() . '</info>');
+        $oPrivateKey = $this->generateSshKey();
+        $this->oOutput->writeln('<info>' . $oPrivateKey->getPublicKey()->getFingerprint() . '</info>');
 
         // --------------------------------------------------------------------------
 
@@ -997,8 +998,8 @@ final class Create extends Command
         $oServer = $this->oProvider->create(
             $this->sDomain,
             $this->sHostname,
-            static::ENVIRONMENTS[$this->sEnvironment],
-            static::FRAMEWORKS[$this->sFramework],
+            self::ENVIRONMENTS[$this->sEnvironment],
+            self::FRAMEWORKS[$this->sFramework],
             $this->oAccount,
             $this->oRegion,
             $this->oSize,
@@ -1006,14 +1007,14 @@ final class Create extends Command
             $this->aProviderOptions,
             $this->aKeywords,
             $this->sDeployKey,
-            $oKey
+            $oPrivateKey
         );
         $this->oOutput->writeln('<info>done</info>');
         $this->oOutput->writeln('Server IP is <info>' . $oServer->getIp() . '</info>');
 
         // --------------------------------------------------------------------------
 
-        $oSsh = $this->waitForSsh($oServer, $oKey);
+        $oSsh = $this->waitForSsh($oServer, $oPrivateKey);
 
         // --------------------------------------------------------------------------
 
@@ -1101,9 +1102,9 @@ final class Create extends Command
     /**
      * Generates a temporary RSA key
      *
-     * @return RSA
+     * @return RSA\PrivateKey
      */
-    private function generateSshKey(): RSA
+    private function generateSshKey(): RSA\PrivateKey
     {
         $sKeyPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid();
 
@@ -1125,8 +1126,8 @@ final class Create extends Command
             );
         }
 
-        $oKey = new RSA();
-        $oKey->loadKey(file_get_contents($sKeyPath));
+        /** @var RSA\PrivateKey $oKey */
+        $oKey = RSA::load(file_get_contents($sKeyPath));
 
         unlink($sKeyPath);
         unlink($sKeyPath . '.pub');
@@ -1139,30 +1140,36 @@ final class Create extends Command
     /**
      * Waits for an SSH connection to be established
      *
-     * @param Server $oServer The server to connect to
-     * @param RSA    $oKey    The key to use
+     * @param Server         $oServer The server to connect to
+     * @param RSA\PrivateKey $oKey    The key to use
      *
      * @return SSH2
      */
-    private function waitForSsh(Server $oServer, RSA $oKey): SSH2
+    private function waitForSsh(Server $oServer, RSA\PrivateKey $oKey): SSH2
     {
         $this->oOutput->write('Waiting for SSH access... ');
         $iStart = time();
 
-        //  Make initial sleep 20 seconds to give the Os some time to start sshd
-        sleep(10);
+        //  Give the OS some time to start sshd
+        $iIntervalWait = 10;
+        $iInitialWait  = $this->oProvider->getSshInitialWait() - $iIntervalWait;
+        if ($iInitialWait < $iIntervalWait) {
+            $iInitialWait = $iIntervalWait;
+        }
+
+        sleep($iInitialWait);
 
         $iPreviousErrorReporting = error_reporting(0);
 
         do {
 
-            sleep(10);
+            sleep($iIntervalWait);
 
-            if (time() - $iStart >= static::SSH_TIMEOUT) {
+            if (time() - $iStart >= self::SSH_TIMEOUT) {
                 throw new TimeoutException(
                     sprintf(
                         'Timed out waiting for server to allow SSH access (timeout: %s seconds)',
-                        static::SSH_TIMEOUT
+                        self::SSH_TIMEOUT
                     )
                 );
             } else {
@@ -1306,12 +1313,12 @@ final class Create extends Command
         $sConfig = $oSsh->exec(
             sprintf(
                 '/root/mysql-setup-db.sh %s %s',
-                strtolower(static::ENVIRONMENTS[$this->sEnvironment]),
+                strtolower(self::ENVIRONMENTS[$this->sEnvironment]),
                 strtolower(
                     sprintf(
                         '%s_%s',
                         str_replace('.', '_', preg_replace('/[^a-zA-Z0-9.]/', '', $this->sDomain)),
-                        static::ENVIRONMENTS[$this->sEnvironment]
+                        self::ENVIRONMENTS[$this->sEnvironment]
                     )
                 )
             )
@@ -1425,11 +1432,11 @@ final class Create extends Command
 
                 sleep(10);
 
-                if (time() - $iStart >= static::SSL_TIMEOUT) {
+                if (time() - $iStart >= self::SSL_TIMEOUT) {
 
                     $this->oOutput->writeln('<error>timeout</error>');
                     $this->warning([
-                        'Timed out waiting for DNS to propagate (timeout: ' . static::SSL_TIMEOUT . ' seconds)',
+                        'Timed out waiting for DNS to propagate (timeout: ' . self::SSL_TIMEOUT . ' seconds)',
                         'You will need to manually configure SSL: SSH in as root and execute `ssl-create`',
                     ]);
                     $bResolved = true;

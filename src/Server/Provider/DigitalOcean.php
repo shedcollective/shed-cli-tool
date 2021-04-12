@@ -2,8 +2,10 @@
 
 namespace Shed\Cli\Server\Provider;
 
+use DigitalOceanV2\Entity\Droplet;
 use DigitalOceanV2\Entity\Network;
-use phpseclib\Crypt\RSA;
+use DigitalOceanV2\ResultPager;
+use phpseclib3\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Server\Create;
 use Shed\Cli\Entity;
@@ -12,6 +14,7 @@ use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
 use Shed\Cli\Entity\Provider\Size;
 use Shed\Cli\Exceptions\CliException;
+use Shed\Cli\Exceptions\Server\TimeoutException;
 use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
 use Shed\Cli\Server\Provider\Api;
@@ -106,6 +109,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @param Account $oAccount The selected provider account
      *
      * @return array
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     public function getRegions(Account $oAccount): array
     {
@@ -130,7 +134,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     public function getSizes(Account $oAccount): array
     {
         $aOut = [];
-        foreach (static::SIZES as $aSize) {
+        foreach (self::SIZES as $aSize) {
             $aOut[$aSize['slug']] = new Size($aSize['label'], $aSize['slug']);
         }
         return $aOut;
@@ -144,6 +148,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @param Account $oAccount The selected provider account
      *
      * @return array
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     public function getImages(Account $oAccount): array
     {
@@ -183,22 +188,35 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the how long to wait for SSH
+     *
+     * @return int
+     */
+    public function getSshInitialWait(): int
+    {
+        return 20;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Create the server
      *
-     * @param string  $sDomain      The configured domain name
-     * @param string  $sHostname    The configured hostname name
-     * @param string  $sEnvironment The configured environment
-     * @param string  $sFramework   The configured framework
-     * @param Account $oAccount     The configured account
-     * @param Region  $oRegion      The configured region
-     * @param Size    $oSize        The configured size
-     * @param Image   $oImage       The configured image
-     * @param array   $aOptions     The configured options
-     * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA     $oRootKey     Temporary root ssh key
+     * @param string         $sDomain      The configured domain name
+     * @param string         $sHostname    The configured hostname name
+     * @param string         $sEnvironment The configured environment
+     * @param string         $sFramework   The configured framework
+     * @param Account        $oAccount     The configured account
+     * @param Region         $oRegion      The configured region
+     * @param Size           $oSize        The configured size
+     * @param Image          $oImage       The configured image
+     * @param array          $aOptions     The configured options
+     * @param array          $aKeywords    The configured keywords
+     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     public function create(
         string $sDomain,
@@ -212,7 +230,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA $oRootKey
+        RSA\PrivateKey $oRootKey
     ): Entity\Server {
 
         //  Add key to DO temporarily
@@ -222,7 +240,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             ->key()
             ->create(
                 'temp-key-' . uniqid(),
-                $oRootKey->getPublicKey(RSA::PUBLIC_FORMAT_OPENSSH)
+                $oRootKey->getPublicKey()->toString('OpenSSH')
             );
 
         $aData = [
@@ -238,7 +256,6 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             'monitoring'        => true,
             'volumes'           => [],
             'tags'              => $aKeywords,
-            'wait'              => true,
         ];
 
         $oDroplet = $this
@@ -256,17 +273,19 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
                 $aData['userData'],
                 $aData['monitoring'],
                 $aData['volumes'],
-                $aData['tags'],
-                $aData['wait']
+                $aData['tags']
             );
+
+        $oDroplet = $this->waitForDropletToBeActive($oAccount, $oDroplet, 300);
 
         $oServer = new Entity\Server();
         $oDisk   = new Entity\Provider\Disk($oDroplet->disk, $oDroplet->disk);
 
         //  Remove the temporary SSH key
-        $this->getApi($oAccount)->getApi()->key()->delete($oKey->id);
+        $this->getApi($oAccount)->getApi()->key()->remove($oKey->id);
 
         //  Get the public IP
+        print_r($oDroplet);
         $aIps = array_filter($oDroplet->networks, function (Network $oNetwork) {
             return $oNetwork->type === 'public';
         });
@@ -299,14 +318,19 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * Fetch and cache regions from Digital Ocean
      *
      * @param Account $oAccount The account to use
+     *
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     private function fetchRegions(Account $oAccount)
     {
         if (empty($this->aRegions)) {
-            $oApi           = $this->getApi($oAccount);
+
+            $oApi   = $this->getApi($oAccount);
+            $oPager = new ResultPager($oApi->getApi());
+
             $this->aRegions = array_values(
                 array_filter(
-                    $oApi->getRegionApi()->getAll(),
+                    $oPager->fetchAll($oApi->getRegionApi(), 'getAll'),
                     function ($oRegion) {
                         return $oRegion->available;
                     }
@@ -321,19 +345,24 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * Fetch and cache images from Digital Ocean
      *
      * @param Account $oAccount The account to use
+     *
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     private function fetchImages(Account $oAccount)
     {
         if (empty($this->aImages)) {
-            $oApi          = $this->getApi($oAccount);
+
+            $oApi   = $this->getApi($oAccount);
+            $oPager = new ResultPager($oApi->getApi());
+
             $this->aImages = array_values(
                 array_filter(
-                    $oApi
-                        ->getImageApi()
-                        ->getAll([
+                    $oPager->fetchAll($oApi->getImageApi(), 'getAll', [
+                        [
                             'type'    => 'snapshot',
                             'private' => true,
-                        ]),
+                        ],
+                    ]),
                     function ($oImage) {
                         return $oImage->type === 'snapshot';
                     }
@@ -358,5 +387,41 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         }
 
         return $this->oDigitalOcean;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Waits for the droplet to become active
+     *
+     * @param                                $oAccount
+     * @param \DigitalOceanV2\Entity\Droplet $oDroplet
+     * @param int|null                       $iTimeout
+     *
+     * @return Droplet
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
+     */
+    private function waitForDropletToBeActive($oAccount, Droplet $oDroplet, int $iTimeout = null): Droplet
+    {
+        $iEndTime = time() + ($iTimeout ?? 300);
+
+        while (time() < $iEndTime) {
+
+            sleep(min(20, $iEndTime - time()));
+
+            $oDroplet = $this
+                ->getApi($oAccount)
+                ->getDropletApi()
+                ->getById($oDroplet->id);
+
+            if ($oDroplet->status === 'active') {
+                return $oDroplet;
+            }
+        }
+
+        throw new TimeoutException(sprintf(
+            'Timed-out whilst waiting for droplet %s to become active.',
+            $oDroplet->id
+        ));
     }
 }
