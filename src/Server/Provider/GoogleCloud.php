@@ -12,7 +12,7 @@ use Google_Service_Compute_Metadata;
 use Google_Service_Compute_MetadataItems;
 use Google_Service_Compute_NetworkInterface;
 use Google_Service_Compute_Tags;
-use phpseclib\Crypt\RSA;
+use phpseclib3\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
@@ -185,7 +185,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
     public function getRegions(Account $oAccount): array
     {
         $aOut = [];
-        foreach (static::REGIONS as $aSize) {
+        foreach (self::REGIONS as $aSize) {
             $aOut[$aSize['slug']] = new Region($aSize['label'], $aSize['slug']);
         }
         return $aOut;
@@ -203,7 +203,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
     public function getSizes(Account $oAccount): array
     {
         $aOut = [];
-        foreach (static::SIZES as $aSize) {
+        foreach (self::SIZES as $aSize) {
             $aOut[$aSize['slug']] = new Size($aSize['label'], $aSize['slug']);
         }
         return $aOut;
@@ -257,20 +257,32 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the how long to wait for SSH
+     *
+     * @return int
+     */
+    public function getSshInitialWait(): int
+    {
+        return 20;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Create the server
      *
-     * @param string  $sDomain      The configured domain name
-     * @param string  $sHostname    The configured hostname name
-     * @param string  $sEnvironment The configured environment
-     * @param string  $sFramework   The configured framework
-     * @param Account $oAccount     The configured account
-     * @param Region  $oRegion      The configured region
-     * @param Size    $oSize        The configured size
-     * @param Image   $oImage       The configured image
-     * @param array   $aOptions     The configured options
-     * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA     $oRootKey     Temporary root ssh key
+     * @param string         $sDomain      The configured domain name
+     * @param string         $sHostname    The configured hostname name
+     * @param string         $sEnvironment The configured environment
+     * @param string         $sFramework   The configured framework
+     * @param Account        $oAccount     The configured account
+     * @param Region         $oRegion      The configured region
+     * @param Size           $oSize        The configured size
+     * @param Image          $oImage       The configured image
+     * @param array          $aOptions     The configured options
+     * @param array          $aKeywords    The configured keywords
+     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      * @throws Exception
@@ -287,7 +299,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA $oRootKey
+        RSA\PrivateKey $oRootKey
     ): Entity\Server {
 
         $oApi = $this->getApi($oAccount);
@@ -350,7 +362,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
 
             $oSshKeys = new Google_Service_Compute_MetadataItems();
             $oSshKeys->setKey('ssh-keys');
-            $oSshKeys->setValue('root:' . $oRootKey->getPublicKey(RSA::PUBLIC_FORMAT_OPENSSH));
+            $oSshKeys->setValue('root:' . $oRootKey->getPublicKey()->toString('OpenSSH'));
 
             $oMetadata = new Google_Service_Compute_Metadata();
             $oMetadata->setItems([$oBlockKeys, $oSshKeys]);

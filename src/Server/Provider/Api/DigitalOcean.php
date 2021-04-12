@@ -2,9 +2,8 @@
 
 namespace Shed\Cli\Server\Provider\Api;
 
-use DigitalOceanV2\Adapter\BuzzAdapter;
 use DigitalOceanV2\Api;
-use DigitalOceanV2\DigitalOceanV2;
+use DigitalOceanV2\Client;
 use DigitalOceanV2\Entity;
 use Shed\Cli\Entity\Provider\Account;
 
@@ -20,7 +19,7 @@ final class DigitalOcean
     /**
      * The Digital Ocean API
      *
-     * @var DigitalOceanV2
+     * @var Client
      */
     private $oApi;
 
@@ -34,8 +33,9 @@ final class DigitalOcean
     public function __construct(Account $oAccount)
     {
         $this->oAccount = $oAccount;
-        $oAdapter       = new BuzzAdapter($this->oAccount->getToken());
-        $this->oApi     = new DigitalOceanV2($oAdapter);
+        $this->oApi     = new Client();
+
+        $this->oApi->authenticate($this->oAccount->getToken());
     }
 
     // --------------------------------------------------------------------------
@@ -55,9 +55,9 @@ final class DigitalOcean
     /**
      * Return the digital Ocean API
      *
-     * @return DigitalOceanV2
+     * @return Client
      */
-    public function getApi(): DigitalOceanV2
+    public function getApi(): Client
     {
         return $this->oApi;
     }
@@ -68,6 +68,8 @@ final class DigitalOcean
      * Test the connection
      *
      * @param string $sToken The token to test
+     *
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     public static function test(string $sToken)
     {
@@ -128,7 +130,8 @@ final class DigitalOcean
     /**
      * Return information of the authenticated user
      *
-     * @return \DigitalOceanV2\Entity\Account
+     * @return Entity\Account
+     * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
     public function getUserInformation(): Entity\Account
     {

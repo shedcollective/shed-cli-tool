@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Server\Provider;
 
-use phpseclib\Crypt\RSA;
+use phpseclib3\Crypt\RSA;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
@@ -117,20 +117,32 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the how long to wait for SSH
+     *
+     * @return int
+     */
+    public function getSshInitialWait(): int
+    {
+        return 20;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Create the server
      *
-     * @param string  $sDomain      The configured domain name
-     * @param string  $sHostname    The configured hostname name
-     * @param string  $sEnvironment The configured environment
-     * @param string  $sFramework   The configured framework
-     * @param Account $oAccount     The configured account
-     * @param Region  $oRegion      The configured region
-     * @param Size    $oSize        The configured size
-     * @param Image   $oImage       The configured image
-     * @param array   $aOptions     The configured options
-     * @param array   $aKeywords    The configured keywords
-     * @param string  $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA     $oRootKey     Temporary root ssh key
+     * @param string         $sDomain      The configured domain name
+     * @param string         $sHostname    The configured hostname name
+     * @param string         $sEnvironment The configured environment
+     * @param string         $sFramework   The configured framework
+     * @param Account        $oAccount     The configured account
+     * @param Region         $oRegion      The configured region
+     * @param Size           $oSize        The configured size
+     * @param Image          $oImage       The configured image
+     * @param array          $aOptions     The configured options
+     * @param array          $aKeywords    The configured keywords
+     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      */
@@ -146,7 +158,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA $oRootKey
+        RSA\PrivateKey $oRootKey
     ): Entity\Server {
         throw new CliException('🚧 Deploying AWS servers is a work in progress');
     }

@@ -60,7 +60,6 @@ final class Laravel extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
-            ->configureDockerFile($sPath, 'apache-laravel-php72')
-            ->installFramework($sPath, 'apache-laravel-php72');
+            ->configureDockerFile($sPath, 'apache-php74-laravel');
     }
 }

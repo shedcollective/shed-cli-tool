@@ -76,7 +76,7 @@ final class Nails extends Base implements Framework
     public function install($sPath, array $aOptions, Framework $oOtherFramework, array $aInstallOptions): void
     {
         $this
-            ->configureDockerFile($sPath, 'apache-nails-php72')
+            ->configureDockerFile($sPath, 'apache-php74-nails')
             ->installAppSkeleton($sPath)
             ->generatePrivateKey($sPath);
     }
@@ -98,6 +98,7 @@ final class Nails extends Base implements Framework
             '--no-docker',
         ];
         System::exec('nails new:project ' . implode(' ', $aArguments));
+        System::exec('rm -rf ' .$sPath. 'www/.circleci');
 
         return $this;
     }
