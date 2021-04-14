@@ -45,10 +45,10 @@ final class Amazon extends Auth
         $this->oOutput->writeln('');
         $this->oOutput->writeln('To generate new access credentials:');
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>1:</comment> Generate a new identity here: <comment>https://console.aws.amazon.com/iam/home</comment>');
+        $this->oOutput->writeln('<comment>1:</comment> Generate a new identity here: <info>https://console.aws.amazon.com/iam/home</info>');
         $this->oOutput->writeln('  <comment>a:</comment> Enable programmatic access');
-        $this->oOutput->writeln('  <comment>b:</comment> Add to the <comment>SHED-CLI-TOOL</comment> user group');
-        $this->oOutput->writeln('<comment>2:</comment> Run: <comment>shed auth:amazon</comment>');
+        $this->oOutput->writeln('  <comment>b:</comment> Add to the <info>SHED-CLI-TOOL</info> user group');
+        $this->oOutput->writeln('<comment>2:</comment> Run: <info>shed auth:amazon</info>');
         $this->oOutput->writeln('<comment>3:</comment> Specify the access key');
         $this->oOutput->writeln('<comment>4:</comment> Specify the access token');
         $this->oOutput->writeln('');

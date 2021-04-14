@@ -48,10 +48,13 @@ final class GoogleCloud extends Auth
         $this->oOutput->writeln('');
         $this->oOutput->writeln('To generate a new Service Account Key:');
         $this->oOutput->writeln('');
-        $this->oOutput->writeln('<comment>1:</comment> Generate a new Service Account Key here: <comment>https://console.cloud.google.com/apis/credentials/serviceaccountkey</comment>');
-        $this->oOutput->writeln('<comment>2:</comment> Ensure `Compute Admin` and `Compute Image User` permissions are set');
+        $this->oOutput->writeln('<comment>1:</comment> Generate a new Service Account Key here: <info>https://console.cloud.google.com/apis/credentials/serviceaccountkey</info>');
+        $this->oOutput->writeln('<comment>2:</comment> Ensure the following permissions are set');
+        $this->oOutput->writeln('  — <info>Compute Image User</info>');
+        $this->oOutput->writeln('  — <info>Compute Instance Admin (v1)</info>');
+        $this->oOutput->writeln('  — <info>Service Account User</info>');
         $this->oOutput->writeln('<comment>3:</comment> Download the JSON key file');
-        $this->oOutput->writeln('<comment>4:</comment> Run: <comment>shed auth:googlecloud</comment>');
+        $this->oOutput->writeln('<comment>4:</comment> Run: <info>shed auth:googlecloud</info>');
         $this->oOutput->writeln('<comment>5:</comment> Specify the project ID');
         $this->oOutput->writeln('<comment>6:</comment> Specify the path to the key file');
         $this->oOutput->writeln('');
