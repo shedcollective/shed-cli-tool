@@ -44,7 +44,7 @@ final class Backup extends Auth
     {
         $this->oOutput->writeln('');
         $this->oOutput->writeln('Credentials are stored in 1Password under the Shed AWS login.');
-        $this->oOutput->writeln('Look for it under <comment>SERVER BACKUPS</comment>');
+        $this->oOutput->writeln('Look for it under <info>SERVER BACKUPS</info>');
         $this->oOutput->writeln('');
     }
 
