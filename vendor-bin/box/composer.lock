@@ -243,21 +243,21 @@
         },
         {
             "name": "amphp/parallel-functions",
-            "version": "v0.1.3",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/parallel-functions.git",
-                "reference": "12e6c602e067b02f78ddf5b720c17e9aa01ad4b4"
+                "reference": "af9795d51abfafc3676cbe7e17965479491abaad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/parallel-functions/zipball/12e6c602e067b02f78ddf5b720c17e9aa01ad4b4",
-                "reference": "12e6c602e067b02f78ddf5b720c17e9aa01ad4b4",
+                "url": "https://api.github.com/repos/amphp/parallel-functions/zipball/af9795d51abfafc3676cbe7e17965479491abaad",
+                "reference": "af9795d51abfafc3676cbe7e17965479491abaad",
                 "shasum": ""
             },
             "require": {
                 "amphp/amp": "^2.0.3",
-                "amphp/parallel": "^0.1.8 || ^0.2 || ^1",
+                "amphp/parallel": "^1.1",
                 "opis/closure": "^3.0.7",
                 "php": ">=7"
             },
@@ -290,7 +290,13 @@
                 "issues": "https://github.com/amphp/parallel-functions/issues",
                 "source": "https://github.com/amphp/parallel-functions/tree/master"
             },
-            "time": "2018-10-28T15:29:02+00:00"
+            "funding": [
+                {
+                    "url": "https://github.com/amphp",
+                    "type": "github"
+                }
+            ],
+            "time": "2020-07-10T17:05:35+00:00"
         },
         {
             "name": "amphp/parser",
@@ -688,16 +694,16 @@
         },
         {
             "name": "composer/xdebug-handler",
-            "version": "1.4.6",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/xdebug-handler.git",
-                "reference": "f27e06cd9675801df441b3656569b328e04aa37c"
+                "reference": "31d57697eb1971712a08031cfaff5a846d10bdf5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/xdebug-handler/zipball/f27e06cd9675801df441b3656569b328e04aa37c",
-                "reference": "f27e06cd9675801df441b3656569b328e04aa37c",
+                "url": "https://api.github.com/repos/composer/xdebug-handler/zipball/31d57697eb1971712a08031cfaff5a846d10bdf5",
+                "reference": "31d57697eb1971712a08031cfaff5a846d10bdf5",
                 "shasum": ""
             },
             "require": {
@@ -732,7 +738,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/xdebug-handler/issues",
-                "source": "https://github.com/composer/xdebug-handler/tree/1.4.6"
+                "source": "https://github.com/composer/xdebug-handler/tree/2.0.0"
             },
             "funding": [
                 {
@@ -748,28 +754,28 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-03-25T17:01:18+00:00"
+            "time": "2021-04-09T19:40:06+00:00"
         },
         {
             "name": "humbug/box",
-            "version": "3.12.0",
+            "version": "3.12.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/box-project/box.git",
-                "reference": "eb8f1be6471544132b739ae5248c9e4e7e19bb38"
+                "reference": "42e0a5081fc965c6b9f6bd5bd820df57bedda1ce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/box-project/box/zipball/eb8f1be6471544132b739ae5248c9e4e7e19bb38",
-                "reference": "eb8f1be6471544132b739ae5248c9e4e7e19bb38",
+                "url": "https://api.github.com/repos/box-project/box/zipball/42e0a5081fc965c6b9f6bd5bd820df57bedda1ce",
+                "reference": "42e0a5081fc965c6b9f6bd5bd820df57bedda1ce",
                 "shasum": ""
             },
             "require": {
-                "amphp/parallel-functions": "^0.1.3",
+                "amphp/parallel-functions": "^1.0",
                 "composer-plugin-api": "^1.0 || ^2.0",
                 "composer/package-versions-deprecated": "^1.8",
                 "composer/semver": "^3.2",
-                "composer/xdebug-handler": "^1.3.2",
+                "composer/xdebug-handler": "^2.0",
                 "ext-phar": "*",
                 "humbug/php-scoper": "^0.13.10 || ^0.14",
                 "justinrainbow/json-schema": "^5.2.9",
@@ -845,7 +851,7 @@
             ],
             "support": {
                 "issues": "https://github.com/box-project/box/issues",
-                "source": "https://github.com/box-project/box/tree/3.12.0"
+                "source": "https://github.com/box-project/box/tree/3.12.2"
             },
             "funding": [
                 {
@@ -853,20 +859,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-03-07T11:24:57+00:00"
+            "time": "2021-04-15T09:01:33+00:00"
         },
         {
             "name": "humbug/php-scoper",
-            "version": "0.14.0",
+            "version": "0.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/humbug/php-scoper.git",
-                "reference": "6ff13aaae731395d04c06fbdfa9ef08bbb879555"
+                "reference": "023b2318224d30f7a9496cdb3a3e475b9444e6b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/6ff13aaae731395d04c06fbdfa9ef08bbb879555",
-                "reference": "6ff13aaae731395d04c06fbdfa9ef08bbb879555",
+                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/023b2318224d30f7a9496cdb3a3e475b9444e6b7",
+                "reference": "023b2318224d30f7a9496cdb3a3e475b9444e6b7",
                 "shasum": ""
             },
             "require": {
@@ -883,7 +889,7 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.1",
-                "humbug/box": "^3.8",
+                "humbug/box": "^3.11",
                 "phpspec/prophecy-phpunit": "^2.0",
                 "phpunit/phpunit": "^9.0"
             },
@@ -929,7 +935,7 @@
             "description": "Prefixes all PHP namespaces in a file or directory.",
             "support": {
                 "issues": "https://github.com/humbug/php-scoper/issues",
-                "source": "https://github.com/humbug/php-scoper/tree/0.14.0"
+                "source": "https://github.com/humbug/php-scoper/tree/0.14.1"
             },
             "funding": [
                 {
@@ -937,7 +943,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-12-08T09:32:54+00:00"
+            "time": "2021-04-12T21:44:51+00:00"
         },
         {
             "name": "jetbrains/phpstorm-stubs",
@@ -945,12 +951,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JetBrains/phpstorm-stubs.git",
-                "reference": "6f2c5083e1d7589721d9cfff0e23f0ce0d662127"
+                "reference": "9533320237b26c81b9376fb1e012e739a118b689"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/6f2c5083e1d7589721d9cfff0e23f0ce0d662127",
-                "reference": "6f2c5083e1d7589721d9cfff0e23f0ce0d662127",
+                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/9533320237b26c81b9376fb1e012e739a118b689",
+                "reference": "9533320237b26c81b9376fb1e012e739a118b689",
                 "shasum": ""
             },
             "require-dev": {
@@ -986,7 +992,7 @@
             "support": {
                 "source": "https://github.com/JetBrains/phpstorm-stubs/tree/master"
             },
-            "time": "2021-04-11T21:14:29+00:00"
+            "time": "2021-04-15T13:02:28+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -1413,16 +1419,16 @@
         },
         {
             "name": "paragonie/sodium_compat",
-            "version": "v1.15.2",
+            "version": "v1.15.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/sodium_compat.git",
-                "reference": "efcecfbceac1bf014b1ede38f4588931fef92586"
+                "reference": "8a93bfe047c7f699f819459de8ddda144cd636a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/efcecfbceac1bf014b1ede38f4588931fef92586",
-                "reference": "efcecfbceac1bf014b1ede38f4588931fef92586",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/8a93bfe047c7f699f819459de8ddda144cd636a4",
+                "reference": "8a93bfe047c7f699f819459de8ddda144cd636a4",
                 "shasum": ""
             },
             "require": {
@@ -1493,9 +1499,9 @@
             ],
             "support": {
                 "issues": "https://github.com/paragonie/sodium_compat/issues",
-                "source": "https://github.com/paragonie/sodium_compat/tree/v1.15.2"
+                "source": "https://github.com/paragonie/sodium_compat/tree/v1.15.4"
             },
-            "time": "2021-04-14T06:07:47+00:00"
+            "time": "2021-04-17T09:00:05+00:00"
         },
         {
             "name": "phpdocumentor/reflection-common",
@@ -2488,21 +2494,21 @@
         },
         {
             "name": "symfony/service-contracts",
-            "version": "v2.2.0",
+            "version": "v2.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/service-contracts.git",
-                "reference": "d15da7ba4957ffb8f1747218be9e1a121fd298a1"
+                "reference": "f040a30e04b57fbcc9c6cbcf4dbaa96bd318b9bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/d15da7ba4957ffb8f1747218be9e1a121fd298a1",
-                "reference": "d15da7ba4957ffb8f1747218be9e1a121fd298a1",
+                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/f040a30e04b57fbcc9c6cbcf4dbaa96bd318b9bb",
+                "reference": "f040a30e04b57fbcc9c6cbcf4dbaa96bd318b9bb",
                 "shasum": ""
             },
             "require": {
                 "php": ">=7.2.5",
-                "psr/container": "^1.0"
+                "psr/container": "^1.1"
             },
             "suggest": {
                 "symfony/service-implementation": ""
@@ -2510,7 +2516,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.2-dev"
+                    "dev-main": "2.4-dev"
                 },
                 "thanks": {
                     "name": "symfony/contracts",
@@ -2547,7 +2553,7 @@
                 "standards"
             ],
             "support": {
-                "source": "https://github.com/symfony/service-contracts/tree/master"
+                "source": "https://github.com/symfony/service-contracts/tree/v2.4.0"
             },
             "funding": [
                 {
@@ -2563,7 +2569,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-09-07T11:33:47+00:00"
+            "time": "2021-04-01T10:43:52+00:00"
         },
         {
             "name": "symfony/var-dumper",
