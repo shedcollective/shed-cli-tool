@@ -291,6 +291,12 @@ final class Create extends Command
                 'D',
                 InputOption::VALUE_OPTIONAL,
                 'An optional public key to assign the deploy user'
+            )
+            ->addOption(
+                'ssh-wait',
+                'w',
+                InputOption::VALUE_REQUIRED,
+                'Override how long the initial wait time for SSH to come online is'
             );
     }
 
@@ -1152,7 +1158,9 @@ final class Create extends Command
 
         //  Give the OS some time to start sshd
         $iIntervalWait = 10;
-        $iInitialWait  = $this->oProvider->getSshInitialWait() - $iIntervalWait;
+        $iProviderWait = (int) $this->oInput->getOption('ssh-wait') ?:  $this->oProvider->getSshInitialWait();
+        $iInitialWait  = $iProviderWait - $iIntervalWait;
+
         if ($iInitialWait < $iIntervalWait) {
             $iInitialWait = $iIntervalWait;
         }
