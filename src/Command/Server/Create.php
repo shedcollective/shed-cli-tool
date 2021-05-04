@@ -390,26 +390,34 @@ final class Create extends Command
     private function setDomain(): Create
     {
         $sOption = trim($this->oInput->getOption('domain'));
-        if (empty($sOption)) {
+        if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
                 null,
                 [$this, 'validateDomain']
             );
-        } else {
-            if ($this->validateDomain($sOption)) {
-                $this->sDomain = $sOption;
-                $this->oOutput->writeln('<comment>Domain Name</comment>: ' . $this->sDomain);
-            } else {
-                $this->sDomain = $this->ask(
-                    'Domain Name:',
-                    null,
-                    [$this, 'validateDomain']
-                );
-            }
+
+        } elseif ($this->validateDomain($sOption)) {
+            $this->sDomain = $sOption;
         }
 
+        $this->sDomain = $this->normaliseDomain($this->sDomain);
+
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Normalises a domain
+     *
+     * @param string $sDomain The domain to normalise
+     *
+     * @return string
+     */
+    protected function normaliseDomain(string $sDomain): string
+    {
+        return strtolower(trim(rtrim($sDomain, '/')));
     }
 
     // --------------------------------------------------------------------------
@@ -1158,7 +1166,7 @@ final class Create extends Command
 
         //  Give the OS some time to start sshd
         $iIntervalWait = 10;
-        $iProviderWait = (int) $this->oInput->getOption('ssh-wait') ?:  $this->oProvider->getSshInitialWait();
+        $iProviderWait = (int) $this->oInput->getOption('ssh-wait') ?: $this->oProvider->getSshInitialWait();
         $iInitialWait  = $iProviderWait - $iIntervalWait;
 
         if ($iInitialWait < $iIntervalWait) {
