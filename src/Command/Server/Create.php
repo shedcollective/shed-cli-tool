@@ -1400,20 +1400,26 @@ final class Create extends Command
      */
     private function configureBackups(SSH2 $oSsh, bool $bEnableBackups): self
     {
-        if ($bEnableBackups && empty($this->oDbConfig->error)) {
+        if ($bEnableBackups) {
 
             $this->oOutput->write('Configuring backups... ');
+
             $oSsh->exec('echo \'export DOMAIN="' . $this->sDomain . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_BUCKET="shed-backups"\' >> /root/.backupconfig');
 
-            if ($this->shouldConfigureMySQL()) {
+            //  Database backups
+            if ($this->shouldConfigureMySQL() && empty($this->oDbConfig->error)) {
                 $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
                 $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
                 $oSsh->exec('echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /root/.backupconfig');
                 $oSsh->exec('echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /root/.backupconfig');
             }
+
+            //  Directory backups
+            $oSsh->exec('echo \'export DIRECTORY="/home/deploy/www"\' >> /root/.backupconfig');
+
             $this->oOutput->writeln('<info>done</info>');
         }
 
