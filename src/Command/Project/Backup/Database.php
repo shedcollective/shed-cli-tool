@@ -218,9 +218,9 @@ final class Database extends Backup
 
                 $sDumpCommand = implode(' ', [
                     'mysqldump',
+                    '--defaults-extra-file=\'' . $sOptionFile . '\'',
                     '-h\'' . $this->sMysqlHost . '\'',
                     '-u\'' . $this->sMysqlUser . '\'',
-                    '--defaults-extra-file=\'' . $sOptionFile . '\'',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
                 ]);
