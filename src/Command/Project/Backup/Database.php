@@ -10,6 +10,7 @@ use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\Config;
+use Shed\Cli\Helper\System;
 use Shed\Cli\Project\Backup;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -143,8 +144,10 @@ final class Database extends Backup
 
         if (empty($this->sMysqlHost)) {
             throw new CliException('Missing required option "mysql-host" [--domain]');
+
         } elseif (empty($this->sMysqlUser)) {
             throw new CliException('Missing required option "mysql-user" [--mysql-user]');
+
         } elseif (empty($this->sMysqlPassword)) {
             throw new CliException('Missing required option "mysql-password" [--mysql-password]');
         }
@@ -194,6 +197,13 @@ final class Database extends Backup
      */
     private function backupProject(): Database
     {
+        //  Store credentials temporarily (avoid unsecure messages)
+        $sOptionFile = $this->createTempFile('mysql.cnf');
+        file_put_contents($sOptionFile, implode(PHP_EOL, [
+            '[client]',
+            'password=' . $this->sMysqlPassword,
+        ]));
+
         foreach ($this->aMysqlDatabases as $sMysqlDatabase) {
 
             try {
@@ -204,14 +214,13 @@ final class Database extends Backup
 
                 //  Dump the DB
                 $this->oOutput->write('↳ Dumping... ');
-                $aFiles['TEMP'] = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . DIRECTORY_SEPARATOR . $sMysqlDatabase . '.sql';
-                mkdir(dirname($aFiles['TEMP']));
+                $aFiles['TEMP'] = $this->createTempFile($sMysqlDatabase . '.sql');
 
                 $sDumpCommand = implode(' ', [
                     'mysqldump',
                     '-h\'' . $this->sMysqlHost . '\'',
                     '-u\'' . $this->sMysqlUser . '\'',
-                    '-p\'' . $this->sMysqlPassword . '\'',
+                    '--defaults-extra-file=\'' . $sOptionFile . '\'',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
                 ]);
@@ -260,6 +269,9 @@ final class Database extends Backup
             }
         }
 
+        //  Delete credentials
+        unlink($sOptionFile);
+
         //  Not the last completed backup time
         Config::set('project.backup.database', (new DateTime())->format('Y-m-d H:i:s'));
 
@@ -267,5 +279,26 @@ final class Database extends Backup
         $this->oOutput->writeln('🎉 Completed backup job');
         $this->oOutput->writeln('');
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Creates a new temp file with limited permissions
+     *
+     * @param string $sFileName The filename to give the file
+     *
+     * @return string
+     */
+    private function createTempFile(string $sFileName): string
+    {
+        $sPath = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . DIRECTORY_SEPARATOR . $sFileName;
+
+        mkdir(dirname($sPath));
+        touch($sPath);
+
+        System::exec('chmod 600 "' . $sPath . '"');
+
+        return $sPath;
     }
 }
