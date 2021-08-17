@@ -285,7 +285,6 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         $this->getApi($oAccount)->getApi()->key()->remove($oKey->id);
 
         //  Get the public IP
-        print_r($oDroplet);
         $aIps = array_filter($oDroplet->networks, function (Network $oNetwork) {
             return $oNetwork->type === 'public';
         });
