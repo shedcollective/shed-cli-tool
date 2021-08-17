@@ -36,4 +36,5 @@ This project uses [humbug/box](https://github.com/humbug/box) for compilation. Y
 ```bash
 composer build
 composer test
+composer analyse
 ```
