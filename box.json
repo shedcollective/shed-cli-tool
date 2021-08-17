@@ -24,7 +24,7 @@
             "in": "vendor"
         },
         {
-            "in": "vendor/google/apiclient-services/src/Google/Service",
+            "in": "vendor/google/apiclient-services/src",
             "path": "Compute"
         }
     ],
