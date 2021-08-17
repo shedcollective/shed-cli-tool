@@ -18,14 +18,9 @@
                 "test_old",
                 "tests",
                 "Test",
-                "Tests",
-                "google/apiclient-services"
+                "Tests"
             ],
             "in": "vendor"
-        },
-        {
-            "in": "vendor/google/apiclient-services/src",
-            "path": "Compute"
         }
     ],
     "compactors": [
