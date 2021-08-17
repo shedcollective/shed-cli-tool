@@ -285,7 +285,6 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         $this->getApi($oAccount)->getApi()->key()->remove($oKey->id);
 
         //  Get the public IP
-        print_r($oDroplet);
         $aIps = array_filter($oDroplet->networks, function (Network $oNetwork) {
             return $oNetwork->type === 'public';
         });
@@ -394,14 +393,14 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     /**
      * Waits for the droplet to become active
      *
-     * @param                                $oAccount
+     * @param Account                        $oAccount
      * @param \DigitalOceanV2\Entity\Droplet $oDroplet
      * @param int|null                       $iTimeout
      *
      * @return Droplet
      * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
-    private function waitForDropletToBeActive($oAccount, Droplet $oDroplet, int $iTimeout = null): Droplet
+    private function waitForDropletToBeActive(Account $oAccount, Droplet $oDroplet, int $iTimeout = null): Droplet
     {
         $iEndTime = time() + ($iTimeout ?? 300);
 

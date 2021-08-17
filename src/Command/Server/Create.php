@@ -1250,7 +1250,7 @@ final class Create extends Command
     private function setDomainEnvVar(SSH2 $oSsh): self
     {
         $this->oOutput->write('Setting domain as env var... ');
-        $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/www/.env');
+        $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/.env');
         $this->oOutput->writeln('<info>done</info>');
 
         return $this;

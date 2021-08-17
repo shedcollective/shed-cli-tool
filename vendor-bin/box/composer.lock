@@ -951,17 +951,17 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JetBrains/phpstorm-stubs.git",
-                "reference": "f9f2acf6fc8606a19609d10c784a5877e9fc4043"
+                "reference": "05192121c8a8f6f98fe8f391de61562474be0cdf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/f9f2acf6fc8606a19609d10c784a5877e9fc4043",
-                "reference": "f9f2acf6fc8606a19609d10c784a5877e9fc4043",
+                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/05192121c8a8f6f98fe8f391de61562474be0cdf",
+                "reference": "05192121c8a8f6f98fe8f391de61562474be0cdf",
                 "shasum": ""
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "@stable",
-                "nikic/php-parser": "dev-master",
+                "nikic/php-parser": "@stable",
                 "php": "^8.0",
                 "phpdocumentor/reflection-docblock": "@stable",
                 "phpunit/phpunit": "@stable"
@@ -992,7 +992,7 @@
             "support": {
                 "source": "https://github.com/JetBrains/phpstorm-stubs/tree/master"
             },
-            "time": "2021-07-29T13:09:53+00:00"
+            "time": "2021-08-16T13:04:14+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -1414,16 +1414,16 @@
         },
         {
             "name": "paragonie/sodium_compat",
-            "version": "v1.16.1",
+            "version": "v1.17.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/sodium_compat.git",
-                "reference": "2e856afe80bfc968b47da1f4a7e1ea8f03d06b38"
+                "reference": "c59cac21abbcc0df06a3dd18076450ea4797b321"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/2e856afe80bfc968b47da1f4a7e1ea8f03d06b38",
-                "reference": "2e856afe80bfc968b47da1f4a7e1ea8f03d06b38",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/c59cac21abbcc0df06a3dd18076450ea4797b321",
+                "reference": "c59cac21abbcc0df06a3dd18076450ea4797b321",
                 "shasum": ""
             },
             "require": {
@@ -1494,9 +1494,9 @@
             ],
             "support": {
                 "issues": "https://github.com/paragonie/sodium_compat/issues",
-                "source": "https://github.com/paragonie/sodium_compat/tree/v1.16.1"
+                "source": "https://github.com/paragonie/sodium_compat/tree/v1.17.0"
             },
-            "time": "2021-05-25T12:58:14+00:00"
+            "time": "2021-08-10T02:43:50+00:00"
         },
         {
             "name": "phpdocumentor/reflection-common",

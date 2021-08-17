@@ -83,7 +83,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     /**
      * The command's body
      *
-     * @return mixed
+     * @return int
      */
     abstract protected function go(): int;
 
@@ -96,7 +96,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      *
      * @return $this
      */
-    protected function banner($sTitle): Command
+    protected function banner(string $sTitle): Command
     {
         $sTitle = $sTitle ? 'Shed CLI: ' . $sTitle : 'Shed CLI';
         $this->oOutput->writeln('');
