@@ -414,7 +414,7 @@ final class Create extends Command
             }
         }
 
-        if (isset($iCherryIndex) && $iCherryIndex !== false) {
+        if ($iCherryIndex !== false) {
 
             $aNoneFrameworks           = array_splice($aFrameworks, $iCherryIndex, 1);
             $aNoneFrameworksNormalised = array_splice($aFrameworksNormalised, $iCherryIndex, 1);

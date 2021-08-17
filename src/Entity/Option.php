@@ -118,7 +118,7 @@ final class Option extends Entity
      *
      * @param array $aOptions The options array
      *
-     * @return callable|array
+     * @return array
      */
     public function getOptions(array $aOptions = []): ?array
     {
@@ -162,9 +162,9 @@ final class Option extends Entity
      *
      * @param array $aOptions The selected options
      *
-     * @return stdClass
+     * @return \stdClass
      */
-    public function summarise(array $aOptions = []): string
+    public function summarise(array $aOptions = []): \stdClass
     {
         if (is_callable($this->cSummary)) {
             $sSummary = call_user_func($this->cSummary, $aOptions);
