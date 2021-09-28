@@ -234,7 +234,7 @@ final class Directories extends Backup
                     '--exclude "%s"',
                     preg_replace('#' . $sSource . DIRECTORY_SEPARATOR . '#', '', $sDir)
                 );
-            }, $this->aExclude)),
+            }, array_filter($this->aExclude))),
             $sSource
         );
     }
