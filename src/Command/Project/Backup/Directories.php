@@ -231,7 +231,7 @@ final class Directories extends Backup
             $sArchive,
             implode(' ', array_map(function (string $sDir) use ($sSource) {
                 return sprintf(
-                    '--exclude "%s/*"',
+                    '--exclude "%s"',
                     preg_replace('#' . $sSource . DIRECTORY_SEPARATOR . '#', '', $sDir)
                 );
             }, $this->aExclude)),
