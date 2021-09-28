@@ -10,17 +10,25 @@ use Shed\Cli\Exceptions\Environment\NotValidException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Exceptions\Zip\CannotOpenException;
 use Shed\Cli\Helper\Config;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Project\Backup;
 use Symfony\Component\Console\Input\InputOption;
 
 final class Directories extends Backup
 {
     /**
-     * The directory to backup
+     * The directories to backup
      *
      * @var string[]
      */
     protected $aDirectories = [];
+
+    /**
+     * Any directories to exclude
+     *
+     * @var string[]
+     */
+    protected $aExclude = [];
 
     // --------------------------------------------------------------------------
 
@@ -39,6 +47,13 @@ final class Directories extends Backup
                 'd',
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
                 'The directory to backup',
+                $this->aDirectories
+            )
+            ->addOption(
+                'exclude',
+                'e',
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
+                'Any directories to exclude',
                 $this->aDirectories
             );
     }
@@ -94,6 +109,7 @@ final class Directories extends Backup
         parent::setVariables();
 
         $this->aDirectories = $this->oInput->getOption('directory');
+        $this->aExclude     = $this->oInput->getOption('exclude');
 
         return $this;
     }
@@ -118,6 +134,10 @@ final class Directories extends Backup
         $iCounter = 0;
         foreach ($this->aDirectories as $sDirectory) {
             $aOptions['Directory ' . ++$iCounter] = $sDirectory;
+        }
+        $iCounter = 0;
+        foreach ($this->aExclude as $sDirectory) {
+            $aOptions['Exclude ' . ++$iCounter] = $sDirectory;
         }
         $this->keyValueList($aOptions);
         return $this->confirm('Continue?');
@@ -150,10 +170,10 @@ final class Directories extends Backup
                 //  Compress the file
                 $this->oOutput->write('↳ Compressing... ');
                 $aFiles['COMPRESSED'] = $this->sTmpDir . DIRECTORY_SEPARATOR . md5(microtime(true)) . '.tar.gz';
-                $this->exec('tar -czf ' . $aFiles['COMPRESSED'] . ' -C ' . $sDirectory . ' .');
+                $this->exec($this->compileTarCommand($aFiles['COMPRESSED'], $sDirectory));
                 $this->oOutput->writeln('<info>done</info>');
 
-                //  Push to S3s
+                //  Push to S3
                 $this->pushToS3($aFiles['COMPRESSED'], 'dir/' . $sSafeDirectory);
 
             } catch (CliException $e) {
@@ -192,5 +212,30 @@ final class Directories extends Backup
         $this->oOutput->writeln('🎉 Completed backup job');
         $this->oOutput->writeln('');
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Compiles the Tar command
+     *
+     * @param string $sArchive The target for the archive
+     * @param string $sSource  The source directory being backed up
+     *
+     * @return string
+     */
+    private function compileTarCommand(string $sArchive, string $sSource): string
+    {
+        return sprintf(
+            'tar -czf "%s" %s -C "%s" .',
+            $sArchive,
+            implode(' ', array_map(function (string $sDir) use ($sSource) {
+                return sprintf(
+                    '--exclude "%s/*"',
+                    preg_replace('#' . $sSource . DIRECTORY_SEPARATOR . '#', '', $sDir)
+                );
+            }, $this->aExclude)),
+            $sSource
+        );
     }
 }
