@@ -31,7 +31,7 @@ final class Heartbeat implements \JsonSerializable
 
     // --------------------------------------------------------------------------
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'domain'     => $this->oDomain,
