@@ -18,12 +18,17 @@ use Shed\Cli\Exceptions\Server\TimeoutException;
 use Shed\Cli\Helper\System;
 use Shed\Cli\Interfaces\Provider;
 use Shed\Cli\Service\ShedApi;
+use Shed\Cli\Traits\Logging;
 use stdClass;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Finder\Finder;
 
 final class Create extends Command
 {
+    use Logging;
+
+    // --------------------------------------------------------------------------
+
     /**
      * The string for the production environment
      *
@@ -344,17 +349,25 @@ final class Create extends Command
      */
     private function checkEnvironment(): Create
     {
-        if (!function_exists('exec')) {
-            throw new NotValidException('Missing function exec()');
+        $aRequiredFunctions = ['exec'];
+        foreach ($aRequiredFunctions as $sRequiredFunction) {
+            $this->logVerbose('Checking <info>' . $sRequiredFunction . '</info> exists... ');
+            if (!function_exists($sRequiredFunction)) {
+                throw new NotValidException('Missing function ' . $sRequiredFunction . '()');
+            }
+            $this->loglnVerbose('<info>exists</info>');
         }
 
         $aRequiredCommands = ['composer'];
         foreach ($aRequiredCommands as $sRequiredCommand) {
+            $this->logVerbose('Checking <info>' . $sRequiredCommand . '</info> is installed... ');
             if (!System::commandExists($sRequiredCommand)) {
                 throw new NotValidException($sRequiredCommand . ' is not installed');
             }
+            $this->loglnVerbose('<info>installed</info>');
         }
 
+        $this->logVerbose('Checking <info>shedcollective.com</info> accounts... ');
         $aShedAccounts = Command\Auth\Shed::getAccounts();
         if (empty($aShedAccounts)) {
             throw new NotValidException(
@@ -365,10 +378,14 @@ final class Create extends Command
                 'Only one shedcollective.com account permitted, ' . count($aShedAccounts) . ' detected'
             );
         }
+        $this->loglnVerbose('<info>1 available</info>');
+
         $this->oShedAccount = reset($aShedAccounts);
         try {
 
-            ShedApi::testToken($this->oShedAccount->getToken());
+            $this->logVerbose('Testing access token... ');
+            ShedApi::testToken($this->oShedAccount->getToken(), $this->oOutput);
+            $this->loglnVerbose('<info>valid</info>');
 
         } catch (Exception $e) {
             throw new NotValidException(
