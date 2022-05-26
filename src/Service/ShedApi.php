@@ -5,6 +5,8 @@ namespace Shed\Cli\Service;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Server;
 use Shed\Cli\Exceptions\CliException;
+use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Class ShedApi
@@ -29,9 +31,10 @@ final class ShedApi
      *
      * @throws CliException
      */
-    public static function testToken(string $sToken)
+    public static function testToken(string $sToken, OutputInterface $oOutput = null)
     {
-        $oCurl = curl_init();
+        $oCurl   = curl_init();
+        $oOutput = $oOutput ?? new NullOutput();
 
         curl_setopt_array(
             $oCurl,
@@ -51,16 +54,25 @@ final class ShedApi
             ]
         );
 
-        curl_exec($oCurl);
-
+        $sBody  = curl_exec($oCurl);
         $sError = curl_error($oCurl);
         $iCode  = curl_getinfo($oCurl, CURLINFO_HTTP_CODE);
 
         curl_close($oCurl);
 
         if ($sError) {
+
+            $oOutput->writeln('', $oOutput::VERBOSITY_VERY_VERBOSE);
+            $oOutput->writeln('Curl Code: ' . $iCode, $oOutput::VERBOSITY_VERY_VERBOSE);
+            $oOutput->writeln('Curl Error: ' . $sError, $oOutput::VERBOSITY_VERY_VERBOSE);
+            $oOutput->writeln('Curl Body: ' . $sBody, $oOutput::VERBOSITY_VERY_VERBOSE);
             throw new CliException($sError);
+
         } elseif ($iCode !== 200) {
+
+            $oOutput->writeln('', $oOutput::VERBOSITY_VERY_VERBOSE);
+            $oOutput->writeln('Curl Code: ' . $iCode, $oOutput::VERBOSITY_VERY_VERBOSE);
+            $oOutput->writeln('Curl Body: ' . $sBody, $oOutput::VERBOSITY_VERY_VERBOSE);
             throw new CliException('Invalid access token');
         }
     }

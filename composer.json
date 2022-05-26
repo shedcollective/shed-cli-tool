@@ -1,6 +1,6 @@
 {
     "name": "shedcollective/command-line-tool",
-    "version": "1.8.2",
+    "version": "1.8.3",
     "homepage": "https://shedcollective.com",
     "description": "The command line tool for simplifying life at Shed",
     "license": "MIT",
@@ -58,5 +58,10 @@
     },
     "bin": [
         "dist/shed"
-    ]
+    ],
+    "config": {
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
+        }
+    }
 }
