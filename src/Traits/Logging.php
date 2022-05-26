@@ -36,4 +36,16 @@ trait Logging
         $this->oOutput->writeln($messages, $this->oOutput::VERBOSITY_VERBOSE);
         return $this;
     }
+
+    protected function logVeryVerbose($messages): self
+    {
+        $this->oOutput->write($messages, false, $this->oOutput::VERBOSITY_VERY_VERBOSE);
+        return $this;
+    }
+
+    protected function loglnVeryVerbose($messages): self
+    {
+        $this->oOutput->writeln($messages, $this->oOutput::VERBOSITY_VERY_VERBOSE);
+        return $this;
+    }
 }

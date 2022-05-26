@@ -406,6 +406,7 @@ final class Create extends Command
      */
     private function setDomain(): Create
     {
+        $this->loglnVeryVerbose('Setting domain');
         $sOption = trim($this->oInput->getOption('domain'));
         if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
@@ -414,7 +415,7 @@ final class Create extends Command
                 [$this, 'validateDomain']
             );
 
-        } elseif ($this->validateDomain($sOption)) {
+        } else {
             $this->sDomain = $sOption;
         }
 
@@ -448,6 +449,8 @@ final class Create extends Command
      */
     protected function validateDomain(string $sDomain): bool
     {
+        $this->loglnVeryVerbose('Validating input: "' . $sDomain . '"');
+
         if (empty($sDomain)) {
             $this->error(array_filter([
                 'Domain is required',
@@ -483,6 +486,7 @@ final class Create extends Command
      */
     private function setEnvironment(): Create
     {
+        $this->loglnVeryVerbose('Setting environment');
         $sOption = trim($this->oInput->getOption('environment'));
 
         if (empty($sOption) || !$this->validateEnvironment($sOption)) {
@@ -497,7 +501,7 @@ final class Create extends Command
         } elseif ($this->validateEnvironment($sOption)) {
 
             $this->sEnvironment = array_search($sOption, self::ENVIRONMENTS);
-            $this->oOutput->writeln(
+            $this->logln(
                 sprintf(
                     '<comment>Environment</comment>: %s',
                     self::ENVIRONMENTS[$this->sEnvironment]
@@ -519,6 +523,8 @@ final class Create extends Command
      */
     protected function validateEnvironment(string $sEnvironment): bool
     {
+        $this->loglnVeryVerbose('Validating input: "' . $sEnvironment . '"');
+
         if (empty($sEnvironment)) {
             $this->error(array_filter([
                 'Environment is required',
@@ -562,6 +568,7 @@ final class Create extends Command
      */
     private function setFramework(): Create
     {
+        $this->loglnVeryVerbose('Setting framework');
         $sOption = trim($this->oInput->getOption('framework'));
 
         if (empty($sOption) || !$this->validateFramework($sOption)) {
@@ -576,7 +583,7 @@ final class Create extends Command
         } else {
 
             $this->sFramework = array_search($sOption, self::FRAMEWORKS);
-            $this->oOutput->writeln(
+            $this->logln(
                 sprintf(
                     '<comment>Framework</comment>: %s',
                     self::FRAMEWORKS[$this->sFramework]
@@ -598,6 +605,8 @@ final class Create extends Command
      */
     protected function validateFramework(string $sFramework): bool
     {
+        $this->loglnVeryVerbose('Validating input: "' . $sFramework . '"');
+
         if (empty($sFramework)) {
             $this->error(array_filter([
                 'Framework is required',
@@ -627,6 +636,8 @@ final class Create extends Command
      */
     private function setProvider(): Create
     {
+        $this->loglnVeryVerbose('Setting provider');
+
         $aProviders           = [];
         $aProvidersNormalised = [];
         $aProviderClasses     = [];
@@ -669,10 +680,10 @@ final class Create extends Command
                 return $this->setProvider();
             }
 
-            $this->oOutput->writeln('<comment>Provider</comment>: ' . $aProviderClasses[$iChoice]->getLabel());
+            $this->logln('<comment>Provider</comment>: ' . $aProviderClasses[$iChoice]->getLabel());
 
         } elseif (count($aProviders) === 1) {
-            $this->oOutput->writeln('Only one provider available: ' . $aProviders[0]);
+            $this->logln('Only one provider available: ' . $aProviders[0]);
             $iChoice = 0;
         } else {
             $iChoice = $this->choose('Provider', $aProviders);
@@ -692,6 +703,7 @@ final class Create extends Command
      */
     private function setAccount(): Create
     {
+        $this->loglnVeryVerbose('Setting account');
         return $this->setProviderProperty(
             'Account',
             $this->oProvider->getAccounts(),
@@ -709,6 +721,7 @@ final class Create extends Command
      */
     private function setRegion(): Create
     {
+        $this->loglnVeryVerbose('Setting region');
         return $this->setProviderProperty(
             'Region',
             $this->oProvider->getRegions($this->oAccount),
@@ -726,6 +739,7 @@ final class Create extends Command
      */
     private function setSize(): Create
     {
+        $this->loglnVeryVerbose('Setting size');
         return $this->setProviderProperty(
             'Size',
             $this->oProvider->getSizes($this->oAccount),
@@ -743,6 +757,7 @@ final class Create extends Command
      */
     private function setImage(): Create
     {
+        $this->loglnVeryVerbose('Setting image');
         return $this->setProviderProperty(
             'Image',
             $this->oProvider->getImages($this->oAccount),
@@ -773,12 +788,12 @@ final class Create extends Command
         if (array_key_exists($sDefault, $aOptions)) {
 
             $oItem = $aOptions[$sDefault];
-            $this->oOutput->writeln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
+            $this->logln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
 
         } elseif (count($aOptions) === 1) {
 
             $oItem = reset($aOptions);
-            $this->oOutput->writeln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
+            $this->logln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
 
         } else {
 
@@ -812,6 +827,8 @@ final class Create extends Command
      */
     private function setProviderOptions(): Create
     {
+        $this->loglnVeryVerbose('Setting provider options');
+
         $this->aProviderOptions = $this->oProvider->getOptions();
 
         foreach ($this->aProviderOptions as $oOption) {
@@ -863,12 +880,14 @@ final class Create extends Command
      */
     private function setKeywords(): Create
     {
+        $this->loglnVeryVerbose('Setting keywords');
+
         $sOption = trim($this->oInput->getOption('keywords'));
         if (empty($sOption)) {
             $sKeywords = $this->ask('Keywords:');
         } else {
             $sKeywords = $sOption;
-            $this->oOutput->writeln('<comment>Keywords</comment>: ' . $sKeywords);
+            $this->logln('<comment>Keywords</comment>: ' . $sKeywords);
         }
 
         $aKeywords   = explode(',', $sKeywords);
@@ -908,6 +927,8 @@ final class Create extends Command
      */
     private function setDeployKey(): Create
     {
+        $this->loglnVeryVerbose('Setting deploy key');
+
         $sOption = trim($this->oInput->getOption('deploy-key'));
         if (empty($sOption)) {
             $this->sDeployKey = $this->ask('Deploy Key:');
@@ -927,6 +948,8 @@ final class Create extends Command
      */
     private function setHostname(): Create
     {
+        $this->loglnVeryVerbose('Setting hostname');
+
         $sOption = trim($this->oInput->getOption('hostname'));
         if (empty($sOption)) {
             $this->sHostname = implode(
@@ -961,8 +984,8 @@ final class Create extends Command
      */
     private function confirmVariables(): bool
     {
-        $this->oOutput->writeln('');
-        $this->oOutput->writeln('A new server will be provisioned with the following details:');
+        $this->logln('');
+        $this->logln('A new server will be provisioned with the following details:');
 
         $aKeyValues = [
             'Domain'      => $this->sDomain,
@@ -1012,17 +1035,17 @@ final class Create extends Command
     {
         $bEnableBackups = self::ENVIRONMENTS[$this->sEnvironment] === self::ENV_PRODUCTION;
 
-        $this->oOutput->writeln('');
+        $this->logln('');
 
         // --------------------------------------------------------------------------
 
-        $this->oOutput->write('Generating temporary SSH key... ');
+        $this->log('Generating temporary SSH key... ');
         $oPrivateKey = $this->generateSshKey();
-        $this->oOutput->writeln('<info>' . $oPrivateKey->getPublicKey()->getFingerprint() . '</info>');
+        $this->logln('<info>' . $oPrivateKey->getPublicKey()->getFingerprint() . '</info>');
 
         // --------------------------------------------------------------------------
 
-        $this->oOutput->write('Creating server... ');
+        $this->log('Creating server... ');
 
         //  @todo (Pablo - 2019-08-02) - Register with Shed API, but in a pending state
 
@@ -1040,8 +1063,8 @@ final class Create extends Command
             $this->sDeployKey,
             $oPrivateKey
         );
-        $this->oOutput->writeln('<info>done</info>');
-        $this->oOutput->writeln('Server IP is <info>' . $oServer->getIp() . '</info>');
+        $this->logln('<info>done</info>');
+        $this->logln('Server IP is <info>' . $oServer->getIp() . '</info>');
 
         // --------------------------------------------------------------------------
 
@@ -1065,9 +1088,9 @@ final class Create extends Command
 
         try {
             //  @todo (Pablo - 2019-08-02) - Update server state with Shed API
-            $this->oOutput->write('Registering with the Shed API... ');
+            $this->log('Registering with the Shed API... ');
             ShedApi::createServer($this->oShedAccount, $oServer);
-            $this->oOutput->writeln('<info>done</info>');
+            $this->logln('<info>done</info>');
         } catch (Exception $e) {
             $this->warning(array_filter([
                 'Failed to register server with the Shed API',
@@ -1139,14 +1162,22 @@ final class Create extends Command
     {
         $sKeyPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid();
 
+        $this->loglnVerbose('Key path: ' . $sKeyPath);
+
+        $sCommand = sprintf(
+            'ssh-keygen -q -b 4096 -C "generated-ssh-key" -f "%s" -N "" -t rsa',
+            $sKeyPath
+        );
+
+        $this->loglnVeryVerbose('Executing `' . $sCommand . '`');
+
         exec(
-            sprintf(
-                'ssh-keygen -q -b 4096 -C "generated-ssh-key" -f "%s" -N "" -t rsa',
-                $sKeyPath
-            ),
+            $sCommand,
             $aOutput,
             $iExitCode
         );
+
+        $this->loglnVeryVerbose('Exit code: ' . $iExitCode);
 
         if ($iExitCode || !file_exists($sKeyPath)) {
             throw new KeyNotGeneratedException(
@@ -1157,9 +1188,12 @@ final class Create extends Command
             );
         }
 
+        $this->loglnVeryVerbose('Loading key into memory');
+
         /** @var RSA\PrivateKey $oKey */
         $oKey = RSA::load(file_get_contents($sKeyPath));
 
+        $this->loglnVeryVerbose('Deleting key files');
         unlink($sKeyPath);
         unlink($sKeyPath . '.pub');
 
@@ -1178,7 +1212,7 @@ final class Create extends Command
      */
     private function waitForSsh(Server $oServer, RSA\PrivateKey $oKey): SSH2
     {
-        $this->oOutput->write('Waiting for SSH access... ');
+        $this->log('Waiting for SSH access... ');
         $iStart = time();
 
         //  Give the OS some time to start sshd
@@ -1206,15 +1240,19 @@ final class Create extends Command
                     )
                 );
             } else {
+                $this->logVerbose('Attempting connection... ');
                 $oSsh       = new SSH2($oServer->getIp());
                 $bConnected = $oSsh->login('root', $oKey);
+                if (!$bConnected) {
+                    $this->loglnVerbose('not connected');
+                }
             }
 
         } while (!$bConnected);
 
         error_reporting($iPreviousErrorReporting);
 
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>connected</info>');
 
         return $oSsh;
     }
@@ -1230,11 +1268,11 @@ final class Create extends Command
      */
     private function disableRootLogin(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Disabling root login... ');
+        $this->log('Disabling root login... ');
         $oSsh->exec('rm -f /root/.ssh/authorized_keys');
         $oSsh->exec('echo \'PermitRootLogin no\' >> /etc/ssh/sshd_config');
         $oSsh->exec('service ssh restart');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>done</info>');
         return $this;
     }
 
@@ -1249,9 +1287,9 @@ final class Create extends Command
      */
     private function randomiseRootPassword(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Randomising root password... ');
+        $this->log('Randomising root password... ');
         $oSsh->exec('usermod --password $(openssl rand -base64 32) root');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>done</info>');
         return $this;
     }
 
@@ -1266,9 +1304,9 @@ final class Create extends Command
      */
     private function setDomainEnvVar(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Setting domain as env var... ');
+        $this->log('Setting domain as env var... ');
         $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/.env');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>done</info>');
 
         return $this;
     }
@@ -1284,11 +1322,11 @@ final class Create extends Command
      */
     private function configureHostname(SSH2 $oSsh): self
     {
-        $this->oOutput->write('Setting hostname... ');
+        $this->log('Setting hostname... ');
         $oSsh->exec('hostname ' . $this->sHostname);
         $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts');
         $oSsh->exec('echo "' . $this->sHostname . '" > /etc/hostname');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>done</info>');
 
         return $this;
     }
@@ -1305,9 +1343,9 @@ final class Create extends Command
     private function addDeployKey(SSH2 $oSsh): self
     {
         if ($this->sDeployKey) {
-            $this->oOutput->write('Adding deploy key... ');
+            $this->log('Adding deploy key... ');
             $oSsh->exec('echo "' . $this->sDeployKey . '" >> /home/deploy/.ssh/authorized_keys');
-            $this->oOutput->writeln('<info>done</info>');
+            $this->logln('<info>done</info>');
         }
 
         return $this;
@@ -1341,7 +1379,7 @@ final class Create extends Command
             return $this;
         }
 
-        $this->oOutput->write('Configuring database... ');
+        $this->log('Configuring database... ');
 
         $sConfig = $oSsh->exec(
             sprintf(
@@ -1371,9 +1409,9 @@ final class Create extends Command
 
         if (!empty($this->oDbConfig->error)) {
             $sError = is_array($this->oDbConfig->error) ? implode(' ', $this->oDbConfig->error) : $this->oDbConfig->error;
-            $this->oOutput->writeln('<error>' . $sError . '</error>');
+            $this->logln('<error>' . $sError . '</error>');
         } else {
-            $this->oOutput->writeln('<info>done</info>');
+            $this->logln('<info>done</info>');
         }
 
         $oSsh->exec('rm -f /root/mysql-setup-db.sh');
@@ -1397,10 +1435,10 @@ final class Create extends Command
             return $this;
         }
 
-        $this->oOutput->write('Securing MySQL... ');
+        $this->log('Securing MySQL... ');
         $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
         $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) &&  mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
-        $this->oOutput->writeln('<info>done</info>');
+        $this->logln('<info>done</info>');
 
         return $this;
     }
@@ -1419,7 +1457,7 @@ final class Create extends Command
     {
         if ($bEnableBackups) {
 
-            $this->oOutput->write('Configuring backups... ');
+            $this->log('Configuring backups... ');
 
             $oSsh->exec('echo \'export DOMAIN="' . $this->sDomain . '"\' >> /root/.backupconfig');
             $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
@@ -1437,7 +1475,7 @@ final class Create extends Command
             //  Directory backups
             $oSsh->exec('echo \'export DIRECTORY="/home/deploy/www"\' >> /root/.backupconfig');
 
-            $this->oOutput->writeln('<info>done</info>');
+            $this->logln('<info>done</info>');
         }
 
         return $this;
@@ -1455,16 +1493,16 @@ final class Create extends Command
      */
     private function configureSsl(SSH2 $oSsh, Server $oServer): self
     {
-        $this->oOutput->writeln('');
+        $this->logln('');
         if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>yes</info>]')) {
 
-            $this->oOutput->writeln('');
-            $this->oOutput->writeln('Ensure DNS records have been deployed for:');
-            $this->oOutput->writeln('- A <info>' . $oServer->getIp() . '</info> ' . $this->sDomain);
-            $this->oOutput->writeln('- A <info>' . $oServer->getIp() . '</info> www.' . $this->sDomain . ' <comment>(optional)</comment>');
-            $this->oOutput->writeln('');
+            $this->logln('');
+            $this->logln('Ensure DNS records have been deployed for:');
+            $this->logln('- A <info>' . $oServer->getIp() . '</info> ' . $this->sDomain);
+            $this->logln('- A <info>' . $oServer->getIp() . '</info> www.' . $this->sDomain . ' <comment>(optional)</comment>');
+            $this->logln('');
 
-            $this->oOutput->write('Waiting for DNS to propagate... ');
+            $this->log('Waiting for DNS to propagate... ');
             $iStart = time();
 
             do {
@@ -1473,7 +1511,7 @@ final class Create extends Command
 
                 if (time() - $iStart >= self::SSL_TIMEOUT) {
 
-                    $this->oOutput->writeln('<error>timeout</error>');
+                    $this->logln('<error>timeout</error>');
                     $this->warning([
                         'Timed out waiting for DNS to propagate (timeout: ' . self::SSL_TIMEOUT . ' seconds)',
                         'You will need to manually configure SSL: SSH in as root and execute `ssl-create`',
@@ -1488,13 +1526,13 @@ final class Create extends Command
 
                     if ($bResolved) {
 
-                        $this->oOutput->writeln('<info>done</info>');
-                        $this->oOutput->write('Generating certificates... ');
+                        $this->logln('<info>done</info>');
+                        $this->log('Generating certificates... ');
                         $oSsh->exec('ssl-create');
-                        $this->oOutput->writeln('<info>done</info>');
-                        $this->oOutput->write('Restarting Apache... ');
+                        $this->logln('<info>done</info>');
+                        $this->log('Restarting Apache... ');
                         $oSsh->exec('service apache2 restart');
-                        $this->oOutput->writeln('<info>done</info>');
+                        $this->logln('<info>done</info>');
                     }
                 }
 
@@ -1536,20 +1574,20 @@ final class Create extends Command
             $sCommand
         );
 
-        $this->oOutput->write('Running post-install scripts... ');
+        $this->log('Running post-install scripts... ');
         $sOutput = $oSsh->exec($sCommand);
 
         if (!empty($sOutput)) {
             $this->oProvisionOutput = json_decode($sOutput);
             if (json_last_error()) {
-                $this->oOutput->writeln('<error>ERROR</error>');
-                $this->oOutput->writeln('<error>Failed to decode output of provisioning script</error>');
-                $this->oOutput->writeln('<error>Output: ' . $sOutput . '</error>');
+                $this->logln('<error>ERROR</error>');
+                $this->logln('<error>Failed to decode output of provisioning script</error>');
+                $this->logln('<error>Output: ' . $sOutput . '</error>');
             } else {
-                $this->oOutput->writeln('<info>done</info>');
+                $this->logln('<info>done</info>');
             }
         } else {
-            $this->oOutput->writeln('<info>done</info>');
+            $this->logln('<info>done</info>');
         }
 
         return $this;
