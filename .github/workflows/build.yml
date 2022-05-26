@@ -1,0 +1,25 @@
+name: build
+on: [ push ]
+jobs:
+    build:
+        name: build
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout code
+                uses: actions/checkout@v2
+
+            -   name: Cache composer dependencies
+                uses: actions/cache@v1
+                with:
+                    path: ./www/vendor
+                    key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+                    restore-keys: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+
+            -   name: Compile
+                run: composer --no-interaction --optimize-autoloader install
+
+            -   name: Build
+                run: composer build
+
+            -   name: Run tests
+                run: composer test
