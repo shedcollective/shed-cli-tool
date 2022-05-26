@@ -11,9 +11,16 @@ jobs:
             -   name: Cache composer dependencies
                 uses: actions/cache@v1
                 with:
-                    path: ./www/vendor
+                    path: ./vendor
                     key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
                     restore-keys: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+
+            -   name: Cache composer dependencies (box)
+                uses: actions/cache@v1
+                with:
+                    path: ./vendor-bin/box/vendor
+                    key: ${{ runner.os }}-composer-${{ hashFiles('vendor-bin/box/composer.json') }}
+                    restore-keys: ${{ runner.os }}-composer-${{ hashFiles('vendor-bin/box/composer.json') }}
 
             -   name: Compile
                 run: composer --no-interaction --optimize-autoloader install
