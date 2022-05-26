@@ -58,5 +58,10 @@
     },
     "bin": [
         "dist/shed"
-    ]
+    ],
+    "config": {
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
+        }
+    }
 }
