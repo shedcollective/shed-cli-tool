@@ -407,7 +407,7 @@ final class Create extends Command
     private function setDomain(): Create
     {
         $this->loglnVeryVerbose('Setting domain');
-        $sOption = trim($this->oInput->getOption('domain'));
+        $sOption = trim($this->oInput->getOption('domain') ?? '');
         if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
@@ -487,7 +487,7 @@ final class Create extends Command
     private function setEnvironment(): Create
     {
         $this->loglnVeryVerbose('Setting environment');
-        $sOption = trim($this->oInput->getOption('environment'));
+        $sOption = trim($this->oInput->getOption('environment') ?? '');
 
         if (empty($sOption) || !$this->validateEnvironment($sOption)) {
 
@@ -569,7 +569,7 @@ final class Create extends Command
     private function setFramework(): Create
     {
         $this->loglnVeryVerbose('Setting framework');
-        $sOption = trim($this->oInput->getOption('framework'));
+        $sOption = trim($this->oInput->getOption('framework') ?? '' ?? '');
 
         if (empty($sOption) || !$this->validateFramework($sOption)) {
 
@@ -671,7 +671,7 @@ final class Create extends Command
             throw new RuntimeException('No providers available');
         } elseif ($this->oInput->getOption('provider')) {
 
-            $sOption = trim($this->oInput->getOption('provider'));
+            $sOption = trim($this->oInput->getOption('provider') ?? '');
             $iChoice = array_search(strtoupper($sOption), $aProvidersNormalised);
             if ($iChoice === false) {
                 $this->error([
@@ -882,7 +882,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting keywords');
 
-        $sOption = trim($this->oInput->getOption('keywords'));
+        $sOption = trim($this->oInput->getOption('keywords') ?? '');
         if (empty($sOption)) {
             $sKeywords = $this->ask('Keywords:');
         } else {
@@ -929,7 +929,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting deploy key');
 
-        $sOption = trim($this->oInput->getOption('deploy-key'));
+        $sOption = trim($this->oInput->getOption('deploy-key') ?? '');
         if (empty($sOption)) {
             $this->sDeployKey = $this->ask('Deploy Key:');
         } else {
@@ -950,7 +950,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting hostname');
 
-        $sOption = trim($this->oInput->getOption('hostname'));
+        $sOption = trim($this->oInput->getOption('hostname') ?? '');
         if (empty($sOption)) {
             $this->sHostname = implode(
                 '-',

@@ -130,8 +130,8 @@ abstract class Auth extends Command
      */
     protected function view(): void
     {
-        $sLabel = trim($this->oInput->getOption('label'));
-        $sToken = trim($this->oInput->getOption('token'));
+        $sLabel = trim($this->oInput->getOption('label') ?? '');
+        $sToken = trim($this->oInput->getOption('token') ?? '');
 
         try {
 
@@ -174,8 +174,8 @@ abstract class Auth extends Command
      */
     protected function delete(): void
     {
-        $sLabel = trim($this->oInput->getOption('label'));
-        $sToken = trim($this->oInput->getOption('token'));
+        $sLabel = trim($this->oInput->getOption('label') ?? '');
+        $sToken = trim($this->oInput->getOption('token') ?? '');
 
         try {
 
@@ -257,7 +257,7 @@ abstract class Auth extends Command
      */
     protected function setLabel(): self
     {
-        $sOption = trim($this->oInput->getOption('label'));
+        $sOption = trim($this->oInput->getOption('label') ?? '');
         if (empty($sOption)) {
             $this->sLabel = $this->ask(
                 static::QUESTION_LABEL . ':',
@@ -288,7 +288,7 @@ abstract class Auth extends Command
      */
     protected function setToken(): self
     {
-        $sOption = trim($this->oInput->getOption('token'));
+        $sOption = trim($this->oInput->getOption('token') ?? '');
         if (empty($sOption)) {
             $this->sToken = $this->ask(
                 static::QUESTION_TOKEN . ':',
