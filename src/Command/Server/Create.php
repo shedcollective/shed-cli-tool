@@ -253,7 +253,7 @@ final class Create extends Command
                 'framework',
                 'f',
                 InputOption::VALUE_OPTIONAL,
-                'The framework (one of: ' . implode(', ', self::ENVIRONMENTS) . ')'
+                'The framework (one of: ' . implode(', ', self::FRAMEWORKS) . ')'
             )
             ->addOption(
                 'provider',
