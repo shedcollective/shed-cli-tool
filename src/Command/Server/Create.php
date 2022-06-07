@@ -1486,6 +1486,18 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Whether SSL needs to be configured
+     *
+     * @return bool
+     */
+    private function shouldConfigureSSL(): bool
+    {
+        return !preg_match('/^docker-/', $this->oImage->getLabel());
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * configures SSL
      *
      * @param SSH2   $oSsh    The SSH connection
@@ -1495,6 +1507,10 @@ final class Create extends Command
      */
     private function configureSsl(SSH2 $oSsh, Server $oServer): self
     {
+        if (!$this->shouldConfigureSSL()) {
+            return $this;
+        }
+
         $this->logln('');
         if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>yes</info>]')) {
 
