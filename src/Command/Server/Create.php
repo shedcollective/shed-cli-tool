@@ -1082,7 +1082,9 @@ final class Create extends Command
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
-            ->provisionFramework($oSsh);
+            ->updateDependencies($oSsh)
+            ->provisionFramework($oSsh)
+            ->reboot($oSsh, $oServer, $oPrivateKey);
 
         // --------------------------------------------------------------------------
 
@@ -1549,6 +1551,28 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
+     * Brings dependencies up to date
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function updateDependencies(SSH2 $oSsh): self
+    {
+        $this->log('Updating dependencies (this may take some time)... ');
+        $oSsh->exec('apt update -y');
+        $oSsh->exec('export DEBIAN_FRONTEND=noninteractive');
+        $oSsh->exec('apt upgrade -y');
+        $oSsh->exec('apt autoremove -y');
+        $oSsh->exec('apt autoclean -y');
+        $this->logln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Executes any post-provision scripts placed by the provisioner
      *
      * @param SSH2 $oSsh
@@ -1589,6 +1613,24 @@ final class Create extends Command
         } else {
             $this->logln('<info>done</info>');
         }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @param SSH2           $oSsh    The SSH connection
+     * @param Server         $oServer The server which is being configured
+     * @param RSA\PrivateKey $oKey    The key to use
+     *
+     * @return $this
+     */
+    private function reboot(SSH2 &$oSsh, Server $oServer, RSA\PrivateKey $oKey): self
+    {
+        $this->logln('Rebooting server... ');
+        $oSsh->exec('reboot');
+        $oSsh = $this->waitForSsh($oServer, $oKey);
 
         return $this;
     }
