@@ -208,7 +208,7 @@ final class Create extends Command
      */
     private function setProjectName(): Create
     {
-        $sOption = trim($this->oInput->getOption('name'));
+        $sOption = trim($this->oInput->getOption('name') ?? '');
         if (empty($sOption)) {
             $this->sProjectName = $this->ask(
                 'Project Name:',
@@ -262,7 +262,7 @@ final class Create extends Command
      */
     private function setProjectSlug(): Create
     {
-        $sOption  = trim($this->oInput->getOption('slug'));
+        $sOption  = trim($this->oInput->getOption('slug') ?? '');
         $sDefault = strtolower($this->sProjectName);
         $sDefault = preg_replace('/[^a-z0-9\- ]/', '', $sDefault);
         $sDefault = str_replace(' ', '-', $sDefault);
@@ -320,7 +320,7 @@ final class Create extends Command
      */
     private function setDirectory(): Create
     {
-        $sOption = trim($this->oInput->getOption('directory'));
+        $sOption = trim($this->oInput->getOption('directory') ?? '');
         if (empty($sOption)) {
             $this->sDir = $this->ask(
                 'Project Directory:',
