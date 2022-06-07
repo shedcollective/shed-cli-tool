@@ -215,7 +215,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
             return $this->ask($sQuestion, $sDefault, $cValidation);
         }
 
-        return trim($sResponse);
+        return trim($sResponse ?? '');
     }
 
     // --------------------------------------------------------------------------
@@ -268,12 +268,12 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     /**
      * Prepare the question string
      *
-     * @param string $sQuestion The question to prepare
-     * @param string $sDefault  The default value
+     * @param string  $sQuestion The question to prepare
+     * @param ?string $sDefault  The default value
      *
      * @return string
      */
-    private function prepQuestion($sQuestion, $sDefault = null): string
+    private function prepQuestion(string $sQuestion, string $sDefault = null): string
     {
         $sQuestion = trim($sQuestion);
         if (preg_match('/[^?:]$/', $sQuestion)) {
