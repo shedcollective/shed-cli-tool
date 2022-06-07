@@ -1354,7 +1354,7 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Whether mySQL needs configured
+     * Whether MySQL needs to be configured
      *
      * @return bool
      */
