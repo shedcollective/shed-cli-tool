@@ -902,7 +902,7 @@ final class Create extends Command
                     array_map(
                         function ($sKeyword) {
 
-                            $sKeyword = strtolower($sKeyword);
+                            $sKeyword = strtolower((string) $sKeyword);
                             $sKeyword = preg_replace('/[^a-z0-9 \-]/', '', $sKeyword);
                             $sKeyword = str_replace(' ', '-', $sKeyword);
                             return trim($sKeyword);
@@ -956,7 +956,7 @@ final class Create extends Command
                 '-',
                 array_map(
                     function ($sBit) {
-                        return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower($sBit)));
+                        return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower((string) $sBit)));
                     },
                     array_filter([
                         $this->sDomain,
