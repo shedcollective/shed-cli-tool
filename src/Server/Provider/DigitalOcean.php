@@ -5,7 +5,7 @@ namespace Shed\Cli\Server\Provider;
 use DigitalOceanV2\Entity\Droplet;
 use DigitalOceanV2\Entity\Network;
 use DigitalOceanV2\ResultPager;
-use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\EC;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Command\Server\Create;
 use Shed\Cli\Entity;
@@ -213,7 +213,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @param array          $aOptions     The configured options
      * @param array          $aKeywords    The configured keywords
      * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
+     * @param EC\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      * @throws \DigitalOceanV2\Exception\ExceptionInterface
@@ -230,7 +230,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA\PrivateKey $oRootKey
+        EC\PrivateKey $oRootKey
     ): Entity\Server {
 
         //  Add key to DO temporarily

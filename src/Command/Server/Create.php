@@ -3,6 +3,7 @@
 namespace Shed\Cli\Command\Server;
 
 use Exception;
+use phpseclib3\Crypt\EC;
 use phpseclib3\Crypt\RSA;
 use phpseclib3\Net\SSH2;
 use RuntimeException;
@@ -1082,7 +1083,7 @@ final class Create extends Command
             ->configureSsl($oSsh, $oServer)
             ->updateDependencies($oSsh)
             ->provisionFramework($oSsh)
-            ->reboot($oSsh, $oServer, $oPrivateKey);
+            ->reboot($oSsh);
 
         // --------------------------------------------------------------------------
 
@@ -1156,16 +1157,16 @@ final class Create extends Command
     /**
      * Generates a temporary RSA key
      *
-     * @return RSA\PrivateKey
+     * @return EC\PrivateKey
      */
-    private function generateSshKey(): RSA\PrivateKey
+    private function generateSshKey(): EC\PrivateKey
     {
         $sKeyPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid();
 
         $this->loglnVerbose('Key path: ' . $sKeyPath);
 
         $sCommand = sprintf(
-            'ssh-keygen -q -b 4096 -C "generated-ssh-key" -f "%s" -N "" -t rsa',
+            'ssh-keygen -q -b 4096 -C "generated-ssh-key" -f "%s" -N "" -t ed25519',
             $sKeyPath
         );
 
@@ -1190,8 +1191,8 @@ final class Create extends Command
 
         $this->loglnVeryVerbose('Loading key into memory');
 
-        /** @var RSA\PrivateKey $oKey */
-        $oKey = RSA::load(file_get_contents($sKeyPath));
+        /** @var EC\PrivateKey $oKey */
+        $oKey = EC::load(file_get_contents($sKeyPath));
 
         $this->loglnVeryVerbose('Deleting key files');
         unlink($sKeyPath);
@@ -1205,12 +1206,12 @@ final class Create extends Command
     /**
      * Waits for an SSH connection to be established
      *
-     * @param Server         $oServer The server to connect to
-     * @param RSA\PrivateKey $oKey    The key to use
+     * @param Server        $oServer The server to connect to
+     * @param EC\PrivateKey $oKey    The key to use
      *
      * @return SSH2
      */
-    private function waitForSsh(Server $oServer, RSA\PrivateKey $oKey): SSH2
+    private function waitForSsh(Server $oServer, EC\PrivateKey $oKey): SSH2
     {
         $this->log('Waiting for SSH access... ');
         $iStart = time();
@@ -1634,17 +1635,14 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * @param SSH2           $oSsh    The SSH connection
-     * @param Server         $oServer The server which is being configured
-     * @param RSA\PrivateKey $oKey    The key to use
+     * @param SSH2 $oSsh The SSH connection
      *
      * @return $this
      */
-    private function reboot(SSH2 &$oSsh, Server $oServer, RSA\PrivateKey $oKey): self
+    private function reboot(SSH2 &$oSsh): self
     {
         $this->logln('Rebooting server... ');
         $oSsh->exec('reboot');
-        $oSsh = $this->waitForSsh($oServer, $oKey);
 
         return $this;
     }

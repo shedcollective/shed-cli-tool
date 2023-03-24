@@ -12,7 +12,7 @@ use Google_Service_Compute_Metadata;
 use Google_Service_Compute_MetadataItems;
 use Google_Service_Compute_NetworkInterface;
 use Google_Service_Compute_Tags;
-use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\EC;
 use Shed\Cli\Command\Auth;
 use Shed\Cli\Entity;
 use Shed\Cli\Entity\Provider\Account;
@@ -271,18 +271,18 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
     /**
      * Create the server
      *
-     * @param string         $sDomain      The configured domain name
-     * @param string         $sHostname    The configured hostname name
-     * @param string         $sEnvironment The configured environment
-     * @param string         $sFramework   The configured framework
-     * @param Account        $oAccount     The configured account
-     * @param Region         $oRegion      The configured region
-     * @param Size           $oSize        The configured size
-     * @param Image          $oImage       The configured image
-     * @param array          $aOptions     The configured options
-     * @param array          $aKeywords    The configured keywords
-     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
+     * @param string        $sDomain      The configured domain name
+     * @param string        $sHostname    The configured hostname name
+     * @param string        $sEnvironment The configured environment
+     * @param string        $sFramework   The configured framework
+     * @param Account       $oAccount     The configured account
+     * @param Region        $oRegion      The configured region
+     * @param Size          $oSize        The configured size
+     * @param Image         $oImage       The configured image
+     * @param array         $aOptions     The configured options
+     * @param array         $aKeywords    The configured keywords
+     * @param string        $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param EC\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
      * @throws Exception
@@ -299,7 +299,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA\PrivateKey $oRootKey
+        EC\PrivateKey $oRootKey
     ): Entity\Server {
 
         $oApi = $this->getApi($oAccount);
