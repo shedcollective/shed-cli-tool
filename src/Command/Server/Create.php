@@ -1083,7 +1083,7 @@ final class Create extends Command
             ->configureSsl($oSsh, $oServer)
             ->updateDependencies($oSsh)
             ->provisionFramework($oSsh)
-            ->reboot($oSsh, $oServer, $oPrivateKey);
+            ->reboot($oSsh);
 
         // --------------------------------------------------------------------------
 
@@ -1639,11 +1639,10 @@ final class Create extends Command
      *
      * @return $this
      */
-    private function reboot(SSH2 &$oSsh, Server $oServer, RSA\PrivateKey $oKey): self
+    private function reboot(SSH2 &$oSsh): self
     {
         $this->logln('Rebooting server... ');
         $oSsh->exec('reboot');
-        $oSsh = $this->waitForSsh($oServer, $oKey);
 
         return $this;
     }
