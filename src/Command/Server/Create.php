@@ -345,7 +345,6 @@ final class Create extends Command
      *
      * @return $this
      * @throws NotValidException
-     *
      */
     private function checkEnvironment(): Create
     {
@@ -956,15 +955,14 @@ final class Create extends Command
                 '-',
                 array_map(
                     function ($sBit) {
-                        return preg_replace('/[^a-z0-9\-]/', '', str_replace('.', '-', strtolower((string) $sBit)));
+                        return preg_replace(
+                            '/[^a-z0-9\-]/',
+                            '',
+                            str_replace('.', '-', strtolower((string) $sBit))
+                        );
                     },
                     array_filter([
                         $this->sDomain,
-                        $this->oImage->getLabel(),
-                        $this->sEnvironment,
-                        $this->sFramework !== Create::FRAMEWORK_NONE
-                            ? $this->sFramework
-                            : null,
                     ])
                 )
             );
