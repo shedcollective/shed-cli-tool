@@ -2,7 +2,7 @@
 
 namespace Shed\Cli\Interfaces;
 
-use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\EC;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Entity\Provider\Image;
 use Shed\Cli\Entity\Provider\Region;
@@ -92,18 +92,18 @@ interface Provider
     /**
      * Create the server
      *
-     * @param string         $sDomain      The configured domain name
-     * @param string         $sHostname    The configured hostname name
-     * @param string         $sEnvironment The configured environment
-     * @param string         $sFramework   The configured framework
-     * @param Account        $oAccount     The configured account
-     * @param Region         $oRegion      The configured region
-     * @param Size           $oSize        The configured size
-     * @param Image          $oImage       The configured image
-     * @param array          $aOptions     The configured options
-     * @param array          $aKeywords    The configured keywords
-     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
-     * @param RSA\PrivateKey $oRootKey     Temporary root ssh key
+     * @param string        $sDomain      The configured domain name
+     * @param string        $sHostname    The configured hostname name
+     * @param string        $sEnvironment The configured environment
+     * @param string        $sFramework   The configured framework
+     * @param Account       $oAccount     The configured account
+     * @param Region        $oRegion      The configured region
+     * @param Size          $oSize        The configured size
+     * @param Image         $oImage       The configured image
+     * @param array         $aOptions     The configured options
+     * @param array         $aKeywords    The configured keywords
+     * @param string        $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param EC\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Server
      */
@@ -119,7 +119,7 @@ interface Provider
         array $aOptions,
         array $aKeywords,
         string $sDeployKey,
-        RSA\PrivateKey $oRootKey
+        EC\PrivateKey $oRootKey
     ): Server;
 
     // --------------------------------------------------------------------------
