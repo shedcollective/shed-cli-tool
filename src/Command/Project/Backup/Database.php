@@ -24,6 +24,13 @@ final class Database extends Backup
     protected $sMysqlHost = '127.0.0.1';
 
     /**
+     * The MySQL Port to use for the backup
+     *
+     * @var string
+     */
+    protected $sMysqlPort = '3306';
+
+    /**
      * The MySQL User to use for the backup
      *
      * @var string
@@ -62,6 +69,13 @@ final class Database extends Backup
                 InputOption::VALUE_REQUIRED,
                 'The MySQL Host to use',
                 $this->sMysqlHost
+            )
+            ->addOption(
+                'mysql-port',
+                'P',
+                InputOption::VALUE_REQUIRED,
+                'The MySQL Port to use',
+                $this->sMysqlPort
             )
             ->addOption(
                 'mysql-user',
@@ -117,7 +131,6 @@ final class Database extends Backup
      *
      * @return $this
      * @throws NotValidException
-     *
      */
     protected function checkEnvironment(array $aCommands = []): Backup
     {
@@ -138,12 +151,16 @@ final class Database extends Backup
         parent::setVariables();
 
         $this->sMysqlHost      = $this->oInput->getOption('mysql-host');
+        $this->sMysqlPort      = $this->oInput->getOption('mysql-port');
         $this->sMysqlUser      = $this->oInput->getOption('mysql-user');
         $this->sMysqlPassword  = $this->oInput->getOption('mysql-password');
         $this->aMysqlDatabases = $this->oInput->getOption('mysql-database');
 
         if (empty($this->sMysqlHost)) {
-            throw new CliException('Missing required option "mysql-host" [--domain]');
+            throw new CliException('Missing required option "mysql-host" [--mysql-host]');
+
+        } elseif (empty($this->sMysqlPort)) {
+            throw new CliException('Missing required option "mysql-port" [--mysql-port]');
 
         } elseif (empty($this->sMysqlUser)) {
             throw new CliException('Missing required option "mysql-user" [--mysql-user]');
@@ -172,6 +189,7 @@ final class Database extends Backup
             'S3 Secret'      => $this->sS3Secret ? '<info>set</info>' : '',
             'S3 Bucket'      => $this->sS3Bucket,
             'MySQL Host'     => $this->sMysqlHost,
+            'MySQL Port'     => $this->sMysqlPort,
             'MySQL User'     => $this->sMysqlUser,
             'MySQL Password' => $this->sMysqlPassword ? '<info>set</info>' : '',
         ];
@@ -220,6 +238,7 @@ final class Database extends Backup
                     'mysqldump',
                     '--defaults-extra-file=\'' . $sOptionFile . '\'',
                     '-h\'' . $this->sMysqlHost . '\'',
+                    '-P\'' . $this->sMysqlPort . '\'',
                     '-u\'' . $this->sMysqlUser . '\'',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
