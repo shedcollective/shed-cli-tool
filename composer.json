@@ -16,7 +16,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": "7.*",
+        "php": ">=7.4",
         "ext-json": "*",
         "ext-zip": "*",
         "ext-curl": "*",
@@ -28,7 +28,9 @@
         "kriswallsmith/buzz": "^1.2",
         "google/apiclient": "^2.0",
         "aws/aws-sdk-php": "^3.95",
-        "phpseclib/phpseclib": "^3.0"
+        "phpseclib/phpseclib": "^3.0",
+        "monolog/monolog": "2.7.0",
+        "psr/cache": "1.0.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
