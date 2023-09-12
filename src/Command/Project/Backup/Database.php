@@ -240,6 +240,7 @@ final class Database extends Backup
                     '-h\'' . $this->sMysqlHost . '\'',
                     '-P\'' . $this->sMysqlPort . '\'',
                     '-u\'' . $this->sMysqlUser . '\'',
+                    '--no-tablespaces',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
                 ]);
