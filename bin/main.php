@@ -4,6 +4,7 @@
 namespace Shed\Cli;
 
 use Shed\Cli\Helper\Config;
+use Shed\Cli\Helper\Debug;
 use Shed\Cli\Helper\Directory;
 use Shed\Cli\Helper\Updates;
 use Symfony\Component\Console\Application;
@@ -11,12 +12,14 @@ use Symfony\Component\Finder\Finder;
 
 // --------------------------------------------------------------------------
 
-require __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-define('BASEPATH', Directory::normalize(__DIR__ . '/../'));
+define('APP_NAME', 'Shed Command Line Tool');
+ini_set('memory_limit', '-1');
 
 // --------------------------------------------------------------------------
 
-define('APP_NAME', 'Shed Command Line Tool');
+require __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+define('BASEPATH', Directory::normalize(__DIR__ . '/../'));
+
 
 // --------------------------------------------------------------------------
 
