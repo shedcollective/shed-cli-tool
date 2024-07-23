@@ -315,27 +315,45 @@ final class Create extends Command
      */
     protected function go(): int
     {
-        $this
-            ->banner('Setting up a new server')
-            ->checkEnvironment()
-            ->setDomain()
-            ->setHostname()
-            ->setEnvironment()
-            ->setFramework()
-            ->setProvider()
-            ->setAccount()
-            ->setRegion()
-            ->setSize()
-            ->setImage()
-            ->setProviderOptions()
-            ->setKeywords()
-            ->setDeployKey();
+        try {
 
-        if ($this->confirmVariables() && $this->confirmVpn()) {
-            $this->createServer();
+            $this
+                ->banner('Setting up a new server')
+                ->checkEnvironment()
+                ->setDomain()
+                ->setHostname()
+                ->setEnvironment()
+                ->setFramework()
+                ->setProvider()
+                ->setAccount()
+                ->setRegion()
+                ->setSize()
+                ->setImage()
+                ->setProviderOptions()
+                ->setKeywords()
+                ->setDeployKey();
+
+            if ($this->confirmVariables() && $this->confirmVpn()) {
+                $this->createServer();
+            }
+
+            return self::EXIT_CODE_SUCCESS;
+
+        } catch (\Throwable $e) {
+
+            $this->error([
+                'An error occurred whilst creating the server:',
+                'Type:    ' . get_class($e),
+                'Message: ' . $e->getMessage(),
+                'File:    ' . $e->getFile(),
+                'Line:    ' . $e->getLine(),
+            ]);
+
+            $this->oOutput->writeln('');
+            return $this->confirm('Try again? [default: <info>no</info>]', false)
+                ? $this->go()
+                : self::EXIT_CODE_FAILURE;
         }
-
-        return self::EXIT_CODE_SUCCESS;
     }
 
     // --------------------------------------------------------------------------
@@ -406,7 +424,7 @@ final class Create extends Command
     private function setDomain(): Create
     {
         $this->loglnVeryVerbose('Setting domain');
-        $sOption = strtolower(trim($this->oInput->getOption('domain') ?? ''));
+        $sOption = strtolower(trim($this->oInput->getOption('domain') ?? $this->sDomain));
         if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
@@ -486,7 +504,7 @@ final class Create extends Command
     private function setEnvironment(): Create
     {
         $this->loglnVeryVerbose('Setting environment');
-        $sOption = trim($this->oInput->getOption('environment') ?? '');
+        $sOption = trim($this->oInput->getOption('environment') ?? $this->sEnvironment);
 
         if (empty($sOption) || !$this->validateEnvironment($sOption)) {
 
@@ -568,7 +586,7 @@ final class Create extends Command
     private function setFramework(): Create
     {
         $this->loglnVeryVerbose('Setting framework');
-        $sOption = trim($this->oInput->getOption('framework') ?? '' ?? '');
+        $sOption = trim($this->oInput->getOption('framework') ?? $this->sFramework);
 
         if (empty($sOption) || !$this->validateFramework($sOption)) {
 
@@ -881,7 +899,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting keywords');
 
-        $sOption = trim($this->oInput->getOption('keywords') ?? '');
+        $sOption = trim($this->oInput->getOption('keywords') ?? implode(',', $this->aKeywords));
         if (empty($sOption)) {
             $sKeywords = $this->ask('Keywords:');
         } else {
@@ -928,7 +946,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting deploy key');
 
-        $sOption = trim($this->oInput->getOption('deploy-key') ?? '');
+        $sOption = trim($this->oInput->getOption('deploy-key') ?? $this->sDeployKey);
         if (empty($sOption)) {
             $this->sDeployKey = $this->ask('Deploy Key:');
         } else {
@@ -949,7 +967,7 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting hostname');
 
-        $sOption = strtolower(trim($this->oInput->getOption('hostname') ?? ''));
+        $sOption = strtolower(trim($this->oInput->getOption('hostname') ?? $this->sHostname));
         if (empty($sOption)) {
             $sOption = implode(
                 '-',
