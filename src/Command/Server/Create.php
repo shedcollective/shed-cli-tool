@@ -4,7 +4,6 @@ namespace Shed\Cli\Command\Server;
 
 use Exception;
 use phpseclib3\Crypt\EC;
-use phpseclib3\Crypt\RSA;
 use phpseclib3\Net\SSH2;
 use RuntimeException;
 use Shed\Cli\Command;
