@@ -407,7 +407,7 @@ final class Create extends Command
     private function setDomain(): Create
     {
         $this->loglnVeryVerbose('Setting domain');
-        $sOption = trim($this->oInput->getOption('domain') ?? '');
+        $sOption = strtolower(trim($this->oInput->getOption('domain') ?? ''));
         if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
