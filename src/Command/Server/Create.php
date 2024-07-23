@@ -320,6 +320,7 @@ final class Create extends Command
             ->banner('Setting up a new server')
             ->checkEnvironment()
             ->setDomain()
+            ->setHostname()
             ->setEnvironment()
             ->setFramework()
             ->setProvider()
@@ -329,8 +330,7 @@ final class Create extends Command
             ->setImage()
             ->setProviderOptions()
             ->setKeywords()
-            ->setDeployKey()
-            ->setHostname();
+            ->setDeployKey();
 
         if ($this->confirmVariables() && $this->confirmVpn()) {
             $this->createServer();
@@ -950,9 +950,9 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting hostname');
 
-        $sOption = trim($this->oInput->getOption('hostname') ?? '');
+        $sOption = strtolower(trim($this->oInput->getOption('hostname') ?? ''));
         if (empty($sOption)) {
-            $this->sHostname = implode(
+            $sOption = implode(
                 '-',
                 array_map(
                     function ($sBit) {
@@ -967,11 +967,47 @@ final class Create extends Command
                     ])
                 )
             );
-        } else {
-            $this->sHostname = $sOption;
         }
 
+        $this->sHostname = $this->ask(
+            'Hostname:',
+            $sOption,
+            [$this, 'validateHostname']
+        );
+
         return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validate a hostname is valid
+     *
+     * @param string $sHostname The domain to test
+     *
+     * @return bool
+     */
+    protected function validateHostname(string $sHostname): bool
+    {
+        $this->loglnVeryVerbose('Validating input: "' . $sHostname . '"');
+
+        if (empty($sHostname)) {
+            $this->error(array_filter([
+                'Hostname is required',
+                $sHostname,
+            ]));
+            return false;
+        }
+
+        if (preg_match('/[^a-z\-0-9]/', $sHostname)) {
+            $this->error(array_filter([
+                'Invalid hostname (a-z, 0-9, and dashes only)',
+                $sHostname,
+            ]));
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
