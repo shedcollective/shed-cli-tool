@@ -194,7 +194,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      */
     public function getSshInitialWait(): int
     {
-        return 20;
+        return 30;
     }
 
     // --------------------------------------------------------------------------
