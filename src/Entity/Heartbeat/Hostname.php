@@ -3,11 +3,11 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 /**
- * Class Domain
+ * Class Hostname
  *
  * @package Shed\Cli\Entity\Heartbeat
  */
-final class Domain implements \JsonSerializable
+final class Hostname implements \JsonSerializable
 {
     /**
      * Determines the server's domain
@@ -16,8 +16,7 @@ final class Domain implements \JsonSerializable
      */
     public function get(): ?string
     {
-        //  @todo (Pablo 2021-08-18) - Complete this method
-        return 'test.com';
+        return exec('hostname');
     }
 
     // --------------------------------------------------------------------------
