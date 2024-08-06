@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Entity\Heartbeat;
 
+use Shed\Cli\Exceptions\HeartbeatException;
+
 /**
  * Class Load
  *
@@ -16,11 +18,25 @@ final class Load implements \JsonSerializable
      */
     public function get(): ?array
     {
-        //  @todo (Pablo 2021-08-18) - Complete this method
+        switch (Os::getType()) {
+            case Os::LINUX:
+                $load = trim(exec('uptime | awk -F\'load average:\' \'{ print $2 }\' | awk \'{ print $1 $2 $3 }\''));
+                [$min5, $min10, $min15] = explode(',', $load);
+                break;
+
+            case Os::MACOS:
+                $load = trim(exec('uptime | awk -F\'load averages:\' \'{ print $2 }\' | awk \'{ print $1,$2,$3 }\''));
+                [$min5, $min10, $min15] = explode(' ', $load);
+                break;
+
+            default:
+                throw new HeartbeatException('Unable to determine system load.');
+        }
+
         return [
-            '5_min'  => 0,
-            '10_min' => 0,
-            '15_min' => 0,
+            '5_min'  => $min5,
+            '10_min' => $min10,
+            '15_min' => $min15,
         ];
     }
 
