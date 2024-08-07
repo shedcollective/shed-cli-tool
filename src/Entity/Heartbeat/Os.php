@@ -22,11 +22,28 @@ final class Os implements \JsonSerializable
      */
     public function get(): ?array
     {
-        //  @todo (Pablo 2021-08-18) - Complete this method
+        switch (static::getType()) {
+            case self::LINUX:
+                $version         = exec('. /etc/os-release && echo $VERSION_ID');
+                $codename        = exec('. /etc/os-release && echo $VERSION_CODENAME');
+                $restartRequired = file_exists('/var/run/reboot-required');
+                break;
+
+            case self::MACOS:
+                $version         = exec('sw_vers -productVersion');
+                $codename        = exec('sw_vers -productName');
+                $restartRequired = null;
+                break;
+
+            default:
+                throw new HeartbeatException('Unable to determine OS Details.');
+        }
+
         return [
-            'type'     => self::getType(),
-            'codename' => '',
-            'version'  => '',
+            'type'             => self::getType(),
+            'codename'         => $codename,
+            'version'          => $version,
+            'restart_required' => $restartRequired,
         ];
     }
 
