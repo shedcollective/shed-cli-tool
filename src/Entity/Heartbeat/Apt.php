@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Entity\Heartbeat;
 
+use Shed\Cli\Exceptions\HeartbeatException;
+
 /**
  * Class Apt
  *
@@ -16,10 +18,26 @@ final class Apt implements \JsonSerializable
      */
     public function get(): ?array
     {
-        //  @todo (Pablo 2021-08-18) - Complete this method
+        switch (Os::getType()) {
+            case Os::LINUX:
+                $updates = trim(exec(
+                    <<<EOT
+                    /usr/lib/update-notifier/apt-check 2>&1
+                    EOT
+                ));
+                $updates = explode(";", $updates);
+                $updates = reset($updates);
+                break;
+
+            case Os::MACOS;
+                return null;
+
+            default:
+                throw new HeartbeatException('Unable to determine system apt status.');
+        }
+
         return [
-            'updates' => 0,
-            'restart' => false,
+            'updates' => $updates,
         ];
     }
 
