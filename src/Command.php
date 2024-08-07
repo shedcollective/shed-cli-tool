@@ -27,6 +27,13 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     const EXIT_CODE_FAILURE = self::FAILURE;
 
     /**
+     * The error exit code
+     *
+     * @var int
+     */
+    const EXIT_CODE_ERROR = 1;
+
+    /**
      * The console's input interface
      *
      * @var InputInterface
