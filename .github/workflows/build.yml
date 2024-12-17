@@ -9,14 +9,14 @@ jobs:
                 uses: actions/checkout@v2
 
             -   name: Cache composer dependencies
-                uses: actions/cache@v1
+                uses: actions/cache@v4
                 with:
                     path: ./vendor
                     key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
                     restore-keys: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
 
             -   name: Cache composer dependencies (box)
-                uses: actions/cache@v1
+                uses: actions/cache@v4
                 with:
                     path: ./vendor-bin/box/vendor
                     key: ${{ runner.os }}-composer-${{ hashFiles('vendor-bin/box/composer.json') }}
