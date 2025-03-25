@@ -4,7 +4,6 @@ namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command;
 use Shed\Cli\Entity;
-use Shed\Cli\Helper\Debug;
 
 /**
  * Class Heartbeat
@@ -33,15 +32,11 @@ final class Heartbeat extends Command
      */
     protected function go(): int
     {
-        $this
-            ->banner('Heartbeat');
+        $this->banner('Heartbeat');
 
         try {
-
             $oHeartbeat = new Entity\Heartbeat();
             $oHeartbeat->beat();
-
-            Debug::d(json_encode($oHeartbeat, JSON_PRETTY_PRINT));
 
             $this->oOutput->writeln('Heartbeat successful');
             $this->oOutput->writeln('');
@@ -49,7 +44,6 @@ final class Heartbeat extends Command
             return self::EXIT_CODE_SUCCESS;
 
         } catch (\Throwable $e) {
-
             $this->oOutput->writeln(sprintf(
                 '<error>Error [%s]: %s</error>',
                 $e->getCode(),
