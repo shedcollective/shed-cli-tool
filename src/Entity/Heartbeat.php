@@ -79,7 +79,7 @@ final class Heartbeat implements \JsonSerializable
      */
     public function beat(): void
     {
-        $endpoint = 'https://api.shedcollective.com/server/heartbeat';
+        $endpoint = 'https://api.shedcollective.com/v1/server/heartbeat';
         $data     = json_encode($this);
 
         $ch = curl_init($endpoint);
