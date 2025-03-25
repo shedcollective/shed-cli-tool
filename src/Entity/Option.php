@@ -74,8 +74,8 @@ final class Option extends Entity
         string $sLabel = '',
         $mDefault = null,
         $mOptions = [],
-        callable $cValidation = null,
-        callable $cSummary = null
+        ?callable $cValidation = null,
+        ?callable $cSummary = null
     ) {
 
         parent::__construct($sLabel);

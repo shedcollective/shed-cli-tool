@@ -31,7 +31,7 @@ final class ShedApi
      *
      * @throws CliException
      */
-    public static function testToken(string $sToken, OutputInterface $oOutput = null)
+    public static function testToken(string $sToken, ?OutputInterface $oOutput = null)
     {
         $oCurl   = curl_init();
         $oOutput = $oOutput ?? new NullOutput();

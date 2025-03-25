@@ -291,7 +291,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      *
      * @return string
      */
-    private function prepQuestion(string $sQuestion, string $sDefault = null): string
+    private function prepQuestion(string $sQuestion, ?string $sDefault = null): string
     {
         $sQuestion = trim($sQuestion);
         if (preg_match('/[^?:]$/', $sQuestion)) {
