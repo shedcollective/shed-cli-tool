@@ -53,7 +53,7 @@
         ],
         "test": [
             "./scripts/test.sh"
-        ], 
+        ],
         "analyse": [
             "./scripts/analyse.sh"
         ]
