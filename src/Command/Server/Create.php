@@ -428,7 +428,7 @@ final class Create extends Command
         if (empty($sOption) || !$this->validateDomain($sOption)) {
             $this->sDomain = $this->ask(
                 'Domain Name:',
-                null,
+                '',
                 [$this, 'validateDomain']
             );
 
