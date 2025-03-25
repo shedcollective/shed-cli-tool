@@ -4,6 +4,7 @@ namespace Shed\Cli;
 
 use Shed\Cli\Helper\Colors;
 use Shed\Cli\Helper\Updates;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
@@ -25,6 +26,13 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      * @var int
      */
     const EXIT_CODE_FAILURE = self::FAILURE;
+
+    /**
+     * The error exit code
+     *
+     * @var int
+     */
+    const EXIT_CODE_ERROR = 1;
 
     /**
      * The console's input interface
@@ -213,6 +221,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      */
     protected function ask($sQuestion, $sDefault = null, $cValidation = null): ?string
     {
+        /** @var QuestionHelper $oHelper */
         $oHelper   = $this->getHelper('question');
         $sQuestion = $this->prepQuestion($sQuestion, $sDefault);
         $oQuestion = new Question($sQuestion, $sDefault);
@@ -235,10 +244,11 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      * @param int      $iDefault    The default option
      * @param callable $cValidation A validation callback
      *
-     * @return int
+     * @return string|int
      */
-    protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null): int
+    protected function choose($sQuestion, array $aOptions, $iDefault = 0, $cValidation = null): string|int
     {
+        /** @var QuestionHelper $oHelper */
         $oHelper   = $this->getHelper('question');
         $mDefault  = array_key_exists($iDefault, $aOptions) ? $aOptions[$iDefault] : null;
         $sQuestion = $this->prepQuestion($sQuestion, $mDefault);
@@ -264,6 +274,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
      */
     protected function confirm($sQuestion, $bDefault = true): bool
     {
+        /** @var QuestionHelper $oHelper */
         $oHelper   = $this->getHelper('question');
         $sQuestion = $this->prepQuestion($sQuestion);
         $oQuestion = new ConfirmationQuestion($sQuestion, $bDefault);

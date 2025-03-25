@@ -148,7 +148,6 @@ final class Create extends Command
      *
      * @return $this
      * @throws NotValidException
-     *
      */
     private function checkEnvironment(): Create
     {
@@ -444,7 +443,9 @@ final class Create extends Command
             $iChoice = $this->choose($sNamespace . ' Framework', $aFrameworks);
         }
 
-        $oProperty = $aFrameworkClasses[$iChoice];
+        /** @var Framework $oFramework */
+        $oFramework = $aFrameworkClasses[$iChoice];
+        $oProperty  = $oFramework;
 
         return $this;
     }

@@ -5,8 +5,8 @@ namespace Shed\Cli\Command;
 use Shed\Cli\Command;
 use Shed\Cli\Entity\Provider\Account;
 use Shed\Cli\Exceptions\Auth\AccountNotFoundException;
-use Shed\Cli\Helper\Config;
 use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Helper\Config;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -26,14 +26,12 @@ abstract class Auth extends Command
      */
     const LABEL = '';
 
-
     /**
      * The question for asking the account label
      *
      * @var string
      */
     const QUESTION_LABEL = 'Account Label';
-
 
     /**
      * The question for asking the account token
@@ -331,12 +329,10 @@ abstract class Auth extends Command
 
         try {
             $oAccount = self::getAccountByLabel($sLabel);
-            if (!empty($oAccount)) {
-                $this->error([
-                    'There is already an account called "' . $oAccount->getLabel() . '"',
-                ]);
-                return false;
-            }
+            $this->error([
+                'There is already an account called "' . $oAccount->getLabel() . '"',
+            ]);
+            return false;
         } catch (AccountNotFoundException $e) {
         }
 
@@ -374,12 +370,10 @@ abstract class Auth extends Command
 
         try {
             $oAccount = self::getAccountByToken($sToken);
-            if (!empty($oAccount)) {
-                $this->error([
-                    'Token is already in use for account "' . $oAccount->getLabel() . '"',
-                ]);
-                return false;
-            }
+            $this->error([
+                'Token is already in use for account "' . $oAccount->getLabel() . '"',
+            ]);
+            return false;
         } catch (AccountNotFoundException $e) {
         }
 
