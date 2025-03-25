@@ -100,7 +100,7 @@ final class Heartbeat implements \JsonSerializable
             throw new HeartbeatException('Failed to send heartbeat: ' . curl_error($ch));
         }
 
-        if ($httpCode !== 200) {
+        if ($httpCode !== 201) {
             throw new HeartbeatException('Heartbeat API returned error code: ' . $httpCode);
         }
 
