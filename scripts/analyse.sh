@@ -3,4 +3,4 @@
 # --------------------------------------------------------------------------
 # Use PHPStan to analyse code
 # --------------------------------------------------------------------------
-./vendor/bin/phpstan analyse -c .phpstan/config.neon
+./vendor/bin/phpstan analyse --memory-limit=-1 -c .phpstan/config.neon

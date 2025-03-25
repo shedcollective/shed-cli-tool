@@ -39,7 +39,7 @@ abstract class Entity
      *
      * @param string $sLabel The label to set
      *
-     * @return $this;
+     * @return $this
      */
     public function setLabel(string $sLabel): self
     {
@@ -66,7 +66,7 @@ abstract class Entity
      *
      * @param string $sSlug The slug to set
      *
-     * @return $this;
+     * @return $this
      */
     public function setSlug(string $sSlug): self
     {
