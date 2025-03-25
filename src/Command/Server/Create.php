@@ -85,8 +85,8 @@ final class Create extends Command
      * The available frameworks
      *
      * @var array
-     * @todo (Pablo - 2019-02-12) - Auto-detect supported backend environments
      */
+    //  @todo (Pablo - 2019-02-12) - Auto-detect supported backend environments
     const FRAMEWORKS = [
         self::FRAMEWORK_NAILS,
         self::FRAMEWORK_LARAVEL,
@@ -120,21 +120,21 @@ final class Create extends Command
     /**
      * The environment being created
      *
-     * @var string
+     * @var int|string
      */
     private $sEnvironment = '';
 
     /**
      * The framework being used
      *
-     * @var string
+     * @var int|string
      */
     private $sFramework = '';
 
     /**
      * The provider being used
      *
-     * @var Provider
+     * @var string|Provider
      */
     private $oProvider = '';
 

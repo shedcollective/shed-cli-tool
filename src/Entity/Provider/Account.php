@@ -34,7 +34,7 @@ final class Account extends Entity
      *
      * @param string $sToken the label to set
      *
-     * @return $this;
+     * @return $this
      */
     public function setToken(string $sToken): self
     {
