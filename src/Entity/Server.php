@@ -69,10 +69,10 @@ final class Server extends Entity
      * @param string $sId     The server's ID
      * @param string $sIp     The server's IP
      * @param string $sDomain The server's domain
-     * @param Disk   $oDisk   The server's disk
-     * @param Image  $oImage  The server's image
-     * @param Region $oRegion The server's region
-     * @param Size   $oSize   The server's size
+     * @param null|Disk   $oDisk   The server's disk
+     * @param null|Image  $oImage  The server's image
+     * @param null|Region $oRegion The server's region
+     * @param null|Size   $oSize   The server's size
      */
     public function __construct(
         string $sLabel = '',
@@ -80,10 +80,10 @@ final class Server extends Entity
         string $sId = '',
         string $sIp = '',
         string $sDomain = '',
-        Disk $oDisk = null,
-        Image $oImage = null,
-        Region $oRegion = null,
-        Size $oSize = null
+        ?Disk $oDisk = null,
+        ?Image $oImage = null,
+        ?Region $oRegion = null,
+        ?Size $oSize = null
     ) {
         parent::__construct($sLabel, $sSlug);
         $this->sId     = $sId;

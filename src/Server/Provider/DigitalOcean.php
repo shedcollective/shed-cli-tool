@@ -400,7 +400,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
      * @return Droplet
      * @throws \DigitalOceanV2\Exception\ExceptionInterface
      */
-    private function waitForDropletToBeActive(Account $oAccount, Droplet $oDroplet, int $iTimeout = null): Droplet
+    private function waitForDropletToBeActive(Account $oAccount, Droplet $oDroplet, ?int $iTimeout = null): Droplet
     {
         $iEndTime = time() + ($iTimeout ?? 300);
 
