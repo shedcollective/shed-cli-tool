@@ -899,8 +899,10 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting keywords');
 
-        $sOption = trim($this->oInput->getOption('keywords') ?? implode(',', $this->aKeywords));
-        if (empty($sOption)) {
+        $sOption = $this->oInput->getOption('keywords');
+
+        //  Null if not set, empty string signifies it was set, but intentionally empty
+        if ($sOption === null) {
             $sKeywords = $this->ask('Keywords:');
         } else {
             $sKeywords = $sOption;
