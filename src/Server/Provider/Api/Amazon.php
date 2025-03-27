@@ -5,6 +5,7 @@ namespace Shed\Cli\Server\Provider\Api;
 use Aws\Ec2\Ec2Client;
 use Aws\Sts\StsClient;
 use Shed\Cli\Entity\Provider\Account;
+use Shed\Cli\Helper\Debug;
 
 final class Amazon
 {
@@ -32,15 +33,6 @@ final class Amazon
     public function __construct($oAccount)
     {
         $this->oAccount = $oAccount;
-
-        $this->oApi = new Ec2Client([
-            'version'     => 'latest',
-            'region'      => 'eu-west-1',
-            'credentials' => [
-                'key'    => $this->oAccount->getLabel(),
-                'secret' => $this->oAccount->getToken(),
-            ],
-        ]);
     }
 
     // --------------------------------------------------------------------------
@@ -59,9 +51,25 @@ final class Amazon
 
     /**
      * Return the digital Ocean API
+     *
+     * @param string $sRegion  The region to use
+     * @param string $sVersion The version to use
+     *
+     * @return Ec2Client
      */
-    public function getApi(): Ec2Client
+    public function getApi($sRegion = 'eu-west-1', $sVersion = 'latest'): Ec2Client
     {
+        if (empty($this->oApi)) {
+            $this->oApi = new Ec2Client([
+                'version'     => $sVersion,
+                'region'      => $sRegion,
+                'credentials' => [
+                    'key'    => $this->oAccount->getLabel(),
+                    'secret' => $this->oAccount->getToken(),
+                ],
+            ]);
+        }
+
         return $this->oApi;
     }
 
