@@ -13,7 +13,7 @@ final class System
      *
      * @throws CommandFailedException
      */
-    public static function exec($mCommand): void
+    public static function exec(string|array $mCommand, array &$aOutput = []): int
     {
         if (is_array($mCommand)) {
             $mCommand = implode(' && ', array_filter($mCommand));
@@ -23,6 +23,19 @@ final class System
         if ($iExitCode) {
             throw new CommandFailedException('"' . $mCommand . '" failed with non-zero exit code ' . $iExitCode);
         }
+
+        return $iExitCode;
+    }
+
+    public static function execString(string|array $mCommand): string
+    {
+        if (is_array($mCommand)) {
+            $mCommand = implode(' && ', array_filter($mCommand));
+        }
+
+        $output = [];
+        self::exec($mCommand, $output);
+        return (string) reset($output);
     }
 
     // --------------------------------------------------------------------------
