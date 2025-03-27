@@ -102,7 +102,6 @@ abstract class Backup extends Command
      *
      * @return $this
      * @throws NotValidException
-     *
      */
     protected function checkEnvironment(array $aCommands = []): Backup
     {
