@@ -45,7 +45,7 @@ final class Ssl implements \JsonSerializable
 
     function getCertbotCertificates(): array
     {
-        $command    = 'sudo certbot certificates 2>&1';
+        $command    = 'certbot certificates 2>&1';
         $output     = [];
         $resultCode = System::exec($command, $output);
 

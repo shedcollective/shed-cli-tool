@@ -27,9 +27,15 @@ final class Security implements \JsonSerializable
 
     private function getFailedLogins(): ?array
     {
-        $output = [];
-        exec('grep "Failed password" /var/log/auth.log | wc -l', $output);
-        $totalFailed = (int) ($output[0] ?? 0);
+        if (!is_readable('/var/log/auth.log')) {
+            return [
+                'total_count'     => null,
+                'recent_attempts' => null,
+                'error'           => 'Access to auth.log denied - insufficient permissions',
+            ];
+        }
+
+        $totalFailed = (int) System::execString('grep "Failed password" /var/log/auth.log | wc -l');
 
         $recentOutput = [];
         System::exec('grep "Failed password" /var/log/auth.log | tail -n 5', $recentOutput);
