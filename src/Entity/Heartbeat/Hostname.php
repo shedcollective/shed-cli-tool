@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Entity\Heartbeat;
 
+use Shed\Cli\Helper\System;
+
 /**
  * Class Hostname
  *
@@ -16,7 +18,7 @@ final class Hostname implements \JsonSerializable
      */
     public function get(): ?string
     {
-        return exec('hostname');
+        return System::execString('hostname');
     }
 
     // --------------------------------------------------------------------------

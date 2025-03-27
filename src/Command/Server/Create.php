@@ -1225,11 +1225,7 @@ final class Create extends Command
 
         $this->loglnVeryVerbose('Executing `' . $sCommand . '`');
 
-        exec(
-            $sCommand,
-            $aOutput,
-            $iExitCode
-        );
+        $iExitCode = System::exec($sCommand);
 
         $this->loglnVeryVerbose('Exit code: ' . $iExitCode);
 

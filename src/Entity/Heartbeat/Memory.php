@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 final class Memory implements \JsonSerializable
 {
@@ -26,9 +27,9 @@ final class Memory implements \JsonSerializable
                 ];
 
             case Os::MACOS:
-                $pageSize = (int) exec('sysctl -n hw.pagesize');
-                $totalMem = (int) exec('sysctl -n hw.memsize');
-                $vmStats  = explode("\n", trim(exec('vm_stat')));
+                $pageSize = (int) System::execString('sysctl -n hw.pagesize');
+                $totalMem = (int) System::execString('sysctl -n hw.memsize');
+                $vmStats  = explode("\n", System::execString('vm_stat'));
 
                 $stats = [];
                 foreach ($vmStats as $row) {

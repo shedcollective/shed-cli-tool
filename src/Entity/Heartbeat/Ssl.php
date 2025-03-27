@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 /**
  * Class Ssl
@@ -46,8 +47,7 @@ final class Ssl implements \JsonSerializable
     {
         $command    = 'sudo certbot certificates 2>&1';
         $output     = [];
-        $resultCode = 0;
-        exec($command, $output, $resultCode);
+        $resultCode = System::exec($command, $output);
 
         if ($resultCode !== 0) {
             throw new HeartbeatException('Failed to retrieve certificate information.');

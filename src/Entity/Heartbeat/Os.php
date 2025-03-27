@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 /**
  * Class Os
@@ -24,14 +25,14 @@ final class Os implements \JsonSerializable
     {
         switch (static::getType()) {
             case self::LINUX:
-                $version         = exec('. /etc/os-release && echo $VERSION_ID');
-                $codename        = exec('. /etc/os-release && echo $VERSION_CODENAME');
+                $version         = System::execString('. /etc/os-release && echo $VERSION_ID');
+                $codename        = System::execString('. /etc/os-release && echo $VERSION_CODENAME');
                 $restartRequired = file_exists('/var/run/reboot-required');
                 break;
 
             case self::MACOS:
-                $version         = exec('sw_vers -productVersion');
-                $codename        = exec('sw_vers -productName');
+                $version         = System::execString('sw_vers -productVersion');
+                $codename        = System::execString('sw_vers -productName');
                 $restartRequired = null;
                 break;
 
