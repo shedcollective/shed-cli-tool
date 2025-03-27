@@ -434,6 +434,12 @@ final class Create extends Command
 
         } else {
             $this->sDomain = $sOption;
+            $this->logln(
+                sprintf(
+                    '<comment>Domain</comment>: %s',
+                    $this->sDomain
+                )
+            );
         }
 
         $this->sDomain = $this->normaliseDomain($this->sDomain);
