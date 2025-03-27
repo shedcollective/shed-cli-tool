@@ -1576,7 +1576,7 @@ final class Create extends Command
         }
 
         $this->logln('');
-        if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>yes</info>]')) {
+        if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>no</info>]', false)) {
 
             $this->logln('');
             $this->logln('Ensure DNS records have been deployed for:');
