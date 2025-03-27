@@ -1640,11 +1640,31 @@ final class Create extends Command
     private function updateDependencies(SSH2 $oSsh): self
     {
         $this->log('Updating dependencies (this may take some time)... ');
-        $oSsh->exec('apt update -y');
-        $oSsh->exec('export DEBIAN_FRONTEND=noninteractive');
-        $oSsh->exec('apt upgrade -y');
-        $oSsh->exec('apt autoremove -y');
-        $oSsh->exec('apt autoclean -y');
+
+        // First check if apt is in use and wait if necessary
+        $waitForApt = <<<EOT
+        for i in `seq 1 300`; do
+            if ! lsof /var/lib/dpkg/lock-frontend >/dev/null 2>&1 && ! lsof /var/lib/apt/lists/lock >/dev/null 2>&1 && ! lsof /var/lib/dpkg/lock >/dev/null 2>&1; then
+                break
+            fi
+            echo "Waiting for apt to be available... (\${i}/300)"
+            sleep 1
+        done
+        EOT;
+
+        $oSsh->setTimeout(300);
+        $oSsh->exec($waitForApt);
+
+        $oSsh->exec(implode(' && ', [
+            'apt update -y',
+            <<<EOT
+            export DEBIAN_FRONTEND=noninteractive && \
+            apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
+            EOT,
+            'apt autoremove -y',
+            'apt autoclean -y',
+        ]));
+
         $this->logln('<info>done</info>');
 
         return $this;
