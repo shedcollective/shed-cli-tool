@@ -434,6 +434,12 @@ final class Create extends Command
 
         } else {
             $this->sDomain = $sOption;
+            $this->logln(
+                sprintf(
+                    '<comment>Domain</comment>: %s',
+                    $this->sDomain
+                )
+            );
         }
 
         $this->sDomain = $this->normaliseDomain($this->sDomain);
@@ -487,6 +493,89 @@ final class Create extends Command
             $this->error(array_filter([
                 'Invalid domain',
                 $sDomain,
+            ]));
+            return false;
+        }
+
+        return true;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Sets the hostname to use, or generates one if not provided
+     *
+     * @return Create
+     */
+    private function setHostname(): Create
+    {
+        $this->loglnVeryVerbose('Setting hostname');
+
+        $bInferred = false;
+        $sOption   = strtolower(trim($this->oInput->getOption('hostname') ?? ''));
+        if (empty($sOption)) {
+            $bInferred = true;
+            $sOption   = implode(
+                '-',
+                array_map(
+                    function ($sBit) {
+                        return preg_replace(
+                            '/[^a-z0-9\-]/',
+                            '',
+                            str_replace('.', '-', strtolower((string) $sBit))
+                        );
+                    },
+                    array_filter([
+                        $this->sDomain,
+                    ])
+                )
+            );
+        }
+
+        if (empty($sOption) || $bInferred || !$this->validateHostname($sOption)) {
+            $this->sHostname = $this->ask(
+                'Hostname:',
+                $sOption,
+                [$this, 'validateHostname']
+            );
+        } else {
+            $this->sHostname = $sOption;
+            $this->logln(
+                sprintf(
+                    '<comment>Hostname</comment>: %s',
+                    $this->sHostname
+                )
+            );
+        }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validate a hostname is valid
+     *
+     * @param string $sHostname The domain to test
+     *
+     * @return bool
+     */
+    protected function validateHostname(string $sHostname): bool
+    {
+        $this->loglnVeryVerbose('Validating input: "' . $sHostname . '"');
+
+        if (empty($sHostname)) {
+            $this->error(array_filter([
+                'Hostname is required',
+                $sHostname,
+            ]));
+            return false;
+        }
+
+        if (preg_match('/[^a-z\-0-9]/', $sHostname)) {
+            $this->error(array_filter([
+                'Invalid hostname (a-z, 0-9, and dashes only)',
+                $sHostname,
             ]));
             return false;
         }
@@ -899,8 +988,10 @@ final class Create extends Command
     {
         $this->loglnVeryVerbose('Setting keywords');
 
-        $sOption = trim($this->oInput->getOption('keywords') ?? implode(',', $this->aKeywords));
-        if (empty($sOption)) {
+        $sOption = $this->oInput->getOption('keywords');
+
+        //  Null if not set, empty string signifies it was set, but intentionally empty
+        if ($sOption === null) {
             $sKeywords = $this->ask('Keywords:');
         } else {
             $sKeywords = $sOption;
@@ -959,77 +1050,6 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Sets the hostname to use, or generates one if not provided
-     *
-     * @return Create
-     */
-    private function setHostname(): Create
-    {
-        $this->loglnVeryVerbose('Setting hostname');
-
-        $sOption = strtolower(trim($this->oInput->getOption('hostname') ?? $this->sHostname));
-        if (empty($sOption)) {
-            $sOption = implode(
-                '-',
-                array_map(
-                    function ($sBit) {
-                        return preg_replace(
-                            '/[^a-z0-9\-]/',
-                            '',
-                            str_replace('.', '-', strtolower((string) $sBit))
-                        );
-                    },
-                    array_filter([
-                        $this->sDomain,
-                    ])
-                )
-            );
-        }
-
-        $this->sHostname = $this->ask(
-            'Hostname:',
-            $sOption,
-            [$this, 'validateHostname']
-        );
-
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Validate a hostname is valid
-     *
-     * @param string $sHostname The domain to test
-     *
-     * @return bool
-     */
-    protected function validateHostname(string $sHostname): bool
-    {
-        $this->loglnVeryVerbose('Validating input: "' . $sHostname . '"');
-
-        if (empty($sHostname)) {
-            $this->error(array_filter([
-                'Hostname is required',
-                $sHostname,
-            ]));
-            return false;
-        }
-
-        if (preg_match('/[^a-z\-0-9]/', $sHostname)) {
-            $this->error(array_filter([
-                'Invalid hostname (a-z, 0-9, and dashes only)',
-                $sHostname,
-            ]));
-            return false;
-        }
-
-        return true;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Confirms the selected options
      *
      * @return bool
@@ -1072,7 +1092,15 @@ final class Create extends Command
      */
     private function confirmVpn(): bool
     {
-        return $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
+        $aKnownVpnIps = [
+            '46.101.50.161',    // London
+            '188.166.79.106',   // Amsterdam
+            '159.65.42.219',    // NYC
+            '59.89.102.30',     // Frankfurt
+            '137.184.15.3',     // San Francisco
+        ];
+
+        return in_array(System::ip(), $aKnownVpnIps) || $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
     }
 
     // --------------------------------------------------------------------------
@@ -1098,8 +1126,6 @@ final class Create extends Command
         // --------------------------------------------------------------------------
 
         $this->log('Creating server... ');
-
-        //  @todo (Pablo - 2019-08-02) - Register with Shed API, but in a pending state
 
         $oServer = $this->oProvider->create(
             $this->sDomain,
@@ -1137,20 +1163,6 @@ final class Create extends Command
             ->updateDependencies($oSsh)
             ->provisionFramework($oSsh)
             ->reboot($oSsh);
-
-        // --------------------------------------------------------------------------
-
-        try {
-            //  @todo (Pablo - 2019-08-02) - Update server state with Shed API
-            $this->log('Registering with the Shed API... ');
-            ShedApi::createServer($this->oShedAccount, $oServer);
-            $this->logln('<info>done</info>');
-        } catch (Exception $e) {
-            $this->warning(array_filter([
-                'Failed to register server with the Shed API',
-                $e->getMessage(),
-            ]));
-        }
 
         // --------------------------------------------------------------------------
 
@@ -1491,7 +1503,7 @@ final class Create extends Command
 
         $this->log('Securing MySQL... ');
         $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
-        $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) &&  mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
+        $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
         $this->logln('<info>done</info>');
 
         return $this;
@@ -1564,7 +1576,7 @@ final class Create extends Command
         }
 
         $this->logln('');
-        if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>yes</info>]')) {
+        if ($this->confirm('Would you like to configure an SSL certificate for this server? [default: <info>no</info>]', false)) {
 
             $this->logln('');
             $this->logln('Ensure DNS records have been deployed for:');
@@ -1628,11 +1640,31 @@ final class Create extends Command
     private function updateDependencies(SSH2 $oSsh): self
     {
         $this->log('Updating dependencies (this may take some time)... ');
-        $oSsh->exec('apt update -y');
-        $oSsh->exec('export DEBIAN_FRONTEND=noninteractive');
-        $oSsh->exec('apt upgrade -y');
-        $oSsh->exec('apt autoremove -y');
-        $oSsh->exec('apt autoclean -y');
+
+        // First check if apt is in use and wait if necessary
+        $waitForApt = <<<EOT
+        for i in `seq 1 300`; do
+            if ! lsof /var/lib/dpkg/lock-frontend >/dev/null 2>&1 && ! lsof /var/lib/apt/lists/lock >/dev/null 2>&1 && ! lsof /var/lib/dpkg/lock >/dev/null 2>&1; then
+                break
+            fi
+            echo "Waiting for apt to be available... (\${i}/300)"
+            sleep 1
+        done
+        EOT;
+
+        $oSsh->setTimeout(300);
+        $oSsh->exec($waitForApt);
+
+        $oSsh->exec(implode(' && ', [
+            'apt update -y',
+            <<<EOT
+            export DEBIAN_FRONTEND=noninteractive && \
+            apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
+            EOT,
+            'apt autoremove -y',
+            'apt autoclean -y',
+        ]));
+
         $this->logln('<info>done</info>');
 
         return $this;

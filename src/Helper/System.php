@@ -55,4 +55,18 @@ final class System
         $sCommandPath = `which $sCommand`;
         return !empty($sCommandPath);
     }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Get the host's public IP address
+     *
+     * @return string|null
+     */
+    public static function ip(): ?string
+    {
+        $details = json_decode(file_get_contents('https://ipinfo.io/json'), true);
+        return $details['ip'] ?? null;
+
+    }
 }
