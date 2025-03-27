@@ -21,7 +21,10 @@ final class System
 
         exec($mCommand, $aOutput, $iExitCode);
         if ($iExitCode) {
-            throw new CommandFailedException('"' . $mCommand . '" failed with non-zero exit code ' . $iExitCode);
+            throw new CommandFailedException(
+                '"' . $mCommand . '" failed with non-zero exit code: ' . $iExitCode,
+                $iExitCode
+            );
         }
 
         return $iExitCode;
