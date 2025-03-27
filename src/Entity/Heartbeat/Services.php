@@ -3,6 +3,8 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Helper\System;
 
 final class Services implements \JsonSerializable
 {
@@ -21,12 +23,15 @@ final class Services implements \JsonSerializable
             case Os::LINUX:
                 $services = [];
                 foreach (self::IMPORTANT_SERVICES as $service) {
-                    $status = exec("systemctl is-active $service 2>&1");
-                    if ($status !== 'inactive') {
-                        $services[$service] = [
-                            'status' => $status,
-                            'uptime' => $this->getServiceUptime($service),
-                        ];
+                    try {
+                        $status = System::execString("systemctl is-active $service 2>&1");
+                        if ($status !== 'inactive') {
+                            $services[$service] = [
+                                'status' => $status,
+                                'uptime' => $this->getServiceUptime($service),
+                            ];
+                        }
+                    } catch (CommandFailedException) {
                     }
                 }
                 return $services;
@@ -41,9 +46,9 @@ final class Services implements \JsonSerializable
 
     private function getServiceUptime(string $service): ?int
     {
-        $pid = exec("systemctl show -p MainPID $service | cut -d'=' -f2");
+        $pid = System::execString("systemctl show -p MainPID $service | cut -d'=' -f2");
         if ($pid && $pid !== '0') {
-            $startTime = (int) exec("ps -o start_time= -p $pid");
+            $startTime = (int) System::execString("ps -o start_time= -p $pid");
             return $startTime ? time() - $startTime : null;
         }
         return null;

@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 /**
  * Class DiskUsage
@@ -20,11 +21,11 @@ final class DiskUsage implements \JsonSerializable
     {
         switch (Os::getType()) {
             case Os::LINUX:
-                $usage = exec('df --block-size=1 --output=size,used,avail / | tail -n 1');
+                $usage = System::execString('df --block-size=1 --output=size,used,avail / | tail -n 1');
                 break;
 
             case Os::MACOS:
-                $usage = exec('df -k / | tail -n 1 | awk \'{print $2*1024, $3*1024, $4*1024}\'');
+                $usage = System::execString('df -k / | tail -n 1 | awk \'{print $2*1024, $3*1024, $4*1024}\'');
                 break;
 
             default:

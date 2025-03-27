@@ -2,7 +2,9 @@
 
 namespace Shed\Cli;
 
+use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Helper\Colors;
+use Shed\Cli\Helper\System;
 use Shed\Cli\Helper\Updates;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -71,13 +73,18 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
                 'An update is available: ' . Updates::getLatestVersion() . ' (you have version ' . Updates::getCurrentVersion() . ')',
             ];
 
-            exec('brew list shedcollective/utilities/shed 2>&1', $aOutput, $iReturnVal);
-            $bInstalledViaBrew     = $iReturnVal === 0;
+            $bInstalledViaBrew     = false;
             $bInstalledViaComposer = false;
 
-            if (!$bInstalledViaBrew) {
-                exec('composer global info shedcollective/command-line-tool 2>&1', $aOutput, $iReturnVal);
-                $bInstalledViaComposer = $iReturnVal === 0;
+            try {
+                System::exec('brew list shedcollective/utilities/shed 2>&1');
+                $bInstalledViaBrew = true;
+            } catch (CommandFailedException) {
+                try {
+                    System::exec('composer global info shedcollective/command-line-tool 2>&1');
+                    $bInstalledViaComposer = true;
+                } catch (CommandFailedException) {
+                }
             }
 
             if ($bInstalledViaBrew) {

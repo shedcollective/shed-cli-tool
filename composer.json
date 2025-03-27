@@ -1,6 +1,6 @@
 {
     "name": "shedcollective/command-line-tool",
-    "version": "1.16.2",
+    "version": "1.16.4",
     "homepage": "https://shedcollective.com",
     "description": "The command line tool for simplifying life at Shed",
     "license": "MIT",

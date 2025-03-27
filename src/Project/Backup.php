@@ -102,7 +102,6 @@ abstract class Backup extends Command
      *
      * @return $this
      * @throws NotValidException
-     *
      */
     protected function checkEnvironment(array $aCommands = []): Backup
     {
@@ -221,7 +220,8 @@ abstract class Backup extends Command
      */
     protected function exec(string $sCommand): void
     {
-        exec($sCommand . ' 2>&1', $aOutput, $iReturnVar);
+        $aOutput    = [];
+        $iReturnVar = System::exec($sCommand . ' 2>&1', $aOutput);
         if ($iReturnVar !== 0) {
             $e = new CliException('Command failed: "' . $sCommand . '"');
             $e->setDetails($aOutput);

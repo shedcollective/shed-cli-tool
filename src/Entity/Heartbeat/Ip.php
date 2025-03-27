@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 /**
  * Class Ip
@@ -20,9 +21,9 @@ final class Ip implements \JsonSerializable
     {
         switch (Os::getType()) {
             case Os::LINUX:
-                return exec('hostname -I | awk \'{print $1}\'');
+                return System::execString('hostname -I | awk \'{print $1}\'');
             case Os::MACOS:
-                return exec('ipconfig getifaddr en0');
+                return System::execString('ipconfig getifaddr en0');
         }
 
         throw new HeartbeatException('Unable to determine IP address.');

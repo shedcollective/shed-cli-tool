@@ -1225,11 +1225,7 @@ final class Create extends Command
 
         $this->loglnVeryVerbose('Executing `' . $sCommand . '`');
 
-        exec(
-            $sCommand,
-            $aOutput,
-            $iExitCode
-        );
+        $iExitCode = System::exec($sCommand);
 
         $this->loglnVeryVerbose('Exit code: ' . $iExitCode);
 
@@ -1469,6 +1465,10 @@ final class Create extends Command
         }
 
         $oSsh->exec('rm -f /root/mysql-setup-db.sh');
+
+        $oSsh->exec(
+            'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /root/.mysql-config.json'
+        );
 
         return $this;
     }

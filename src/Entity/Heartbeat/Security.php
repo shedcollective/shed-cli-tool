@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Helper\System;
 
 final class Security implements \JsonSerializable
 {
@@ -26,12 +27,18 @@ final class Security implements \JsonSerializable
 
     private function getFailedLogins(): ?array
     {
-        $output = [];
-        exec('grep "Failed password" /var/log/auth.log | wc -l', $output);
-        $totalFailed = (int) ($output[0] ?? 0);
+        if (!is_readable('/var/log/auth.log')) {
+            return [
+                'total_count'     => null,
+                'recent_attempts' => null,
+                'error'           => 'Access to auth.log denied - insufficient permissions',
+            ];
+        }
+
+        $totalFailed = (int) System::execString('grep "Failed password" /var/log/auth.log | wc -l');
 
         $recentOutput = [];
-        exec('grep "Failed password" /var/log/auth.log | tail -n 5', $recentOutput);
+        System::exec('grep "Failed password" /var/log/auth.log | tail -n 5', $recentOutput);
 
         return [
             'total_count'     => $totalFailed,
@@ -41,15 +48,13 @@ final class Security implements \JsonSerializable
 
     private function getLastLogin(): ?string
     {
-        $output = [];
-        exec('last -1 -F | head -1', $output);
-        return $output[0] ?? null;
+        return System::execString('last -1 -F | head -1') ?: null;
     }
 
     private function getOpenPorts(): array
     {
         $output = [];
-        exec("ss -tuln | grep LISTEN | awk '{print $5}' | cut -d: -f2", $output);
+        System::exec("ss -tuln | grep LISTEN | awk '{print $5}' | cut -d: -f2", $output);
         return array_filter(array_map('trim', $output));
     }
 
