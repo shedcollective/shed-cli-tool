@@ -1466,6 +1466,10 @@ final class Create extends Command
 
         $oSsh->exec('rm -f /root/mysql-setup-db.sh');
 
+        $oSsh->exec(
+            'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /root/.mysql-config.json'
+        );
+
         return $this;
     }
 
