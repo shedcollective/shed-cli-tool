@@ -1099,8 +1099,6 @@ final class Create extends Command
 
         $this->log('Creating server... ');
 
-        //  @todo (Pablo - 2019-08-02) - Register with Shed API, but in a pending state
-
         $oServer = $this->oProvider->create(
             $this->sDomain,
             $this->sHostname,
@@ -1137,20 +1135,6 @@ final class Create extends Command
             ->updateDependencies($oSsh)
             ->provisionFramework($oSsh)
             ->reboot($oSsh);
-
-        // --------------------------------------------------------------------------
-
-        try {
-            //  @todo (Pablo - 2019-08-02) - Update server state with Shed API
-            $this->log('Registering with the Shed API... ');
-            ShedApi::createServer($this->oShedAccount, $oServer);
-            $this->logln('<info>done</info>');
-        } catch (Exception $e) {
-            $this->warning(array_filter([
-                'Failed to register server with the Shed API',
-                $e->getMessage(),
-            ]));
-        }
 
         // --------------------------------------------------------------------------
 
