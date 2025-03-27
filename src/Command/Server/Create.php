@@ -1072,7 +1072,15 @@ final class Create extends Command
      */
     private function confirmVpn(): bool
     {
-        return $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
+        $aKnownVpnIps = [
+            '46.101.50.161',    // London
+            '188.166.79.106',   // Amsterdam
+            '159.65.42.219',    // NYC
+            '59.89.102.30',     // Frankfurt
+            '137.184.15.3',     // San Francisco
+        ];
+
+        return in_array(System::ip(), $aKnownVpnIps) || $this->confirm('VPN required. Is it connected? [default: <info>yes</info>]');
     }
 
     // --------------------------------------------------------------------------
