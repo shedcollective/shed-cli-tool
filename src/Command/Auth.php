@@ -99,15 +99,15 @@ abstract class Auth extends Command
             case 'help':
                 $this->help();
                 break;
-            case 'view':
-                $this->view();
+            case 'add':
+                $this->add();
                 break;
             case 'delete':
                 $this->delete();
                 break;
-            case 'add':
+            case 'view':
             default:
-                $this->add();
+                $this->view();
                 break;
         }
 
@@ -150,11 +150,22 @@ abstract class Auth extends Command
                 ]);
 
             } else {
-                foreach (static::getAccounts() as $oAccount) {
-                    $this->keyValueList([
-                        static::QUESTION_LABEL => $oAccount->getLabel(),
-                        static::QUESTION_TOKEN => $oAccount->getToken(),
-                    ]);
+
+                $aAccounts = static::getAccounts();
+
+                if ($aAccounts) {
+                    foreach ($aAccounts as $oAccount) {
+                        $this->keyValueList([
+                            static::QUESTION_LABEL => $oAccount->getLabel(),
+                            static::QUESTION_TOKEN => $oAccount->getToken(),
+                        ]);
+                    }
+                } else {
+                    $this->oOutput->writeln(sprintf(
+                        'No %1$s accounts are configured. Run <info>shed auth:%2$s add</info> to save new credentials, or <info>shed auth:%2$s help</info> for details.',
+                        static::LABEL,
+                        static::SLUG
+                    ));
                 }
             }
 
