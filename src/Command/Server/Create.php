@@ -1160,7 +1160,9 @@ final class Create extends Command
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
-            ->updateDependencies($oSsh)
+            ->updateNodeDependencies($oSsh)
+            ->updateAptDependencies($oSsh)
+            ->updateShedCliTool($oSsh)
             ->provisionFramework($oSsh)
             ->reboot($oSsh);
 
@@ -1631,15 +1633,32 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Brings dependencies up to date
+     * Brings node dependencies up to date
      *
      * @param SSH2 $oSsh The SSH connection
      *
      * @return $this
      */
-    private function updateDependencies(SSH2 $oSsh): self
+    private function updateNodeDependencies(SSH2 $oSsh): self
     {
-        $this->log('Updating dependencies (this may take some time)... ');
+        $this->log('Updating node dependencies... ');
+        $oSsh->exec('npm update -g');
+        $this->logln('<info>done</info>');
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Brings apt dependencies up to date
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function updateAptDependencies(SSH2 $oSsh): self
+    {
+        $this->log('Updating apt dependencies (this may take some time)... ');
 
         // First check if apt is in use and wait if necessary
         $waitForApt = <<<EOT
@@ -1664,6 +1683,26 @@ final class Create extends Command
             'apt autoremove -y',
             'apt autoclean -y',
         ]));
+
+        $this->logln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Brings the Shed CLI tool up to date
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function updateShedCliTool(SSH2 $oSsh): self
+    {
+        $this->log('Updating Shed CLI tool... ');
+
+        $oSsh->exec('cd ~/shed-cli-tool && git pull');
 
         $this->logln('<info>done</info>');
 
