@@ -1151,16 +1151,12 @@ final class Create extends Command
         // --------------------------------------------------------------------------
 
         $this
-            ->disableRootLogin($oSsh)
-            ->randomiseRootPassword($oSsh)
-            ->setDomainEnvVar($oSsh)
             ->configureHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
-            ->updateNodeDependencies($oSsh)
             ->updateAptDependencies($oSsh)
             ->updateShedCliTool($oSsh)
             ->provisionFramework($oSsh)
@@ -1319,60 +1315,6 @@ final class Create extends Command
         $this->logln('<info>connected</info>');
 
         return $oSsh;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Disables the root login
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function disableRootLogin(SSH2 $oSsh): self
-    {
-        $this->log('Disabling root login... ');
-        $oSsh->exec('rm -f /root/.ssh/authorized_keys');
-        $oSsh->exec('echo \'PermitRootLogin no\' >> /etc/ssh/sshd_config');
-        $oSsh->exec('service ssh restart');
-        $this->logln('<info>done</info>');
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Randomise root password
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function randomiseRootPassword(SSH2 $oSsh): self
-    {
-        $this->log('Randomising root password... ');
-        $oSsh->exec('usermod --password $(openssl rand -base64 32) root');
-        $this->logln('<info>done</info>');
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Sets the domain env var
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function setDomainEnvVar(SSH2 $oSsh): self
-    {
-        $this->log('Setting domain as env var... ');
-        $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/.env.sh');
-        $this->logln('<info>done</info>');
-
-        return $this;
     }
 
     // --------------------------------------------------------------------------
@@ -1627,23 +1569,6 @@ final class Create extends Command
             ]);
         }
 
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Brings node dependencies up to date
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function updateNodeDependencies(SSH2 $oSsh): self
-    {
-        $this->log('Updating node dependencies... ');
-        $oSsh->exec('npm update -g');
-        $this->logln('<info>done</info>');
         return $this;
     }
 
