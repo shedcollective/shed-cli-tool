@@ -1303,7 +1303,7 @@ final class Create extends Command
             } else {
                 $this->logVerbose('Attempting connection... ');
                 $oSsh       = new SSH2($oServer->getIp());
-                $bConnected = $oSsh->login('root', $oKey);
+                $bConnected = $oSsh->login('ubuntu', $oKey);
                 if (!$bConnected) {
                     $this->loglnVerbose('not connected');
                 }
@@ -1394,7 +1394,7 @@ final class Create extends Command
 
         $sConfig = $oSsh->exec(
             sprintf(
-                '/root/mysql-setup-db.sh %s %s',
+                'sudo /home/ubuntu/mysql-setup-db.sh %s %s',
                 strtolower(self::ENVIRONMENTS[$this->sEnvironment]),
                 strtolower(
                     sprintf(
@@ -1665,7 +1665,7 @@ final class Create extends Command
      */
     private function provisionFramework(SSH2 $oSsh): self
     {
-        $sFile      = '/root/install-framework.sh';
+        $sFile      = '/ubuntu/install-framework.sh';
         $aDatabases = $this->oDbConfig->databases ?? [];
         $sCommand   = implode(' ', [
             $sFile,
