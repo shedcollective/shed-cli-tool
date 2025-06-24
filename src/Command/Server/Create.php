@@ -1009,7 +1009,6 @@ final class Create extends Command
                 array_unique(
                     array_map(
                         function ($sKeyword) {
-
                             $sKeyword = strtolower((string) $sKeyword);
                             $sKeyword = preg_replace('/[^a-z0-9 \-]/', '', $sKeyword);
                             $sKeyword = str_replace(' ', '-', $sKeyword);
