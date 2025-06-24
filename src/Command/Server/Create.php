@@ -99,7 +99,7 @@ final class Create extends Command
      *
      * @var int
      */
-    const SSH_TIMEOUT = 120;
+    const SSH_TIMEOUT = 300;
 
     /**
      * How long to wait for the SSL DNS to resolve
