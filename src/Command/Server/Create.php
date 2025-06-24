@@ -1556,7 +1556,7 @@ final class Create extends Command
                     $this->logln('<error>timeout</error>');
                     $this->warning([
                         'Timed out waiting for DNS to propagate (timeout: ' . self::SSL_TIMEOUT . ' seconds)',
-                        'You will need to manually configure SSL: SSH in as root and execute `ssl-create`',
+                        'You will need to manually configure SSL: SSH in as `root` and execute `ssl-create ' . $oServer->getDomain() . '`',
                     ]);
                     $bResolved = true;
 
@@ -1570,7 +1570,7 @@ final class Create extends Command
 
                         $this->logln('<info>done</info>');
                         $this->log('Generating certificates... ');
-                        $oSsh->exec('ssl-create');
+                        $oSsh->exec('ssl-create ' . $oServer->getDomain());
                         $oSsh->read();
                         $this->logln('<info>done</info>');
                         $this->log('Restarting Apache... ');
@@ -1583,7 +1583,7 @@ final class Create extends Command
             } while (empty($bResolved));
         } else {
             $this->warning([
-                'Execute `ssl-create` as root when you are ready to deploy SSL certificates for this server.',
+                'Execute `ssl-create ' . $oServer->getDomain() . '` as `root` when you are ready to deploy SSL certificates for this server.',
             ]);
         }
 
