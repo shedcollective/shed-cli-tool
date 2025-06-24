@@ -127,7 +127,7 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getId(): ?string
+    public function getId(): string
     {
         return $this->sId;
     }
@@ -154,7 +154,7 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getIp(): ?string
+    public function getIp(): string
     {
         return $this->sIp;
     }
@@ -181,7 +181,7 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getDomain(): ?string
+    public function getDomain(): string
     {
         return $this->sDomain;
     }
@@ -233,7 +233,7 @@ final class Server extends Entity
     /**
      * Get the server's Disk
      *
-     * @return Disk
+     * @return Disk|null
      */
     public function getDisk(): ?Disk
     {
@@ -260,7 +260,7 @@ final class Server extends Entity
     /**
      * Get the server's Image
      *
-     * @return Image
+     * @return Image|null
      */
     public function getImage(): ?Image
     {
@@ -287,7 +287,7 @@ final class Server extends Entity
     /**
      * Get the server's Region
      *
-     * @return Region
+     * @return Region|null
      */
     public function getRegion(): ?Region
     {
@@ -314,7 +314,7 @@ final class Server extends Entity
     /**
      * Get the server's Size
      *
-     * @return Size
+     * @return Size|null
      */
     public function getSize(): ?Size
     {
