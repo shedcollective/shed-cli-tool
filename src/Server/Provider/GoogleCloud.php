@@ -438,6 +438,7 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
                 ->setId($oInstance->id)
                 ->setIp($oAccessConfig->getNatIP())
                 ->setDomain($sDomain)
+                ->setHostname($sHostname)
                 ->setDisk($oDisk)
                 ->setImage($oImage)
                 ->setRegion($oRegion)

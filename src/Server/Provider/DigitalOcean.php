@@ -296,6 +296,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             ->setId($oDroplet->id)
             ->setIp($oIp->ipAddress)
             ->setDomain($sDomain)
+            ->setHostname($sHostname)
             ->setDisk($oDisk)
             ->setImage($oImage)
             ->setRegion($oRegion)

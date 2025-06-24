@@ -1168,6 +1168,7 @@ final class Create extends Command
             [
                 'ID'         => $oServer->getId(),
                 'IP Address' => $oServer->getIp(),
+                'Hostname'   => $oServer->getHostname(),
                 'Domain'     => $oServer->getDomain(),
                 'Disk'       => $oServer->getDisk()->getLabel(),
                 'Image'      => $oServer->getImage()->getLabel(),
