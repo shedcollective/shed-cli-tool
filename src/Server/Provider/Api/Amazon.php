@@ -3,9 +3,10 @@
 namespace Shed\Cli\Server\Provider\Api;
 
 use Aws\Ec2\Ec2Client;
+use Aws\Result;
 use Aws\Sts\StsClient;
 use Shed\Cli\Entity\Provider\Account;
-use Shed\Cli\Helper\Debug;
+use Shed\Cli\Server\Provider;
 
 final class Amazon
 {
@@ -57,7 +58,7 @@ final class Amazon
      *
      * @return Ec2Client
      */
-    public function getApi($sRegion = 'eu-west-1', $sVersion = 'latest'): Ec2Client
+    public function getApi($sRegion = Provider\Amazon::DEFAULT_REGION, $sVersion = 'latest'): Ec2Client
     {
         if (empty($this->oApi)) {
             $this->oApi = new Ec2Client([
@@ -81,17 +82,17 @@ final class Amazon
      * @param string $sAccessKey    The access key to test
      * @param string $sAccessSecret The access secret to test
      */
-    public static function test(string $sAccessKey, string $sAccessSecret)
+    public static function test(string $sAccessKey, string $sAccessSecret): Result
     {
         $client = new StsClient([
             'version'     => 'latest',
-            'region'      => 'eu-west-1',
+            'region'      => Provider\Amazon::REGION_HUMAN,
             'credentials' => [
                 'key'    => $sAccessKey,
                 'secret' => $sAccessSecret,
             ],
         ]);
 
-        $client->getCallerIdentity();
+        return $client->getCallerIdentity();
     }
 }
