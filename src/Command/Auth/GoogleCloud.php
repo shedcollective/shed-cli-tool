@@ -54,7 +54,7 @@ final class GoogleCloud extends Auth
         $this->oOutput->writeln('  — <info>Compute Instance Admin (v1)</info>');
         $this->oOutput->writeln('  — <info>Service Account User</info>');
         $this->oOutput->writeln('<comment>3:</comment> Download the JSON key file');
-        $this->oOutput->writeln('<comment>4:</comment> Run: <info>shed auth:googlecloud</info>');
+        $this->oOutput->writeln('<comment>4:</comment> Run: <info>shed auth:googlecloud add</info>');
         $this->oOutput->writeln('<comment>5:</comment> Specify the project ID');
         $this->oOutput->writeln('<comment>6:</comment> Specify the path to the key file');
         $this->oOutput->writeln('');

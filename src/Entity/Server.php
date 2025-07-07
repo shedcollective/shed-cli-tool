@@ -32,6 +32,13 @@ final class Server extends Entity
     private $sDomain;
 
     /**
+     * The server's hostname
+     *
+     * @var string
+     */
+    private $sHostname;
+
+    /**
      * The server's disk
      *
      * @var Disk
@@ -64,15 +71,16 @@ final class Server extends Entity
     /**
      * Server constructor.
      *
-     * @param string $sLabel  The server's label
-     * @param string $sSlug   The server's slug
-     * @param string $sId     The server's ID
-     * @param string $sIp     The server's IP
-     * @param string $sDomain The server's domain
-     * @param null|Disk   $oDisk   The server's disk
-     * @param null|Image  $oImage  The server's image
-     * @param null|Region $oRegion The server's region
-     * @param null|Size   $oSize   The server's size
+     * @param string      $sLabel    The server's label
+     * @param string      $sSlug     The server's slug
+     * @param string      $sId       The server's ID
+     * @param string      $sIp       The server's IP
+     * @param string      $sDomain   The server's domain
+     * @param string      $sHostname The server's hostname
+     * @param null|Disk   $oDisk     The server's disk
+     * @param null|Image  $oImage    The server's image
+     * @param null|Region $oRegion   The server's region
+     * @param null|Size   $oSize     The server's size
      */
     public function __construct(
         string $sLabel = '',
@@ -80,19 +88,21 @@ final class Server extends Entity
         string $sId = '',
         string $sIp = '',
         string $sDomain = '',
+        string $sHostname = '',
         ?Disk $oDisk = null,
         ?Image $oImage = null,
         ?Region $oRegion = null,
         ?Size $oSize = null
     ) {
         parent::__construct($sLabel, $sSlug);
-        $this->sId     = $sId;
-        $this->sIp     = $sIp;
-        $this->sDomain = $sDomain;
-        $this->oDisk   = $oDisk;
-        $this->oImage  = $oImage;
-        $this->oRegion = $oRegion;
-        $this->oSize   = $oSize;
+        $this->sId       = $sId;
+        $this->sIp       = $sIp;
+        $this->sDomain   = $sDomain;
+        $this->sHostname = $sHostname;
+        $this->oDisk     = $oDisk;
+        $this->oImage    = $oImage;
+        $this->oRegion   = $oRegion;
+        $this->oSize     = $oSize;
     }
 
     // --------------------------------------------------------------------------
@@ -117,7 +127,7 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getId(): ?string
+    public function getId(): string
     {
         return $this->sId;
     }
@@ -144,7 +154,7 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getIp(): ?string
+    public function getIp(): string
     {
         return $this->sIp;
     }
@@ -171,9 +181,36 @@ final class Server extends Entity
      *
      * @return string
      */
-    public function getDomain(): ?string
+    public function getDomain(): string
     {
         return $this->sDomain;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Set the server's hostname
+     *
+     * @param string $sHostname The server's hostname
+     *
+     * @return $this
+     */
+    public function setHostname(string $sHostname): self
+    {
+        $this->sHostname = $sHostname;
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Get the server's hostname
+     *
+     * @return string
+     */
+    public function getHostname(): string
+    {
+        return $this->sHostname;
     }
 
     // --------------------------------------------------------------------------
@@ -196,7 +233,7 @@ final class Server extends Entity
     /**
      * Get the server's Disk
      *
-     * @return Disk
+     * @return Disk|null
      */
     public function getDisk(): ?Disk
     {
@@ -223,7 +260,7 @@ final class Server extends Entity
     /**
      * Get the server's Image
      *
-     * @return Image
+     * @return Image|null
      */
     public function getImage(): ?Image
     {
@@ -250,7 +287,7 @@ final class Server extends Entity
     /**
      * Get the server's Region
      *
-     * @return Region
+     * @return Region|null
      */
     public function getRegion(): ?Region
     {
@@ -277,7 +314,7 @@ final class Server extends Entity
     /**
      * Get the server's Size
      *
-     * @return Size
+     * @return Size|null
      */
     public function getSize(): ?Size
     {
