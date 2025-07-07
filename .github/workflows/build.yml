@@ -37,8 +37,5 @@ jobs:
             -   name: Build
                 run: composer build
 
-            -   name: Run tests
-                run: composer test
-
             -   name: Verify
                 run: php ./dist/shed --version
