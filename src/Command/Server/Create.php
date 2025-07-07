@@ -99,7 +99,7 @@ final class Create extends Command
      *
      * @var int
      */
-    const SSH_TIMEOUT = 120;
+    const SSH_TIMEOUT = 300;
 
     /**
      * How long to wait for the SSL DNS to resolve
@@ -1009,7 +1009,6 @@ final class Create extends Command
                 array_unique(
                     array_map(
                         function ($sKeyword) {
-
                             $sKeyword = strtolower((string) $sKeyword);
                             $sKeyword = preg_replace('/[^a-z0-9 \-]/', '', $sKeyword);
                             $sKeyword = str_replace(' ', '-', $sKeyword);
@@ -1151,16 +1150,14 @@ final class Create extends Command
         // --------------------------------------------------------------------------
 
         $this
-            ->disableRootLogin($oSsh)
-            ->randomiseRootPassword($oSsh)
-            ->setDomainEnvVar($oSsh)
             ->configureHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureSsl($oSsh, $oServer)
-            ->updateDependencies($oSsh)
+            ->updateAptDependencies($oSsh)
+            ->updateShedCliTool($oSsh)
             ->provisionFramework($oSsh)
             ->reboot($oSsh);
 
@@ -1170,6 +1167,7 @@ final class Create extends Command
             [
                 'ID'         => $oServer->getId(),
                 'IP Address' => $oServer->getIp(),
+                'Hostname'   => $oServer->getHostname(),
                 'Domain'     => $oServer->getDomain(),
                 'Disk'       => $oServer->getDisk()->getLabel(),
                 'Image'      => $oServer->getImage()->getLabel(),
@@ -1304,7 +1302,7 @@ final class Create extends Command
             } else {
                 $this->logVerbose('Attempting connection... ');
                 $oSsh       = new SSH2($oServer->getIp());
-                $bConnected = $oSsh->login('root', $oKey);
+                $bConnected = $oSsh->login('ubuntu', $oKey);
                 if (!$bConnected) {
                     $this->loglnVerbose('not connected');
                 }
@@ -1322,60 +1320,6 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Disables the root login
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function disableRootLogin(SSH2 $oSsh): self
-    {
-        $this->log('Disabling root login... ');
-        $oSsh->exec('rm -f /root/.ssh/authorized_keys');
-        $oSsh->exec('echo \'PermitRootLogin no\' >> /etc/ssh/sshd_config');
-        $oSsh->exec('service ssh restart');
-        $this->logln('<info>done</info>');
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Randomise root password
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function randomiseRootPassword(SSH2 $oSsh): self
-    {
-        $this->log('Randomising root password... ');
-        $oSsh->exec('usermod --password $(openssl rand -base64 32) root');
-        $this->logln('<info>done</info>');
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Sets the domain env var
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function setDomainEnvVar(SSH2 $oSsh): self
-    {
-        $this->log('Setting domain as env var... ');
-        $oSsh->exec('sed -E -i \'s/DOMAIN="localhost"/DOMAIN="' . $this->sDomain . '"/g\' /home/deploy/.env.sh');
-        $this->logln('<info>done</info>');
-
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Sets the system's hostname
      *
      * @param SSH2 $oSsh The SSH connection
@@ -1385,9 +1329,12 @@ final class Create extends Command
     private function configureHostname(SSH2 $oSsh): self
     {
         $this->log('Setting hostname... ');
-        $oSsh->exec('hostname ' . $this->sHostname);
-        $oSsh->exec('sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts');
-        $oSsh->exec('echo "' . $this->sHostname . '" > /etc/hostname');
+        $oSsh->exec(implode(PHP_EOL, [
+            'hostname ' . $this->sHostname,
+            'sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts',
+            'echo "' . $this->sHostname . '" > /etc/hostname',
+        ]));
+        $oSsh->read();
         $this->logln('<info>done</info>');
 
         return $this;
@@ -1407,6 +1354,7 @@ final class Create extends Command
         if ($this->sDeployKey) {
             $this->log('Adding deploy key... ');
             $oSsh->exec('echo "' . $this->sDeployKey . '" >> /home/deploy/.ssh/authorized_keys');
+            $oSsh->read();
             $this->logln('<info>done</info>');
         }
 
@@ -1445,7 +1393,7 @@ final class Create extends Command
 
         $sConfig = $oSsh->exec(
             sprintf(
-                '/root/mysql-setup-db.sh %s %s',
+                'sudo /home/ubuntu/mysql-setup-db.sh %s %s',
                 strtolower(self::ENVIRONMENTS[$this->sEnvironment]),
                 strtolower(
                     sprintf(
@@ -1456,6 +1404,7 @@ final class Create extends Command
                 )
             )
         );
+        $oSsh->read();
 
         $this->oDbConfig = json_decode($sConfig);
 
@@ -1476,11 +1425,11 @@ final class Create extends Command
             $this->logln('<info>done</info>');
         }
 
-        $oSsh->exec('rm -f /root/mysql-setup-db.sh');
-
-        $oSsh->exec(
-            'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /root/.mysql-config.json'
-        );
+        $oSsh->exec(implode(PHP_EOL, [
+            'rm -f /home/ubuntu/mysql-setup-db.sh',
+            'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /home/ubuntu/.mysql-config.json',
+        ]));
+        $oSsh->read();
 
         return $this;
     }
@@ -1502,8 +1451,11 @@ final class Create extends Command
         }
 
         $this->log('Securing MySQL... ');
-        $oSsh->exec('echo $(openssl rand -base64 32) > /root/.mysql_root_password');
-        $oSsh->exec('$MYSQL_ROOT_PW = $(cat /root/.mysql_root_password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}');
+        $oSsh->exec(implode(PHP_EOL, [
+            'echo $(openssl rand -base64 32) > /home/ubuntu/.mysql-root-password',
+            '$MYSQL_ROOT_PW = $(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
+        ]));
+        $oSsh->read();
         $this->logln('<info>done</info>');
 
         return $this;
@@ -1525,21 +1477,28 @@ final class Create extends Command
 
             $this->log('Configuring backups... ');
 
-            $oSsh->exec('echo \'export DOMAIN="' . $this->sDomain . '"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /root/.backupconfig');
-            $oSsh->exec('echo \'export S3_BUCKET="shed-backups"\' >> /root/.backupconfig');
+            $oSsh->exec(implode(PHP_EOL, [
+                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_BUCKET="shed-backups"\' >> /home/ubuntu/.backupconfig',
+            ]));
+            $oSsh->read();
 
             //  Database backups
             if ($this->shouldConfigureMySQL() && empty($this->oDbConfig->error)) {
-                $oSsh->exec('echo \'export MYSQL_HOST="127.0.0.1"\' >> /root/.backupconfig');
-                $oSsh->exec('echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /root/.backupconfig');
-                $oSsh->exec('echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /root/.backupconfig');
-                $oSsh->exec('echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /root/.backupconfig');
+                $oSsh->exec(implode(PHP_EOL, [
+                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/ubuntu/.backupconfig',
+                ]));
+                $oSsh->read();
             }
 
             //  Directory backups
-            $oSsh->exec('echo \'export DIRECTORY="/home/deploy/www"\' >> /root/.backupconfig');
+            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
+            $oSsh->read();
 
             $this->logln('<info>done</info>');
         }
@@ -1596,7 +1555,7 @@ final class Create extends Command
                     $this->logln('<error>timeout</error>');
                     $this->warning([
                         'Timed out waiting for DNS to propagate (timeout: ' . self::SSL_TIMEOUT . ' seconds)',
-                        'You will need to manually configure SSL: SSH in as root and execute `ssl-create`',
+                        'You will need to manually configure SSL: SSH in as `root` and execute `ssl-create ' . $oServer->getDomain() . '`',
                     ]);
                     $bResolved = true;
 
@@ -1610,10 +1569,12 @@ final class Create extends Command
 
                         $this->logln('<info>done</info>');
                         $this->log('Generating certificates... ');
-                        $oSsh->exec('ssl-create');
+                        $oSsh->exec('ssl-create ' . $oServer->getDomain());
+                        $oSsh->read();
                         $this->logln('<info>done</info>');
                         $this->log('Restarting Apache... ');
                         $oSsh->exec('service apache2 restart');
+                        $oSsh->read();
                         $this->logln('<info>done</info>');
                     }
                 }
@@ -1621,7 +1582,7 @@ final class Create extends Command
             } while (empty($bResolved));
         } else {
             $this->warning([
-                'Execute `ssl-create` as root when you are ready to deploy SSL certificates for this server.',
+                'Execute `ssl-create ' . $oServer->getDomain() . '` as `root` when you are ready to deploy SSL certificates for this server.',
             ]);
         }
 
@@ -1631,15 +1592,15 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Brings dependencies up to date
+     * Brings apt dependencies up to date
      *
      * @param SSH2 $oSsh The SSH connection
      *
      * @return $this
      */
-    private function updateDependencies(SSH2 $oSsh): self
+    private function updateAptDependencies(SSH2 $oSsh): self
     {
-        $this->log('Updating dependencies (this may take some time)... ');
+        $this->log('Updating apt dependencies (this may take some time)... ');
 
         // First check if apt is in use and wait if necessary
         $waitForApt = <<<EOT
@@ -1654,6 +1615,7 @@ final class Create extends Command
 
         $oSsh->setTimeout(300);
         $oSsh->exec($waitForApt);
+        $oSsh->read();
 
         $oSsh->exec(implode(' && ', [
             'apt update -y',
@@ -1664,7 +1626,27 @@ final class Create extends Command
             'apt autoremove -y',
             'apt autoclean -y',
         ]));
+        $oSsh->read();
 
+        $this->logln('<info>done</info>');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Brings the Shed CLI tool up to date
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function updateShedCliTool(SSH2 $oSsh): self
+    {
+        $this->log('Updating Shed CLI tool... ');
+        $oSsh->exec('cd /home/ubuntu/shed-cli-tool && git pull');
+        $oSsh->read();
         $this->logln('<info>done</info>');
 
         return $this;
@@ -1682,7 +1664,7 @@ final class Create extends Command
      */
     private function provisionFramework(SSH2 $oSsh): self
     {
-        $sFile      = '/root/install-framework.sh';
+        $sFile      = '/ubuntu/install-framework.sh';
         $aDatabases = $this->oDbConfig->databases ?? [];
         $sCommand   = implode(' ', [
             $sFile,
@@ -1700,6 +1682,7 @@ final class Create extends Command
 
         $this->log('Running post-install scripts... ');
         $sOutput = $oSsh->exec($sCommand);
+        $oSsh->read();
 
         if (!empty($sOutput)) {
             $this->oProvisionOutput = json_decode($sOutput);
@@ -1728,6 +1711,7 @@ final class Create extends Command
     {
         $this->logln('Rebooting server... ');
         $oSsh->exec('reboot');
+        $oSsh->read();
 
         return $this;
     }
