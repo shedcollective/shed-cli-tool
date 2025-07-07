@@ -1478,26 +1478,26 @@ final class Create extends Command
             $this->log('Configuring backups... ');
 
             $oSsh->exec(implode(PHP_EOL, [
-                'echo \'export DOMAIN="' . $this->sDomain . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'export S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'export S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'export S3_BUCKET="shed-backups"\' >> /home/ubuntu/.backupconfig',
+                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/ubuntu/.backupconfig',
+                'echo \'S3_BUCKET="shed-backups"\' >> /home/ubuntu/.backupconfig',
             ]));
             $oSsh->read();
 
             //  Database backups
             if ($this->shouldConfigureMySQL() && empty($this->oDbConfig->error)) {
                 $oSsh->exec(implode(PHP_EOL, [
-                    'echo \'export MYSQL_HOST="127.0.0.1"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'export MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'export MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'export MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/ubuntu/.backupconfig',
                 ]));
                 $oSsh->read();
             }
 
             //  Directory backups
-            $oSsh->exec('echo \'export DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
+            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
             $oSsh->read();
 
             $this->logln('<info>done</info>');
