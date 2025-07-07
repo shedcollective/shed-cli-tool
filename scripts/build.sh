@@ -35,8 +35,10 @@ fi
 # Build
 # --------------------------------------------------------------------------
 # Ensure we're using the lowest php we support
-brew unlink php
-brew link php@8.1
+if ! [ -x "$(command -v brew)" ]; then
+    brew unlink php
+    brew link php@8.1
+fi
 
 # So our lock file is up to date (version number)
 composer update --lock -q
@@ -44,5 +46,7 @@ composer --no-interaction --optimize-autoloader --no-dev --ansi install
 vendor/bin/box compile --ansi
 
 # Reset PHP
-brew unlink php@8.1
-brew link php
+if ! [ -x "$(command -v brew)" ]; then
+    brew unlink php@8.1
+    brew link php
+fi
