@@ -241,6 +241,7 @@ final class Database extends Backup
                     '-P\'' . $this->sMysqlPort . '\'',
                     '-u\'' . $this->sMysqlUser . '\'',
                     '--no-tablespaces',
+                    '--hex-blob',
                     $sMysqlDatabase,
                     '> ' . $aFiles['TEMP'],
                 ]);
