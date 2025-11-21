@@ -1150,7 +1150,6 @@ final class Create extends Command
         // --------------------------------------------------------------------------
 
         $this
-            ->configureHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
@@ -1315,29 +1314,6 @@ final class Create extends Command
         $this->logln('<info>connected</info>');
 
         return $oSsh;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Sets the system's hostname
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function configureHostname(SSH2 $oSsh): self
-    {
-        $this->log('Setting hostname... ');
-        $oSsh->exec(implode(PHP_EOL, [
-            'hostname ' . $this->sHostname,
-            'sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts',
-            'echo "' . $this->sHostname . '" > /etc/hostname',
-        ]));
-        $oSsh->read();
-        $this->logln('<info>done</info>');
-
-        return $this;
     }
 
     // --------------------------------------------------------------------------
