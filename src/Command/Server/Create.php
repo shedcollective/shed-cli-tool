@@ -1429,7 +1429,7 @@ final class Create extends Command
         $this->log('Securing MySQL... ');
         $oSsh->exec(implode(PHP_EOL, [
             'echo $(openssl rand -base64 32) > /home/ubuntu/.mysql-root-password',
-            '$MYSQL_ROOT_PW = $(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
+            'MYSQL_ROOT_PW=$(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
         ]));
         $oSsh->read();
         $this->logln('<info>done</info>');
