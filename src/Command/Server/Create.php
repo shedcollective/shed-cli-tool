@@ -1621,7 +1621,7 @@ final class Create extends Command
     private function updateShedCliTool(SSH2 $oSsh): self
     {
         $this->log('Updating Shed CLI tool... ');
-        $oSsh->exec('cd /home/ubuntu/shed-cli-tool && git pull');
+        $oSsh->exec('cd /opt/shed-cli-tool && git pull');
         $oSsh->read();
         $this->logln('<info>done</info>');
 
