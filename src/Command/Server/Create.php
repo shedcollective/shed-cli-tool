@@ -1150,7 +1150,6 @@ final class Create extends Command
         // --------------------------------------------------------------------------
 
         $this
-            ->configureHostname($oSsh)
             ->addDeployKey($oSsh)
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
@@ -1320,29 +1319,6 @@ final class Create extends Command
     // --------------------------------------------------------------------------
 
     /**
-     * Sets the system's hostname
-     *
-     * @param SSH2 $oSsh The SSH connection
-     *
-     * @return $this
-     */
-    private function configureHostname(SSH2 $oSsh): self
-    {
-        $this->log('Setting hostname... ');
-        $oSsh->exec(implode(PHP_EOL, [
-            'hostname ' . $this->sHostname,
-            'sed -Ei "s:127\.0\.1\.1.+:127.0.1.1 ' . $this->sHostname . ':g" /etc/hosts',
-            'echo "' . $this->sHostname . '" > /etc/hostname',
-        ]));
-        $oSsh->read();
-        $this->logln('<info>done</info>');
-
-        return $this;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Adds the deploy key
      *
      * @param SSH2 $oSsh The SSH connection
@@ -1453,7 +1429,7 @@ final class Create extends Command
         $this->log('Securing MySQL... ');
         $oSsh->exec(implode(PHP_EOL, [
             'echo $(openssl rand -base64 32) > /home/ubuntu/.mysql-root-password',
-            '$MYSQL_ROOT_PW = $(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
+            'MYSQL_ROOT_PW=$(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
         ]));
         $oSsh->read();
         $this->logln('<info>done</info>');
@@ -1645,7 +1621,7 @@ final class Create extends Command
     private function updateShedCliTool(SSH2 $oSsh): self
     {
         $this->log('Updating Shed CLI tool... ');
-        $oSsh->exec('cd /home/ubuntu/shed-cli-tool && git pull');
+        $oSsh->exec('cd /opt/shed-cli-tool && git pull');
         $oSsh->read();
         $this->logln('<info>done</info>');
 
