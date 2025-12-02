@@ -2,6 +2,8 @@
 
 namespace Shed\Cli\Helper;
 
+use JetBrains\PhpStorm\NoReturn;
+
 final class Debug
 {
     /**
@@ -23,6 +25,7 @@ final class Debug
      *
      * @param mixed $mValue The value to dump
      */
+    #[NoReturn]
     public static function dd($mValue): void
     {
         self::d($mValue);
