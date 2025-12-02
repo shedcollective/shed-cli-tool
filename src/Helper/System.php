@@ -52,7 +52,7 @@ final class System
      */
     public static function commandExists(string $sCommand): bool
     {
-        $sCommandPath = `which $sCommand`;
+        $sCommandPath = shell_exec('which ' . $sCommand);
         return !empty($sCommandPath);
     }
 
