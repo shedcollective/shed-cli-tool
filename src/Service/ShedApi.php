@@ -58,8 +58,6 @@ final class ShedApi
         $sError = curl_error($oCurl);
         $iCode  = curl_getinfo($oCurl, CURLINFO_HTTP_CODE);
 
-        curl_close($oCurl);
-
         if ($sError) {
 
             $oOutput->writeln('', $oOutput::VERBOSITY_VERY_VERBOSE);
