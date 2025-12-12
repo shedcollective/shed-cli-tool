@@ -891,7 +891,7 @@ final class Create extends Command
         &$oProperty
     ): self {
 
-        if (array_key_exists($sDefault, $aOptions)) {
+        if (isset($sDefault) && array_key_exists($sDefault, $aOptions)) {
 
             $oItem = $aOptions[$sDefault];
             $this->logln('<comment>' . $sLabel . '</comment>: ' . $oItem->getLabel());
