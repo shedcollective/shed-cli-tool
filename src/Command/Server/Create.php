@@ -1375,7 +1375,17 @@ final class Create extends Command
     {
         if ($this->sDeployKey) {
             $this->log('Adding deploy key... ');
-            $oSsh->exec('echo "' . $this->sDeployKey . '" >> /home/deploy/.ssh/authorized_keys');
+            $oSsh->exec(implode(' && ', [
+                // Create .ssh with correct owner/permissions in one go
+                'sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh',
+                // Ensure the file exists with the right owner/mode
+                'sudo install -m 600 -o deploy -g deploy /dev/null /home/deploy/.ssh/authorized_keys',
+                // Append the key without letting the shell interpret it; add a newline explicitly
+                'printf %s ' . escapeshellarg($this->sDeployKey . "\n") . ' | sudo tee -a /home/deploy/.ssh/authorized_keys >/dev/null',
+                // Belt-and-braces: ensure final ownership/mode (in case distro defaults differ)
+                'sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys',
+                'sudo chmod 600 /home/deploy/.ssh/authorized_keys',
+            ]));
             $oSsh->read();
             $this->logln('<info>done</info>');
         }
