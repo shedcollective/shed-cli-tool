@@ -600,7 +600,7 @@ final class Create extends Command
             $this->sEnvironment = $this->choose(
                 'Environment:',
                 self::ENVIRONMENTS,
-                null,
+                0,
                 [$this, 'validateEnvironment']
             );
 
@@ -682,7 +682,7 @@ final class Create extends Command
             $this->sFramework = $this->choose(
                 'Framework:',
                 self::FRAMEWORKS,
-                null,
+                0,
                 [$this, 'validateFramework']
             );
 
