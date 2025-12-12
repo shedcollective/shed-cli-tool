@@ -17,7 +17,6 @@ use Shed\Cli\Exceptions\CliException;
 use Shed\Cli\Exceptions\Server\TimeoutException;
 use Shed\Cli\Interfaces;
 use Shed\Cli\Server;
-use Shed\Cli\Server\Provider\Api;
 
 final class DigitalOcean extends Server\Provider implements Interfaces\Provider
 {
@@ -202,17 +201,17 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
     /**
      * Create the server
      *
-     * @param string         $sDomain      The configured domain name
-     * @param string         $sHostname    The configured hostname name
-     * @param string         $sEnvironment The configured environment
-     * @param string         $sFramework   The configured framework
-     * @param Account        $oAccount     The configured account
-     * @param Region         $oRegion      The configured region
-     * @param Size           $oSize        The configured size
-     * @param Image          $oImage       The configured image
-     * @param array          $aOptions     The configured options
-     * @param array          $aKeywords    The configured keywords
-     * @param string         $sDeployKey   The deploy key, if any, to assign to the deploy user
+     * @param string        $sDomain      The configured domain name
+     * @param string        $sHostname    The configured hostname name
+     * @param string        $sEnvironment The configured environment
+     * @param string        $sFramework   The configured framework
+     * @param Account       $oAccount     The configured account
+     * @param Region        $oRegion      The configured region
+     * @param Size          $oSize        The configured size
+     * @param Image         $oImage       The configured image
+     * @param array         $aOptions     The configured options
+     * @param array         $aKeywords    The configured keywords
+     * @param string        $sDeployKey   The deploy key, if any, to assign to the deploy user
      * @param EC\PrivateKey $oRootKey     Temporary root ssh key
      *
      * @return Entity\Server
@@ -243,6 +242,16 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
                 $oRootKey->getPublicKey()->toString('OpenSSH')
             );
 
+        // Prepare cloud-init user-data to inject the key for the 'ubuntu' user
+        $sPublicKey = $oRootKey->getPublicKey()->toString('OpenSSH');
+        $sUserData  = <<<YAML
+            #cloud-config
+            users:
+              - name: ubuntu
+                ssh-authorized-keys:
+                  - {$sPublicKey}
+            YAML;
+
         $aData = [
             'name'              => $sHostname,
             'region'            => $oRegion->getSlug(),
@@ -252,7 +261,7 @@ final class DigitalOcean extends Server\Provider implements Interfaces\Provider
             'ipv6'              => false,
             'privateNetworking' => false,
             'sshKeys'           => [$oKey->id],
-            'userData'          => '',
+            'userData'          => $sUserData,
             'monitoring'        => true,
             'volumes'           => [],
             'tags'              => $aKeywords,

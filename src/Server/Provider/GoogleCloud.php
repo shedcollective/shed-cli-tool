@@ -360,9 +360,11 @@ final class GoogleCloud extends Server\Provider implements Interfaces\Provider
             $oBlockKeys->setKey('block-project-ssh-keys');
             $oBlockKeys->setValue('true');
 
+            $sPublicKey = $oRootKey->getPublicKey()->toString('OpenSSH');
+
             $oSshKeys = new Google_Service_Compute_MetadataItems();
             $oSshKeys->setKey('ssh-keys');
-            $oSshKeys->setValue('root:' . $oRootKey->getPublicKey()->toString('OpenSSH'));
+            $oSshKeys->setValue("root:{$sPublicKey}\nubuntu:{$sPublicKey}");
 
             $oMetadata = new Google_Service_Compute_Metadata();
             $oMetadata->setItems([$oBlockKeys, $oSshKeys]);
