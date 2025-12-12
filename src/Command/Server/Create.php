@@ -905,15 +905,20 @@ final class Create extends Command
 
             $iChoice = $this->choose(
                 $sLabel . ':',
-                array_values(array_map(function ($oItem) {
+                array_values(
+                    array_map(
+                        function ($oItem) {
 
-                    $sLabel = $oItem->getLabel();
-                    $sLabel .= $oItem->getSlug() && $oItem->getSlug() !== $oItem->getLabel()
-                        ? ' <info>(' . $oItem->getSlug() . ')</info>'
-                        : '';
+                            $sLabel = $oItem->getLabel();
+                            $sLabel .= $oItem->getSlug() && $oItem->getSlug() !== $oItem->getLabel()
+                                ? ' <info>(' . $oItem->getSlug() . ')</info>'
+                                : '';
 
-                    return $sLabel;
-                }, $aOptions))
+                            return $sLabel;
+                        },
+                        $aOptions
+                    )
+                )
             );
 
             $oItem = array_values($aOptions)[$iChoice];
