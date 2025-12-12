@@ -1271,7 +1271,20 @@ final class Create extends Command
      */
     private function waitForSsh(Server $oServer, EC\PrivateKey $oKey): SSH2
     {
-        $this->log('Waiting for SSH access... ');
+        // Enable detailed logging for debugging connection issues
+        if (!defined('NET_SSH2_LOGGING')) {
+            if ($this->oOutput->getVerbosity() > $this->oOutput::VERBOSITY_VERBOSE) {
+                define('NET_SSH2_LOGGING', 2);
+            } elseif ($this->oOutput->getVerbosity() > $this->oOutput::VERBOSITY_NORMAL) {
+                define('NET_SSH2_LOGGING', 1);
+            }
+        }
+
+        if ($this->oOutput->getVerbosity() > $this->oOutput::VERBOSITY_NORMAL) {
+            $this->logln('Waiting for SSH access... ');
+        } else {
+            $this->log('Waiting for SSH access... ');
+        }
         $iStart = time();
 
         //  Give the OS some time to start sshd
@@ -1300,10 +1313,38 @@ final class Create extends Command
                 );
             } else {
                 $this->logVerbose('Attempting connection... ');
-                $oSsh       = new SSH2($oServer->getIp());
-                $bConnected = $oSsh->login('ubuntu', $oKey);
+
+                try {
+                    $oSsh = new SSH2($oServer->getIp());
+                    $oSsh->setTimeout(10); // Explicit timeout to prevent hanging
+
+                    // Log in using the key object directly
+                    $bConnected = $oSsh->login('ubuntu', $oKey);
+                } catch (\Throwable $e) {
+                    $bConnected = false;
+                    $this->logVerbose('  -> Exception: ' . $e->getMessage());
+                }
+
                 if (!$bConnected) {
                     $this->loglnVerbose('not connected');
+
+                    if (isset($oSsh)) {
+                        // 1. Log internal phpseclib errors (handshake failures)
+                        if (method_exists($oSsh, 'getErrors')) {
+                            foreach ($oSsh->getErrors() as $error) {
+                                $this->loglnVerbose('  -> SSH Error: ' . $error);
+                            }
+                        }
+
+                        // 2. Log Server Algorithms (Debugging: helps confirm if server accepts ed25519)
+                        // Only log this on the first few failures to avoid spamming
+                        if (method_exists($oSsh, 'getServerAlgorithms')) {
+                            $algos = $oSsh->getServerAlgorithms();
+                            if (isset($algos['server_host_key_algorithms'])) {
+                                $this->loglnVerbose('  -> Server Host Keys: ' . implode(', ', $algos['server_host_key_algorithms']));
+                            }
+                        }
+                    }
                 }
             }
 
