@@ -1374,6 +1374,7 @@ final class Create extends Command
     private function addDeployKey(SSH2 $oSsh): self
     {
         if ($this->sDeployKey) {
+            $timerStart = microtime(true);
             $this->log('Adding deploy key... ');
             $oSsh->exec(implode(' && ', [
                 // Create .ssh with correct owner/permissions in one go
@@ -1387,7 +1388,9 @@ final class Create extends Command
                 'sudo chmod 600 /home/deploy/.ssh/authorized_keys',
             ]));
             $oSsh->read();
-            $this->logln('<info>done</info>');
+            $timerEnd  = microtime(true);
+            $timeTaken = $timerEnd - $timerStart;
+            $this->logln('<info>done</info> (' . $timeTaken . 's)');
         }
 
         return $this;
@@ -1421,6 +1424,7 @@ final class Create extends Command
             return $this;
         }
 
+        $timerStart = microtime(true);
         $this->log('Configuring database... ');
 
         $sConfig = $oSsh->exec(
@@ -1453,8 +1457,6 @@ final class Create extends Command
         if (!empty($this->oDbConfig->error)) {
             $sError = is_array($this->oDbConfig->error) ? implode(' ', $this->oDbConfig->error) : $this->oDbConfig->error;
             $this->logln('<error>' . $sError . '</error>');
-        } else {
-            $this->logln('<info>done</info>');
         }
 
         $oSsh->exec(implode(PHP_EOL, [
@@ -1462,6 +1464,10 @@ final class Create extends Command
             'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /home/ubuntu/.mysql-config.json',
         ]));
         $oSsh->read();
+
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
 
         return $this;
     }
@@ -1482,13 +1488,16 @@ final class Create extends Command
             return $this;
         }
 
+        $timerStart = microtime(true);
         $this->log('Securing MySQL... ');
         $oSsh->exec(implode(PHP_EOL, [
             'echo $(openssl rand -base64 32) > /home/ubuntu/.mysql-root-password',
             'MYSQL_ROOT_PW=$(cat /home/ubuntu/.mysql-root-password) && mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
         ]));
         $oSsh->read();
-        $this->logln('<info>done</info>');
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
 
         return $this;
     }
@@ -1507,6 +1516,7 @@ final class Create extends Command
     {
         if ($bEnableBackups) {
 
+            $timerStart = microtime(true);
             $this->log('Configuring backups... ');
 
             $oSsh->exec(implode(PHP_EOL, [
@@ -1532,7 +1542,9 @@ final class Create extends Command
             $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
             $oSsh->read();
 
-            $this->logln('<info>done</info>');
+            $timerEnd  = microtime(true);
+            $timeTaken = $timerEnd - $timerStart;
+            $this->logln('<info>done</info> (' . $timeTaken . 's)');
         }
 
         return $this;
@@ -1575,6 +1587,7 @@ final class Create extends Command
             $this->logln('- A <info>' . $oServer->getIp() . '</info> www.' . $this->sDomain . ' <comment>(optional)</comment>');
             $this->logln('');
 
+            $timerStart = microtime(true);
             $this->log('Waiting for DNS to propagate... ');
             $iStart = time();
 
@@ -1607,7 +1620,9 @@ final class Create extends Command
                         $this->log('Restarting Apache... ');
                         $oSsh->exec('service apache2 restart');
                         $oSsh->read();
-                        $this->logln('<info>done</info>');
+                        $timerEnd  = microtime(true);
+                        $timeTaken = $timerEnd - $timerStart;
+                        $this->logln('<info>done</info> (' . $timeTaken . 's)');
                     }
                 }
 
@@ -1632,6 +1647,7 @@ final class Create extends Command
      */
     private function updateAptDependencies(SSH2 $oSsh): self
     {
+        $timerStart = microtime(true);
         $this->log('Updating apt dependencies (this may take some time)... ');
 
         // First check if apt is in use and wait if necessary
@@ -1660,7 +1676,9 @@ final class Create extends Command
         ]));
         $oSsh->read();
 
-        $this->logln('<info>done</info>');
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
 
         return $this;
     }
@@ -1676,10 +1694,13 @@ final class Create extends Command
      */
     private function updateShedCliTool(SSH2 $oSsh): self
     {
+        $timerStart = microtime(true);
         $this->log('Updating Shed CLI tool... ');
         $oSsh->exec('cd /opt/shed-cli-tool && git pull');
         $oSsh->read();
-        $this->logln('<info>done</info>');
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
 
         return $this;
     }
@@ -1696,7 +1717,8 @@ final class Create extends Command
      */
     private function provisionFramework(SSH2 $oSsh): self
     {
-        $sFile      = '/ubuntu/install-framework.sh';
+        $timerStart = microtime(true);
+        $sFile      = '/home/ubuntu/install-framework.sh';
         $aDatabases = $this->oDbConfig->databases ?? [];
         $sCommand   = implode(' ', [
             $sFile,
@@ -1723,10 +1745,14 @@ final class Create extends Command
                 $this->logln('<error>Failed to decode output of provisioning script</error>');
                 $this->logln('<error>Output: ' . $sOutput . '</error>');
             } else {
-                $this->logln('<info>done</info>');
+                $timerEnd  = microtime(true);
+                $timeTaken = $timerEnd - $timerStart;
+                $this->logln('<info>done</info> (' . $timeTaken . 's)');
             }
         } else {
-            $this->logln('<info>done</info>');
+            $timerEnd  = microtime(true);
+            $timeTaken = $timerEnd - $timerStart;
+            $this->logln('<info>done</info> (' . $timeTaken . 's)');
         }
 
         return $this;
@@ -1739,10 +1765,10 @@ final class Create extends Command
      *
      * @return $this
      */
-    private function reboot(SSH2 &$oSsh): self
+    private function reboot(SSH2 $oSsh): self
     {
         $this->logln('Rebooting server... ');
-        $oSsh->exec('reboot');
+        $oSsh->exec('sudo reboot now');
         $oSsh->read();
 
         return $this;
