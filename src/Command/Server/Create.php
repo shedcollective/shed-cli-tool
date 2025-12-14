@@ -1721,6 +1721,7 @@ final class Create extends Command
         $sFile      = '/home/ubuntu/install-framework.sh';
         $aDatabases = $this->oDbConfig->databases ?? [];
         $sCommand   = implode(' ', [
+            'sudo',
             $sFile,
             $this->oDbConfig->host ?? 'localhost',
             $this->oDbConfig->user ?? '',
