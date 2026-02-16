@@ -303,6 +303,16 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
                 'PublicKeyMaterial' => $oRootKey->getPublicKey()->toString('OpenSSH'),
             ]);
 
+        // Prepare cloud-init user-data for the 'ubuntu' user
+        $sPublicKey = $oRootKey->getPublicKey()->toString('OpenSSH');
+        $sUserData  = <<<YAML
+            #cloud-config
+            users:
+              - name: ubuntu
+                ssh-authorized-keys:
+                  - {$sPublicKey}
+            YAML;
+
         $oResult = $this
             ->getApi($oAccount)
             ->runInstances([
@@ -311,6 +321,7 @@ final class Amazon extends Server\Provider implements Interfaces\Provider
                 'MinCount'          => 1,
                 'MaxCount'          => 1,
                 'KeyName'           => $sKeyName,
+                'UserData'          => base64_encode($sUserData),
                 'SecurityGroupIds'  => self::SECURITY_GROUPS,
                 'TagSpecifications' => [
                     [

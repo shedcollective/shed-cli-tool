@@ -257,7 +257,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     {
         /** @var QuestionHelper $oHelper */
         $oHelper   = $this->getHelper('question');
-        $mDefault  = array_key_exists($iDefault, $aOptions) ? $aOptions[$iDefault] : null;
+        $mDefault  = array_key_exists($iDefault ?? 0, $aOptions) ? $aOptions[$iDefault] : null;
         $sQuestion = $this->prepQuestion($sQuestion, $mDefault);
         $oQuestion = new ChoiceQuestion($sQuestion, $aOptions, $iDefault);
         $sResponse = $oHelper->ask($this->oInput, $this->oOutput, $oQuestion);
