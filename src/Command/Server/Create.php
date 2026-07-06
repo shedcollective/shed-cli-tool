@@ -1536,24 +1536,24 @@ final class Create extends Command
             $this->log('Configuring backups... ');
 
             $oSsh->exec(implode(PHP_EOL, [
-                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_BUCKET="shed-backups"\' >> /home/ubuntu/.backupconfig',
+                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_BUCKET="shed-backups"\' >> /home/root/.backupconfig',
             ]));
 
             //  Database backups
             if ($this->shouldConfigureMySQL() && empty($this->oDbConfig->error)) {
                 $oSsh->exec(implode(PHP_EOL, [
-                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/root/.backupconfig',
                 ]));
             }
 
             //  Directory backups
-            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
+            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/root/.backupconfig');
 
             $timerEnd  = microtime(true);
             $timeTaken = $timerEnd - $timerStart;
