@@ -1,0 +1,12 @@
+# CODEOWNERS
+# Backend (composer) belongs to @hellopablo
+# Frontend (npm/yarn) belongs to @hellopablo
+
+# --- Backend: Composer ---
+composer.json                                  @hellopablo
+composer.lock                                  @hellopablo
+
+# --- Frontend: npm/yarn ---
+package.json                                   @hellopablo
+package-lock.json                              @hellopablo
+yarn.lock                                      @hellopablo
