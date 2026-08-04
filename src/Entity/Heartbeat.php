@@ -13,6 +13,7 @@ use Shed\Cli\Exceptions\HeartbeatException;
 final class Heartbeat implements \JsonSerializable
 {
     protected Entity\Heartbeat\Apt       $oApt;
+    protected Entity\Heartbeat\Cron      $oCron;
     protected Entity\Heartbeat\DiskUsage $oDiskUsage;
     protected Entity\Heartbeat\Hostname  $oHostname;
     protected Entity\Heartbeat\Ip        $oIp;
@@ -33,6 +34,7 @@ final class Heartbeat implements \JsonSerializable
     public function __construct()
     {
         $this->oApt       = new Entity\Heartbeat\Apt();
+        $this->oCron      = new Entity\Heartbeat\Cron();
         $this->oDiskUsage = new Entity\Heartbeat\DiskUsage();
         $this->oHostname  = new Entity\Heartbeat\Hostname();
         $this->oIp        = new Entity\Heartbeat\Ip();
@@ -44,7 +46,6 @@ final class Heartbeat implements \JsonSerializable
         $this->oServices  = new Entity\Heartbeat\Services();
         $this->oSsl       = new Entity\Heartbeat\Ssl();
         $this->oVersion   = new Entity\Heartbeat\Version();
-        //  @todo (Pablo 2025-04-08) - Details on cron status and configured jobs
     }
 
     // --------------------------------------------------------------------------
@@ -60,6 +61,7 @@ final class Heartbeat implements \JsonSerializable
     {
         return [
             'apt'      => $this->oApt,
+            'cron'     => $this->oCron,
             'disk'     => $this->oDiskUsage,
             'hostname' => $this->oHostname,
             'ip'       => $this->oIp,

@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php
+│   │   │   ├── Version.php, Cron.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -283,6 +283,11 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
 - Network information (IP addresses)
 - Security information
 - Shed CLI tool version (from the server's `composer.json`)
+- Configured cron jobs for all users, plus `/etc/crontab`, `/etc/cron.d`, the
+  `run-parts` directories, and the cron daemon's status. Requires root to
+  enumerate per-user crontabs; degrades to an `error` key otherwise. Credentials
+  written inline into a job (`-pSECRET`, `--password=`, `Bearer …`,
+  `*_SECRET=`) are redacted before the payload leaves the server.
 
 Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 
@@ -301,7 +306,7 @@ Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`
 
 ---
 
