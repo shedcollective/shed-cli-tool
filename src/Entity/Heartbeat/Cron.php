@@ -120,6 +120,12 @@ final class Cron implements \JsonSerializable
     /**
      * Gathers details about the cron daemon and the jobs configured on the host
      *
+     * `users` and `system` are keyed maps, so they are cast to objects to keep
+     * them serialising as `{}` rather than `[]` when empty — an empty PHP array
+     * is indistinguishable from an empty list, which changes the type the
+     * receiving API sees. `run_parts` always carries its four interval keys, and
+     * `jobs` is genuinely a list, so neither needs the cast.
+     *
      * @return array|null
      */
     public function get(): ?array
@@ -128,8 +134,8 @@ final class Cron implements \JsonSerializable
             case Os::LINUX:
                 return [
                     'daemon'    => $this->getDaemonStatus(),
-                    'users'     => $this->getUserJobs(),
-                    'system'    => $this->getSystemJobs(),
+                    'users'     => (object) $this->getUserJobs(),
+                    'system'    => (object) $this->getSystemJobs(),
                     'run_parts' => $this->getRunParts(),
                 ];
 
@@ -361,7 +367,9 @@ final class Cron implements \JsonSerializable
         }
 
         return [
-            'env'  => $aEnv,
+            //  Cast for the same reason as in get(): an empty environment is the
+            //  common case, and must not serialise as a list
+            'env'  => (object) $aEnv,
             'jobs' => $aJobs,
         ];
     }
