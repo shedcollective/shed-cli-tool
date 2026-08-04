@@ -69,6 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
+│   │   │   ├── Version.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -281,6 +282,7 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
 - OS and kernel information
 - Network information (IP addresses)
 - Security information
+- Shed CLI tool version (from the server's `composer.json`)
 
 Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 
@@ -299,7 +301,7 @@ Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`
 
 ---
 

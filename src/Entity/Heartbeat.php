@@ -23,6 +23,7 @@ final class Heartbeat implements \JsonSerializable
     protected Entity\Heartbeat\Security  $oSecurity;
     protected Entity\Heartbeat\Services  $oServices;
     protected Entity\Heartbeat\Ssl       $oSsl;
+    protected Entity\Heartbeat\Version   $oVersion;
 
     // --------------------------------------------------------------------------
 
@@ -42,8 +43,8 @@ final class Heartbeat implements \JsonSerializable
         $this->oSecurity  = new Entity\Heartbeat\Security();
         $this->oServices  = new Entity\Heartbeat\Services();
         $this->oSsl       = new Entity\Heartbeat\Ssl();
+        $this->oVersion   = new Entity\Heartbeat\Version();
         //  @todo (Pablo 2025-04-08) - Details on cron status and configured jobs
-        //  @todo (Pablo 2025-04-10) - Shed CLI tool version
     }
 
     // --------------------------------------------------------------------------
@@ -69,6 +70,7 @@ final class Heartbeat implements \JsonSerializable
             'security' => $this->oSecurity,
             'services' => $this->oServices,
             'ssl'      => $this->oSsl,
+            'version'  => $this->oVersion,
         ];
     }
 
