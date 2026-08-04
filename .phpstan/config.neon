@@ -1,6 +1,8 @@
 
 parameters:
     level: 3
+    # The oldest PHP we support; keep in sync with composer.json
+    phpVersion: 80100
     paths:
         - ../src
         - ../tests
