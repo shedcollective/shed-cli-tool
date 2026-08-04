@@ -12,19 +12,20 @@ use Shed\Cli\Exceptions\HeartbeatException;
  */
 final class Heartbeat implements \JsonSerializable
 {
-    protected Entity\Heartbeat\Apt       $oApt;
-    protected Entity\Heartbeat\Cron      $oCron;
-    protected Entity\Heartbeat\DiskUsage $oDiskUsage;
-    protected Entity\Heartbeat\Hostname  $oHostname;
-    protected Entity\Heartbeat\Ip        $oIp;
-    protected Entity\Heartbeat\Load      $oLoad;
-    protected Entity\Heartbeat\Memory    $oMemory;
-    protected Entity\Heartbeat\Os        $oOs;
-    protected Entity\Heartbeat\PhpInfo   $oPhpInfo;
-    protected Entity\Heartbeat\Security  $oSecurity;
-    protected Entity\Heartbeat\Services  $oServices;
-    protected Entity\Heartbeat\Ssl       $oSsl;
-    protected Entity\Heartbeat\Version   $oVersion;
+    protected Entity\Heartbeat\Apt                $oApt;
+    protected Entity\Heartbeat\Cron               $oCron;
+    protected Entity\Heartbeat\DiskUsage          $oDiskUsage;
+    protected Entity\Heartbeat\Hostname           $oHostname;
+    protected Entity\Heartbeat\Ip                 $oIp;
+    protected Entity\Heartbeat\Load               $oLoad;
+    protected Entity\Heartbeat\Memory             $oMemory;
+    protected Entity\Heartbeat\Os                 $oOs;
+    protected Entity\Heartbeat\PhpInfo            $oPhpInfo;
+    protected Entity\Heartbeat\Security           $oSecurity;
+    protected Entity\Heartbeat\Services           $oServices;
+    protected Entity\Heartbeat\Ssl                $oSsl;
+    protected Entity\Heartbeat\UnattendedUpgrades $oUnattendedUpgrades;
+    protected Entity\Heartbeat\Version            $oVersion;
 
     // --------------------------------------------------------------------------
 
@@ -33,19 +34,20 @@ final class Heartbeat implements \JsonSerializable
      */
     public function __construct()
     {
-        $this->oApt       = new Entity\Heartbeat\Apt();
-        $this->oCron      = new Entity\Heartbeat\Cron();
-        $this->oDiskUsage = new Entity\Heartbeat\DiskUsage();
-        $this->oHostname  = new Entity\Heartbeat\Hostname();
-        $this->oIp        = new Entity\Heartbeat\Ip();
-        $this->oLoad      = new Entity\Heartbeat\Load();
-        $this->oMemory    = new Entity\Heartbeat\Memory();
-        $this->oOs        = new Entity\Heartbeat\Os();
-        $this->oPhpInfo   = new Entity\Heartbeat\PhpInfo();
-        $this->oSecurity  = new Entity\Heartbeat\Security();
-        $this->oServices  = new Entity\Heartbeat\Services();
-        $this->oSsl       = new Entity\Heartbeat\Ssl();
-        $this->oVersion   = new Entity\Heartbeat\Version();
+        $this->oApt                = new Entity\Heartbeat\Apt();
+        $this->oCron               = new Entity\Heartbeat\Cron();
+        $this->oDiskUsage          = new Entity\Heartbeat\DiskUsage();
+        $this->oHostname           = new Entity\Heartbeat\Hostname();
+        $this->oIp                 = new Entity\Heartbeat\Ip();
+        $this->oLoad               = new Entity\Heartbeat\Load();
+        $this->oMemory             = new Entity\Heartbeat\Memory();
+        $this->oOs                 = new Entity\Heartbeat\Os();
+        $this->oPhpInfo            = new Entity\Heartbeat\PhpInfo();
+        $this->oSecurity           = new Entity\Heartbeat\Security();
+        $this->oServices           = new Entity\Heartbeat\Services();
+        $this->oSsl                = new Entity\Heartbeat\Ssl();
+        $this->oUnattendedUpgrades = new Entity\Heartbeat\UnattendedUpgrades();
+        $this->oVersion            = new Entity\Heartbeat\Version();
     }
 
     // --------------------------------------------------------------------------
@@ -60,19 +62,20 @@ final class Heartbeat implements \JsonSerializable
     public function get(): array
     {
         return [
-            'apt'      => $this->oApt,
-            'cron'     => $this->oCron,
-            'disk'     => $this->oDiskUsage,
-            'hostname' => $this->oHostname,
-            'ip'       => $this->oIp,
-            'load'     => $this->oLoad,
-            'memory'   => $this->oMemory,
-            'os'       => $this->oOs,
-            'php'      => $this->oPhpInfo,
-            'security' => $this->oSecurity,
-            'services' => $this->oServices,
-            'ssl'      => $this->oSsl,
-            'version'  => $this->oVersion,
+            'apt'                 => $this->oApt,
+            'cron'                => $this->oCron,
+            'disk'                => $this->oDiskUsage,
+            'hostname'            => $this->oHostname,
+            'ip'                  => $this->oIp,
+            'load'                => $this->oLoad,
+            'memory'              => $this->oMemory,
+            'os'                  => $this->oOs,
+            'php'                 => $this->oPhpInfo,
+            'security'            => $this->oSecurity,
+            'services'            => $this->oServices,
+            'ssl'                 => $this->oSsl,
+            'unattended_upgrades' => $this->oUnattendedUpgrades,
+            'version'             => $this->oVersion,
         ];
     }
 
