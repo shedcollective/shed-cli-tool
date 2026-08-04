@@ -34,19 +34,11 @@ fi
 # --------------------------------------------------------------------------
 # Build
 # --------------------------------------------------------------------------
-# Ensure we're using the lowest php we support
-if [ -x "$(command -v brew)" ]; then
-    brew unlink php
-    brew link php@8.1
-fi
+# Dependencies are resolved against the oldest PHP we support via the
+# `config.platform.php` setting in composer.json, so the build can run on any
+# PHP version — no need to switch the local install.
 
 # So our lock file is up to date (version number)
 composer update --lock -q
 composer --no-interaction --optimize-autoloader --no-dev --ansi install
 vendor/bin/box compile --ansi
-
-# Reset PHP
-if [ -x "$(command -v brew)" ]; then
-    brew unlink php@8.1
-    brew link php
-fi

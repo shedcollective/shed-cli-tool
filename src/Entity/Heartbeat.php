@@ -13,6 +13,7 @@ use Shed\Cli\Exceptions\HeartbeatException;
 final class Heartbeat implements \JsonSerializable
 {
     protected Entity\Heartbeat\Apt       $oApt;
+    protected Entity\Heartbeat\Cron      $oCron;
     protected Entity\Heartbeat\DiskUsage $oDiskUsage;
     protected Entity\Heartbeat\Hostname  $oHostname;
     protected Entity\Heartbeat\Ip        $oIp;
@@ -23,6 +24,7 @@ final class Heartbeat implements \JsonSerializable
     protected Entity\Heartbeat\Security  $oSecurity;
     protected Entity\Heartbeat\Services  $oServices;
     protected Entity\Heartbeat\Ssl       $oSsl;
+    protected Entity\Heartbeat\Version   $oVersion;
 
     // --------------------------------------------------------------------------
 
@@ -32,6 +34,7 @@ final class Heartbeat implements \JsonSerializable
     public function __construct()
     {
         $this->oApt       = new Entity\Heartbeat\Apt();
+        $this->oCron      = new Entity\Heartbeat\Cron();
         $this->oDiskUsage = new Entity\Heartbeat\DiskUsage();
         $this->oHostname  = new Entity\Heartbeat\Hostname();
         $this->oIp        = new Entity\Heartbeat\Ip();
@@ -42,8 +45,7 @@ final class Heartbeat implements \JsonSerializable
         $this->oSecurity  = new Entity\Heartbeat\Security();
         $this->oServices  = new Entity\Heartbeat\Services();
         $this->oSsl       = new Entity\Heartbeat\Ssl();
-        //  @todo (Pablo 2025-04-08) - Details on cron status and configured jobs
-        //  @todo (Pablo 2025-04-10) - Shed CLI tool version
+        $this->oVersion   = new Entity\Heartbeat\Version();
     }
 
     // --------------------------------------------------------------------------
@@ -59,6 +61,7 @@ final class Heartbeat implements \JsonSerializable
     {
         return [
             'apt'      => $this->oApt,
+            'cron'     => $this->oCron,
             'disk'     => $this->oDiskUsage,
             'hostname' => $this->oHostname,
             'ip'       => $this->oIp,
@@ -69,6 +72,7 @@ final class Heartbeat implements \JsonSerializable
             'security' => $this->oSecurity,
             'services' => $this->oServices,
             'ssl'      => $this->oSsl,
+            'version'  => $this->oVersion,
         ];
     }
 

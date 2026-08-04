@@ -102,6 +102,22 @@ final class Create extends Command
     const SSH_TIMEOUT = 300;
 
     /**
+     * The default ceiling (in seconds) for an individual SSH command to run.
+     * This is a ceiling, not a delay: exec() returns as soon as the command
+     * completes; the timeout only fires if a command genuinely hangs.
+     *
+     * @var int
+     */
+    const SSH_EXEC_TIMEOUT = 120;
+
+    /**
+     * The ceiling (in seconds) for the (potentially slow) apt steps
+     *
+     * @var int
+     */
+    const SSH_EXEC_TIMEOUT_APT = 300;
+
+    /**
      * How long to wait for the SSL DNS to resolve
      *
      * @var int
@@ -1152,6 +1168,10 @@ final class Create extends Command
 
         $oSsh = $this->waitForSsh($oServer, $oPrivateKey);
 
+        //  waitForSsh() uses a short (10s) timeout for connection attempts; raise
+        //  it to a sensible ceiling for the provisioning commands that follow.
+        $oSsh->setTimeout(self::SSH_EXEC_TIMEOUT);
+
         // --------------------------------------------------------------------------
 
         $this
@@ -1387,7 +1407,6 @@ final class Create extends Command
                 'sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys',
                 'sudo chmod 600 /home/deploy/.ssh/authorized_keys',
             ]));
-            $oSsh->read();
             $timerEnd  = microtime(true);
             $timeTaken = $timerEnd - $timerStart;
             $this->logln('<info>done</info> (' . $timeTaken . 's)');
@@ -1440,7 +1459,6 @@ final class Create extends Command
                 )
             )
         );
-        $oSsh->read();
 
         $this->oDbConfig = json_decode($sConfig);
 
@@ -1463,7 +1481,6 @@ final class Create extends Command
             'rm -f /home/ubuntu/mysql-setup-db.sh',
             'echo ' . escapeshellarg(json_encode($this->oDbConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . ' > /home/ubuntu/.mysql-config.json',
         ]));
-        $oSsh->read();
 
         $timerEnd  = microtime(true);
         $timeTaken = $timerEnd - $timerStart;
@@ -1494,7 +1511,6 @@ final class Create extends Command
             'echo $(openssl rand -base64 32) > /home/ubuntu/.mysql-root-password',
             'MYSQL_ROOT_PW=$(cat /home/ubuntu/.mysql-root-password) && sudo mysql_secure_installation --use-default -p${MYSQL_ROOT_PW}',
         ]));
-        $oSsh->read();
         $timerEnd  = microtime(true);
         $timeTaken = $timerEnd - $timerStart;
         $this->logln('<info>done</info> (' . $timeTaken . 's)');
@@ -1520,27 +1536,24 @@ final class Create extends Command
             $this->log('Configuring backups... ');
 
             $oSsh->exec(implode(PHP_EOL, [
-                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/ubuntu/.backupconfig',
-                'echo \'S3_BUCKET="shed-backups"\' >> /home/ubuntu/.backupconfig',
+                'echo \'DOMAIN="' . $this->sDomain . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_ACCESS_KEY="' . $this->oBackupAccount->getLabel() . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_ACCESS_SECRET="' . $this->oBackupAccount->getToken() . '"\' >> /home/root/.backupconfig',
+                'echo \'S3_BUCKET="shed-backups"\' >> /home/root/.backupconfig',
             ]));
-            $oSsh->read();
 
             //  Database backups
             if ($this->shouldConfigureMySQL() && empty($this->oDbConfig->error)) {
                 $oSsh->exec(implode(PHP_EOL, [
-                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/ubuntu/.backupconfig',
-                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/ubuntu/.backupconfig',
+                    'echo \'MYSQL_HOST="127.0.0.1"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_USER="' . $this->oDbConfig->user . '"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_PASSWORD="' . $this->oDbConfig->password . '"\' >> /home/root/.backupconfig',
+                    'echo \'MYSQL_DATABASE="' . reset($this->oDbConfig->databases) . '"\' >> /home/root/.backupconfig',
                 ]));
-                $oSsh->read();
             }
 
             //  Directory backups
-            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/ubuntu/.backupconfig');
-            $oSsh->read();
+            $oSsh->exec('echo \'DIRECTORY="/home/deploy/www"\' >> /home/root/.backupconfig');
 
             $timerEnd  = microtime(true);
             $timeTaken = $timerEnd - $timerStart;
@@ -1615,11 +1628,9 @@ final class Create extends Command
                         $this->logln('<info>done</info>');
                         $this->log('Generating certificates... ');
                         $oSsh->exec('ssl-create ' . $oServer->getDomain());
-                        $oSsh->read();
                         $this->logln('<info>done</info>');
                         $this->log('Restarting Apache... ');
                         $oSsh->exec('service apache2 restart');
-                        $oSsh->read();
                         $timerEnd  = microtime(true);
                         $timeTaken = $timerEnd - $timerStart;
                         $this->logln('<info>done</info> (' . $timeTaken . 's)');
@@ -1661,9 +1672,9 @@ final class Create extends Command
         done
         EOT;
 
-        $oSsh->setTimeout(300);
+        //  apt can be slow, so raise the ceiling for these commands
+        $oSsh->setTimeout(self::SSH_EXEC_TIMEOUT_APT);
         $oSsh->exec($waitForApt);
-        $oSsh->read();
 
         $oSsh->exec(implode(' && ', [
             'apt update -y',
@@ -1674,7 +1685,9 @@ final class Create extends Command
             'apt autoremove -y',
             'apt autoclean -y',
         ]));
-        $oSsh->read();
+
+        //  Restore the default ceiling for the remaining (quick) commands
+        $oSsh->setTimeout(self::SSH_EXEC_TIMEOUT);
 
         $timerEnd  = microtime(true);
         $timeTaken = $timerEnd - $timerStart;
@@ -1696,8 +1709,7 @@ final class Create extends Command
     {
         $timerStart = microtime(true);
         $this->log('Updating Shed CLI tool... ');
-        $oSsh->exec('cd /opt/shed-cli-tool && git pull');
-        $oSsh->read();
+        $oSsh->exec('cd /opt/shed-cli-tool && git checkout master && git pull');
         $timerEnd  = microtime(true);
         $timeTaken = $timerEnd - $timerStart;
         $this->logln('<info>done</info> (' . $timeTaken . 's)');
@@ -1737,7 +1749,6 @@ final class Create extends Command
 
         $this->log('Running post-install scripts... ');
         $sOutput = $oSsh->exec($sCommand);
-        $oSsh->read();
 
         if (!empty($sOutput)) {
             $this->oProvisionOutput = json_decode($sOutput);
@@ -1770,7 +1781,6 @@ final class Create extends Command
     {
         $this->logln('Rebooting server... ');
         $oSsh->exec('sudo reboot now');
-        $oSsh->read();
 
         return $this;
     }

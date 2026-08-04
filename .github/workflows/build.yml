@@ -2,54 +2,91 @@ name: build
 
 on: [ push ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    # The PHAR is compiled on a modern PHP because box itself requires >= 8.4.1
+    # (see vendor-bin/box/composer.lock). This does not affect the PHP versions
+    # the binary supports: `config.platform.php` in composer.json pins
+    # dependency resolution to our 8.1 floor regardless of the PHP used to build.
+    BUILD_PHP_VERSION: '8.5'
+
 jobs:
     build:
-        name: Build and Test Binary on PHP ${{ matrix.php-version }}
+        name: Compile binary
         runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                php-version: ['8.1', '8.2', '8.3', '8.4', '8.5']
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
-            - name: Setup PHP
+            - name: Setup PHP ${{ env.BUILD_PHP_VERSION }}
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '8.1'
+                  php-version: ${{ env.BUILD_PHP_VERSION }}
                   coverage: none
 
-            - name: Cache composer dependencies
-              uses: actions/cache@v4
-              with:
-                  path: ./vendor
-                  key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.json') }}
-                  restore-keys: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.json') }}
+            - name: Locate Composer cache
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
-            - name: Cache composer dependencies (box)
+            # The download cache is cached rather than ./vendor, because the
+            # `post-autoload-dump` hook prunes unused google/apiclient-services
+            # in place. A restored, already-pruned vendor directory would go
+            # stale the moment the service allowlist in composer.json changes.
+            - name: Cache Composer downloads
               uses: actions/cache@v4
               with:
-                  path: ./vendor-bin/box/vendor
-                  key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('vendor-bin/box/composer.json') }}
-                  restore-keys: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('vendor-bin/box/composer.json') }}
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ env.BUILD_PHP_VERSION }}-${{ hashFiles('composer.lock', 'vendor-bin/box/composer.lock') }}
+                  restore-keys: ${{ runner.os }}-composer-${{ env.BUILD_PHP_VERSION }}-
 
             - name: Install dependencies
-              run: composer --no-interaction --optimize-autoloader install
+              run: composer install --no-interaction --no-progress
 
             - name: Build binary
               run: composer build
 
-            - name: Switch to PHP ${{ matrix.php-version }}
+            - name: Upload binary
+              uses: actions/upload-artifact@v4
+              with:
+                  name: shed-binary
+                  path: dist/shed
+                  if-no-files-found: error
+                  retention-days: 7
+
+    test:
+        name: Test binary on PHP ${{ matrix.php-version }}
+        runs-on: ubuntu-latest
+        needs: build
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version: [ '8.1', '8.2', '8.3', '8.4', '8.5' ]
+        steps:
+            - name: Setup PHP ${{ matrix.php-version }}
               uses: shivammathur/setup-php@v2
               with:
                   php-version: ${{ matrix.php-version }}
                   coverage: none
 
-            - name: Test binary on PHP ${{ matrix.php-version }}
+            - name: Download binary
+              uses: actions/download-artifact@v4
+              with:
+                  name: shed-binary
+
+            # The executable bit is not preserved by upload-artifact
+            - name: Make binary executable
+              run: chmod +x ./shed
+
+            - name: Test binary
               run: |
-                  # Make binary executable
-                  chmod +x ./dist/shed
-                  
-                  # Test version command
-                  echo "Testing --version command..."
-                  ./dist/shed --version
+                  ./shed --version
+                  ./shed list
+
+            # Guards against the PHAR growing so large it cannot be mapped into
+            # memory under a stock CLI memory_limit, which is how the tool is
+            # most likely to be run on a server.
+            - name: Test binary starts under a 128M memory limit
+              run: php -d memory_limit=128M ./shed --version
