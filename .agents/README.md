@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php, Cron.php
+│   │   │   ├── Version.php, Cron.php, Node.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -80,6 +80,7 @@ shed-cli-tool/
 │   │   ├── Directory.php               # Path utilities
 │   │   ├── Updates.php                 # Version checking
 │   │   ├── Colors.php                  # Terminal output styling
+│   │   ├── Redact.php                  # Masks credentials in reported commands
 │   │   └── Zip.php                     # Archive operations
 │   ├── Service/
 │   │   └── ShedApi.php                 # Shed Collective API client
@@ -288,6 +289,12 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   enumerate per-user crontabs; degrades to an `error` key otherwise. Credentials
   written inline into a job (`-pSECRET`, `--password=`, `Bearer …`,
   `*_SECRET=`) are redacted before the payload leaves the server.
+- Node installations and the versions actually in use, in three parts:
+  `system` (the install a shell resolves, plus any others shadowing it),
+  `users` (what each user has installed for themselves, via nvm or another
+  version manager, and which version their `default` alias currently selects),
+  and `running` (every node process, the user running it and the version it was
+  loaded from, read out of `/proc`). See "Node version reporting" below.
 
 Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 
@@ -306,7 +313,53 @@ Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`
+
+---
+
+## Node Version Reporting
+
+`Entity\Heartbeat\Node` answers three separate questions, because on a host
+where node is managed per user the answers differ:
+
+| Key | What it reports |
+|---|---|
+| `system` | Node installed outside any home directory — what `node` resolves to on the PATH, plus every other system binary found, its dpkg package where it has one, and the npm beside it. A tarball unpacked into `/usr/local/bin` shadows the packaged `/usr/bin/node` without removing it, so the full `installs` list is what shows that has happened. |
+| `users` | Per-user installs, keyed by username. nvm is reported in detail: the versions installed, the aliases defined, the `default` alias and the version it currently resolves to, whether that version is actually installed, and whether the user's shell loads nvm at all. fnm, volta, asdf, mise, nodenv and `n` are detected too, but without the alias detail. |
+| `running` | Every node process, with the user running it and the version it was loaded from. `by_user` summarises this as user → version → count and is computed over every process, so it stays accurate even when the `processes` detail is truncated. |
+
+### How a version is established
+
+`running` reads `/proc/<pid>/exe`, so a process is attributed to the binary its
+kernel image was loaded from, whatever the PATH or a process manager's
+configuration might imply. Reading that link for another user's process needs
+`CAP_SYS_PTRACE` — root holds it on a normal host, but it is dropped by default
+inside a container. Where it is missing the process is identified from `comm`
+and `cmdline` instead, and anything that cannot be identified either way is
+counted in `unreadable` so that a partial view is never mistaken for a quiet
+one.
+
+Each version carries a `version_source`:
+
+- `binary` — node was asked, and this is its answer.
+- `path` — taken from the directory the install sits in (`.nvm/versions/node/v20.11.1/…`).
+
+The distinction matters because the heartbeat runs as root and **will not
+execute a binary that is not owned by root down every component of its path**.
+A node in a user's home directory is a file that user controls; running it to
+ask its version would hand them root. Those installs are reported from their
+path instead, which is a claim by whoever owns the directory rather than by
+node — hence the flag.
+
+For the same reason, files read out of a home directory (nvm aliases, shell
+profiles) must resolve to somewhere still inside that home and belong to either
+that user or root, so a symlink planted in a home cannot be used to post the
+contents of an arbitrary root-only file to the API.
+
+Process arguments are where an application is identified — the binary is `node`
+on all of them — but also where a careless deploy leaves a token or a database
+password, so they are passed through `Helper\Redact` before they leave the
+server, exactly as cron commands are.
 
 ---
 
