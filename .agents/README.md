@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php, Cron.php, Node.php
+│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -289,6 +289,12 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   enumerate per-user crontabs; degrades to an `error` key otherwise. Credentials
   written inline into a job (`-pSECRET`, `--password=`, `Bearer …`,
   `*_SECRET=`) are redacted before the payload leaves the server.
+- MySQL / MariaDB server version, when a server binary is installed. The engine
+  is taken from the `--version` banner (`MariaDB` vs not), never from the
+  filename — Ubuntu's MariaDB still ships a `mysqld` symlink. The binary is
+  only executed when it is owned by root down every path component. A missing
+  database is `present: false`; macOS reports the whole block as `null`.
+  See "MySQL version reporting" below.
 - Node installations and the versions actually in use, in three parts:
   `system` (the install a shell resolves, plus any others shadowing it),
   `users` (what each user has installed for themselves, via nvm or another
@@ -313,7 +319,7 @@ Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`
 
 ---
 
@@ -360,6 +366,31 @@ Process arguments are where an application is identified — the binary is `node
 on all of them — but also where a careless deploy leaves a token or a database
 password, so they are passed through `Helper\Redact` before they leave the
 server, exactly as cron commands are.
+
+---
+
+## MySQL version reporting
+
+`Entity\Heartbeat\Mysql` reports the **server** binary on the box — never a
+client login, never `~/.mysql-root-password`. It looks at fixed paths
+(`/usr/sbin/mariadbd`, `/usr/sbin/mysqld`, `/usr/bin/mariadbd`,
+`/usr/bin/mysqld`) and runs `--version` only when the real path is owned by
+root and not group- or other-writable, with `env -i` and a 5s `timeout`.
+
+The engine is taken from the banner (`MariaDB` in the text vs not). Ubuntu's
+MariaDB still ships a `mysqld` symlink, so the filename is not authoritative.
+
+If the binary exists but cannot be asked, it falls back to `dpkg-query` on
+`mysql-server` / `mysql-server-core-*` / `mariadb-server` and marks
+`version_source` as `package`. If nothing is installed:
+
+```json
+{"present": false, "engine": null, "version": null, "version_full": null, "version_source": null, "error": null}
+```
+
+`version: null` means unknown, never `0` or an empty string. The whole block is
+`null` on macOS. A missing database does **not** throw — that would abort the
+heartbeat.
 
 ---
 
