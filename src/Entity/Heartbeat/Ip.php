@@ -3,7 +3,6 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
-use Shed\Cli\Helper\System;
 
 /**
  * Class Ip
@@ -12,21 +11,27 @@ use Shed\Cli\Helper\System;
  */
 final class Ip implements \JsonSerializable
 {
-    /**
-     * Determines the server's IP address
-     *
-     * @return string|null
-     */
-    public function get(): ?string
+    public function __construct(private IpAddresses $oAddresses)
     {
-        switch (Os::getType()) {
-            case Os::LINUX:
-                return System::execString('hostname -I | awk \'{print $1}\'');
-            case Os::MACOS:
-                return System::execString('ipconfig getifaddr en0');
+    }
+
+    /**
+     * The server's primary IP — a public IPv4 when one is known
+     *
+     * Collected alongside {@see IpAddresses} so `hostname -I` and any cloud
+     * metadata probe run once per heartbeat.
+     *
+     * @return string
+     */
+    public function get(): string
+    {
+        $sPrimary = $this->oAddresses->primary();
+
+        if ($sPrimary === null || $sPrimary === '') {
+            throw new HeartbeatException('Unable to determine IP address.');
         }
 
-        throw new HeartbeatException('Unable to determine IP address.');
+        return $sPrimary;
     }
 
     // --------------------------------------------------------------------------

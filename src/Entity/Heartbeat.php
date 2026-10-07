@@ -17,6 +17,7 @@ final class Heartbeat implements \JsonSerializable
     protected Entity\Heartbeat\DiskUsage          $oDiskUsage;
     protected Entity\Heartbeat\Hostname           $oHostname;
     protected Entity\Heartbeat\Ip                 $oIp;
+    protected Entity\Heartbeat\IpAddresses        $oIpAddresses;
     protected Entity\Heartbeat\Load               $oLoad;
     protected Entity\Heartbeat\Memory             $oMemory;
     protected Entity\Heartbeat\Mysql              $oMysql;
@@ -40,7 +41,8 @@ final class Heartbeat implements \JsonSerializable
         $this->oCron               = new Entity\Heartbeat\Cron();
         $this->oDiskUsage          = new Entity\Heartbeat\DiskUsage();
         $this->oHostname           = new Entity\Heartbeat\Hostname();
-        $this->oIp                 = new Entity\Heartbeat\Ip();
+        $this->oIpAddresses        = new Entity\Heartbeat\IpAddresses();
+        $this->oIp                 = new Entity\Heartbeat\Ip($this->oIpAddresses);
         $this->oLoad               = new Entity\Heartbeat\Load();
         $this->oMemory             = new Entity\Heartbeat\Memory();
         $this->oMysql              = new Entity\Heartbeat\Mysql();
@@ -71,6 +73,7 @@ final class Heartbeat implements \JsonSerializable
             'disk'                => $this->oDiskUsage,
             'hostname'            => $this->oHostname,
             'ip'                  => $this->oIp,
+            'ip_addresses'        => $this->oIpAddresses,
             'load'                => $this->oLoad,
             'memory'              => $this->oMemory,
             'mysql'               => $this->oMysql,
