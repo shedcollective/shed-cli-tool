@@ -67,7 +67,7 @@ shed-cli-tool/
 │   │   ├── Heartbeat/                  # Individual metric entities
 │   │   │   ├── Load.php, Memory.php, DiskUsage.php
 │   │   │   ├── Ssl.php, Services.php, Apt.php
-│   │   │   ├── Hostname.php, Ip.php, Os.php
+│   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
 │   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php
 │   │   ├── Option.php
@@ -281,7 +281,12 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
 - Running services status
 - Pending APT updates
 - OS and kernel information
-- Network information (IP addresses)
+- Network information (IP addresses). `ip` is a public IPv4 when one is known: first public
+  address already on a guest NIC, else (on GCE / EC2 only, when the NIC is all private) the
+  instance-metadata external IP, else the first interface address. `ip_addresses` lists every
+  known address with `scope` (`external` / `private`) and `source` (`interface`,
+  `gcp-metadata`, `ec2-metadata`). IPv6 is listed but not chosen as `ip` while an IPv4 exists.
+  Metadata probes use a 2s timeout and must not fail the heartbeat. ipinfo.io is not used.
 - Security information
 - Shed CLI tool version (from the server's `composer.json`)
 - Configured cron jobs for all users, plus `/etc/crontab`, `/etc/cron.d`, the
@@ -323,7 +328,7 @@ becomes a trickle across ten minutes. Interactive runs skip the wait.
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`
 
 ---
 
