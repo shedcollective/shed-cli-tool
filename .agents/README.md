@@ -302,7 +302,11 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   and `running` (every node process, the user running it and the version it was
   loaded from, read out of `/proc`). See "Node version reporting" below.
 
-Sends all data to `https://shedcollective.com/api/` as a heartbeat payload.
+Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
+
+When run non-interactively (the hourly cron), the command sleeps a stable
+`crc32(hostname) % 600` seconds before collecting, so the fleet's :00 burst
+becomes a trickle across ten minutes. Interactive runs skip the wait.
 
 ---
 
