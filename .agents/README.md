@@ -263,6 +263,7 @@ Provisions a new cloud server and fully configures it. This is the most complex 
    - Deploy key (adds to `~/.ssh/authorized_keys`)
    - MySQL installation and user/database creation (if framework requires it)
    - Scheduled backup cron jobs (production only)
+   - Apache `deploy.conf` `ServerName` / `ServerAlias` from the intended domain (lamp and webserver images; required so the catch-all default vhost does not take real-site traffic)
    - SSL certificate (Let's Encrypt / certbot)
    - APT package dependencies
    - Shed CLI tool installation

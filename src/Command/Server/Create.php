@@ -1179,6 +1179,7 @@ final class Create extends Command
             ->configureMySQL($oSsh)
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
+            ->configureApacheVhost($oSsh)
             ->configureSsl($oSsh, $oServer)
             ->updateAptDependencies($oSsh)
             ->updateShedCliTool($oSsh)
@@ -1559,6 +1560,54 @@ final class Create extends Command
             $timeTaken = $timerEnd - $timerStart;
             $this->logln('<info>done</info> (' . $timeTaken . 's)');
         }
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Whether the Apache site vhost needs a ServerName
+     *
+     * @return bool
+     */
+    private function shouldConfigureApacheVhost(): bool
+    {
+        return (bool) preg_match('/(lamp|webserver)/', $this->oImage->getLabel());
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Writes the intended domain onto deploy.conf so name-based matching
+     * sends real-site traffic there instead of the catch-all default vhost.
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function configureApacheVhost(SSH2 $oSsh): self
+    {
+        if (!$this->shouldConfigureApacheVhost()) {
+            return $this;
+        }
+
+        $timerStart = microtime(true);
+        $this->log('Configuring Apache vhost... ');
+
+        $sDomain   = preg_replace('/^www\./', '', $this->sDomain) ?: $this->sDomain;
+        $sSedName  = 's/^[[:space:]]*#*[[:space:]]*ServerName[[:space:]].*/    ServerName ' . $sDomain . '/';
+        $sSedAlias = 's/^[[:space:]]*#*[[:space:]]*ServerAlias[[:space:]].*/    ServerAlias www.' . $sDomain . '/';
+
+        $oSsh->exec(sprintf(
+            'if [[ -f /etc/apache2/sites-available/deploy.conf ]]; then sudo sed -i %s %s /etc/apache2/sites-available/deploy.conf; fi',
+            escapeshellarg($sSedName),
+            escapeshellarg($sSedAlias)
+        ));
+
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
 
         return $this;
     }
