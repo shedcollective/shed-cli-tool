@@ -264,6 +264,7 @@ Provisions a new cloud server and fully configures it. This is the most complex 
    - MySQL installation and user/database creation (if framework requires it)
    - Scheduled backup cron jobs (production only)
    - Apache `deploy.conf` `ServerName` / `ServerAlias` from the intended domain (lamp and webserver images; required so the catch-all default vhost does not take real-site traffic)
+   - PHP `display_errors` in `/etc/php/99-shed-php.ini` (staging only; images ship with it `Off`, and each SAPI's `conf.d` links to this file, so one edit covers CLI and FPM). php-fpm is reloaded so the change is live before the final reboot
    - SSL certificate (Let's Encrypt / certbot)
    - APT package dependencies
    - Shed CLI tool installation
