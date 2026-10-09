@@ -1180,6 +1180,7 @@ final class Create extends Command
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureApacheVhost($oSsh)
+            ->configurePhpDisplayErrors($oSsh)
             ->configureSsl($oSsh, $oServer)
             ->updateAptDependencies($oSsh)
             ->updateShedCliTool($oSsh)
@@ -1603,6 +1604,44 @@ final class Create extends Command
             'if [[ -f /etc/apache2/sites-available/deploy.conf ]]; then sudo sed -i %s %s /etc/apache2/sites-available/deploy.conf; fi',
             escapeshellarg($sSedName),
             escapeshellarg($sSedAlias)
+        ));
+
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Turns PHP display_errors on for staging servers.
+     *
+     * Images ship with display_errors = Off in /etc/php/99-shed-php.ini. Each
+     * SAPI's conf.d links to that file, so one edit covers CLI and FPM.
+     * Production keeps the image default.
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function configurePhpDisplayErrors(SSH2 $oSsh): self
+    {
+        if (self::ENVIRONMENTS[$this->sEnvironment] !== self::ENV_STAGING) {
+            return $this;
+        }
+
+        $timerStart = microtime(true);
+        $this->log('Enabling PHP display_errors... ');
+
+        $sIni = '/etc/php/99-shed-php.ini';
+        $sSed = 's/^[[:space:]]*display_errors[[:space:]]*=.*/display_errors = On/';
+
+        $oSsh->exec(sprintf(
+            'if [[ -f %1$s ]]; then sudo sed -i %2$s %1$s && sudo systemctl reload \'php*-fpm\' || true; fi',
+            escapeshellarg($sIni),
+            escapeshellarg($sSed)
         ));
 
         $timerEnd  = microtime(true);
