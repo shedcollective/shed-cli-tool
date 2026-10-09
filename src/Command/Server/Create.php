@@ -1180,6 +1180,7 @@ final class Create extends Command
             ->secureMySQL($oSsh)
             ->configureBackups($oSsh, $bEnableBackups)
             ->configureApacheVhost($oSsh)
+            ->configureRemoteIp($oSsh)
             ->configurePhpDisplayErrors($oSsh)
             ->configureSsl($oSsh, $oServer)
             ->updateAptDependencies($oSsh)
@@ -1605,6 +1606,38 @@ final class Create extends Command
             escapeshellarg($sSedName),
             escapeshellarg($sSedAlias)
         ));
+
+        $timerEnd  = microtime(true);
+        $timeTaken = $timerEnd - $timerStart;
+        $this->logln('<info>done</info> (' . $timeTaken . 's)');
+
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Fetches Cloudflare's current proxy ranges into mod_remoteip's trusted list.
+     *
+     * The ranges are not stored in the image sources. Images ship
+     * refresh-remoteip-trusted; this runs it so a server cut from an older
+     * image trusts the ranges published today. Images without the script are
+     * left unchanged.
+     *
+     * @param SSH2 $oSsh The SSH connection
+     *
+     * @return $this
+     */
+    private function configureRemoteIp(SSH2 $oSsh): self
+    {
+        if (!$this->shouldConfigureApacheVhost()) {
+            return $this;
+        }
+
+        $timerStart = microtime(true);
+        $this->log('Fetching Cloudflare proxy ranges... ');
+
+        $oSsh->exec('if [[ -x /usr/local/sbin/refresh-remoteip-trusted ]]; then sudo /usr/local/sbin/refresh-remoteip-trusted; fi');
 
         $timerEnd  = microtime(true);
         $timeTaken = $timerEnd - $timerStart;
