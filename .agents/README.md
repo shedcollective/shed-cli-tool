@@ -311,9 +311,13 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
 
 Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
 
-When run non-interactively (the hourly cron), the command sleeps a stable
+When stdin is not a terminal (the hourly cron), or when run with
+`--no-interaction` / `--quiet`, the command sleeps a stable
 `crc32(hostname) % 600` seconds before collecting, so the fleet's :00 burst
-becomes a trickle across ten minutes. Interactive runs skip the wait.
+becomes a trickle across ten minutes. A terminal session skips the wait.
+Symfony Console 6 leaves `isInteractive()` true unless one of those flags is
+passed, and the cron line passes neither, so the wait is decided from the
+terminal itself (`stream_isatty`, which does not need the posix extension).
 
 ---
 

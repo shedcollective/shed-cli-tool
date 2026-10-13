@@ -32,4 +32,18 @@ final class HeartbeatTest extends TestCase
             Heartbeat::jitterSeconds('beta.example')
         );
     }
+
+    public function test_a_terminal_session_does_not_wait(): void
+    {
+        $this->assertFalse(Heartbeat::shouldWait(true, true));
+    }
+
+    public function test_unattended_runs_wait(): void
+    {
+        // Cron: Symfony still reports interactive, but stdin is not a terminal.
+        $this->assertTrue(Heartbeat::shouldWait(true, false));
+        // --no-interaction or --quiet, with or without a terminal.
+        $this->assertTrue(Heartbeat::shouldWait(false, true));
+        $this->assertTrue(Heartbeat::shouldWait(false, false));
+    }
 }
