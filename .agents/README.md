@@ -264,6 +264,7 @@ Provisions a new cloud server and fully configures it. This is the most complex 
    - MySQL installation and user/database creation (if framework requires it)
    - Scheduled backup cron jobs (production only)
    - Apache `deploy.conf` `ServerName` / `ServerAlias` from the intended domain (lamp and webserver images; required so the catch-all default vhost does not take real-site traffic)
+   - PHP `display_errors` in `/etc/php/99-shed-php.ini` (staging only; images ship with it `Off`, and each SAPI's `conf.d` links to this file, so one edit covers CLI and FPM). php-fpm is reloaded so the change is live before the final reboot
    - SSL certificate (Let's Encrypt / certbot)
    - APT package dependencies
    - Shed CLI tool installation
@@ -310,9 +311,13 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
 
 Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
 
-When run non-interactively (the hourly cron), the command sleeps a stable
+When stdin is not a terminal (the hourly cron), or when run with
+`--no-interaction` / `--quiet`, the command sleeps a stable
 `crc32(hostname) % 600` seconds before collecting, so the fleet's :00 burst
-becomes a trickle across ten minutes. Interactive runs skip the wait.
+becomes a trickle across ten minutes. A terminal session skips the wait.
+Symfony Console 6 leaves `isInteractive()` true unless one of those flags is
+passed, and the cron line passes neither, so the wait is decided from the
+terminal itself (`stream_isatty`, which does not need the posix extension).
 
 ---
 

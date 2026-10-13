@@ -36,7 +36,8 @@ final class UnattendedUpgrades implements \JsonSerializable
 
     /**
      * The apt config subtree governing whether, and how often, apt runs
-     * unattended. Written by /etc/apt/apt.conf.d/20auto-upgrades.
+     * unattended. The package file is 20auto-upgrades; image policy is
+     * 21shed-auto-upgrades. apt-config dump merges the drop-in stack.
      *
      * @var string
      */
@@ -44,7 +45,8 @@ final class UnattendedUpgrades implements \JsonSerializable
 
     /**
      * The apt config subtree governing what unattended-upgrades is permitted to
-     * do once it runs. Written by /etc/apt/apt.conf.d/50unattended-upgrades.
+     * do once it runs. The package file is 50unattended-upgrades; image
+     * policy is 51shed-unattended-upgrades. apt-config dump merges the stack.
      *
      * @var string
      */
@@ -125,9 +127,10 @@ final class UnattendedUpgrades implements \JsonSerializable
      * value apt assumes when the key is absent entirely.
      *
      * `Enable` is normally unset and defaults to on. `Unattended-Upgrade` is the
-     * opposite: absent means zero, which means never — it is 20auto-upgrades
-     * which turns it on. Reading an absent key as "default" rather than "off"
-     * would report an unconfigured host as healthy.
+     * opposite: absent means zero, which means never — 20auto-upgrades (or a
+     * later file such as 21shed-auto-upgrades) turns it on. Reading an absent
+     * key as "default" rather than "off" would report an unconfigured host
+     * as healthy.
      *
      * @var array
      */
