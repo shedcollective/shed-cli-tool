@@ -36,6 +36,18 @@ final class Heartbeat extends Command
     }
 
     /**
+     * Whether to wait before collecting.
+     *
+     * Symfony Console 6 leaves isInteractive() true unless --no-interaction or
+     * --quiet is passed, and the hourly cron line passes neither. A missing
+     * terminal is the unattended case; those flags still wait at a terminal.
+     */
+    public static function shouldWait(bool $interactive, bool $stdinIsTerminal): bool
+    {
+        return !$interactive || !$stdinIsTerminal;
+    }
+
+    /**
      * Execute the command
      *
      * @return int
@@ -44,8 +56,8 @@ final class Heartbeat extends Command
     {
         $this->banner('Heartbeat');
 
-        // Cron is non-interactive; skip the wait when someone runs this by hand.
-        if (!$this->oInput->isInteractive()) {
+        // Cron has no terminal. Skip the wait when someone runs this by hand.
+        if (self::shouldWait($this->oInput->isInteractive(), self::stdinIsTerminal())) {
             sleep(self::jitterSeconds(gethostname() ?: ''));
         }
 
@@ -67,5 +79,14 @@ final class Heartbeat extends Command
 
             return self::EXIT_CODE_ERROR;
         }
+    }
+
+    /**
+     * True when stdin is a terminal. stream_isatty is in core since PHP 7.2,
+     * so this does not depend on the posix extension.
+     */
+    private static function stdinIsTerminal(): bool
+    {
+        return \defined('STDIN') && \is_resource(\STDIN) && @\stream_isatty(\STDIN);
     }
 }
