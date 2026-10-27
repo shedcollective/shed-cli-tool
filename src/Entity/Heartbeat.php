@@ -27,6 +27,7 @@ final class Heartbeat implements \JsonSerializable
     protected Entity\Heartbeat\Security           $oSecurity;
     protected Entity\Heartbeat\Services           $oServices;
     protected Entity\Heartbeat\Ssl                $oSsl;
+    protected Entity\Heartbeat\Sudoers            $oSudoers;
     protected Entity\Heartbeat\UnattendedUpgrades $oUnattendedUpgrades;
     protected Entity\Heartbeat\Version            $oVersion;
 
@@ -52,6 +53,7 @@ final class Heartbeat implements \JsonSerializable
         $this->oSecurity           = new Entity\Heartbeat\Security();
         $this->oServices           = new Entity\Heartbeat\Services();
         $this->oSsl                = new Entity\Heartbeat\Ssl();
+        $this->oSudoers            = new Entity\Heartbeat\Sudoers();
         $this->oUnattendedUpgrades = new Entity\Heartbeat\UnattendedUpgrades();
         $this->oVersion            = new Entity\Heartbeat\Version();
     }
@@ -83,6 +85,7 @@ final class Heartbeat implements \JsonSerializable
             'security'            => $this->oSecurity,
             'services'            => $this->oServices,
             'ssl'                 => $this->oSsl,
+            'sudoers'             => $this->oSudoers,
             'unattended_upgrades' => $this->oUnattendedUpgrades,
             'version'             => $this->oVersion,
         ];
