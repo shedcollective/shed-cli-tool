@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php
+│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -308,6 +308,13 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   version manager, and which version their `default` alias currently selects),
   and `running` (every node process, the user running it and the version it was
   loaded from, read out of `/proc`). See "Node version reporting" below.
+- Who has sudo access and what they may run: the privilege specifications in
+  `/etc/sudoers` and every file in `/etc/sudoers.d`, plus the resolved current
+  membership of any group one of those lines grants access to (a `%group` line
+  names a group, not the people in it). Requires root to read `/etc/sudoers`
+  (mode `0440`) and list `/etc/sudoers.d` (mode `0750`); degrades to an `error`
+  key per file otherwise, the same as the cron block. Commands are redacted the
+  same way a cron job's command is. See "Sudo access reporting" below.
 
 Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
 
@@ -334,7 +341,7 @@ terminal itself (`stream_isatty`, which does not need the posix extension).
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`
 
 ---
 
@@ -381,6 +388,56 @@ Process arguments are where an application is identified — the binary is `node
 on all of them — but also where a careless deploy leaves a token or a database
 password, so they are passed through `Helper\Redact` before they leave the
 server, exactly as cron commands are.
+
+---
+
+## Sudo access reporting
+
+`Entity\Heartbeat\Sudoers` answers "who has sudo, and what may they run" by reading the privilege
+specifications out of `/etc/sudoers` and every file in `/etc/sudoers.d`, and resolving the current
+membership of any group one of those lines grants access to.
+
+### Why group membership is read separately
+
+A line like `%sudo ALL=(ALL:ALL) ALL` grants access to whoever is in the `sudo` group, not to a
+fixed list — the sudoers file says nothing about who that is right now. `getent group <name>` is
+run once per group named by a `%group` entry and its members are reported under a sibling `groups`
+map, keyed by group name. A group that no longer exists on the host (removed since the sudoers
+file was last edited) reports as `null` there, not `[]` — unknown, never "nobody is in it".
+
+### What `parseSudoers()` recognises, and what it deliberately skips
+
+One regex pulls `subject host=(run_as) [tags:] commands` out of a privilege specification line.
+Everything else sudo's grammar allows is skipped rather than guessed at — sudo itself is the only
+thing that has to parse this file correctly, and this is a best-effort inventory of it:
+
+- Blank lines and `#`-comments.
+- `Defaults` lines, whether global or scoped to one user (`Defaults:deploy !requiretty`).
+- Alias definitions (`User_Alias`, `Cmnd_Alias`, `Runas_Alias`, `Host_Alias`) — **never expanded**.
+  A line that uses an alias reports the alias name verbatim as the `subject` or in `commands`, not
+  what it resolves to.
+- Include directives, both the legacy `#include`/`#includedir` form and the modern
+  `@include`/`@includedir` form. `/etc/sudoers.d` is already read directly regardless of what a
+  file's own directive names, so a directive naming it is simply skipped rather than followed.
+
+### Files read, and how a permission failure is reported
+
+`/etc/sudoers` is mode `0440 root:root`; `/etc/sudoers.d` is `0750 root:root`. Both need root to
+read. Each file is reported as `{entries, error}` — a fixed pair, always both present — so a read
+failure is never confused with a file that was readable and simply held nothing. A single
+unreadable drop-in degrades only that file's own entry; it does not cost the ones that could be
+read, the same per-file behaviour `/etc/cron.d` gets in the cron block. `/etc/sudoers.d` itself
+failing to be listed is reported at the block's own top level, distinct from one file inside it
+failing.
+
+Drop-ins with a dot in the name or a trailing `~` are skipped, the same convention `run-parts` and
+`/etc/cron.d` use — sudo itself ignores them too.
+
+### Commands are redacted the same way cron's are
+
+A sudoers entry is just as capable of having a credential written into it as a cron command is
+(`-pSECRET`, `--password=`, `Bearer …`), so each command in the list is passed through
+`Helper\Redact::secrets()` before it leaves the server.
 
 ---
 
