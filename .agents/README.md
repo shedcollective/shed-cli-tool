@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php
+│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php, Docker.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -308,6 +308,13 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   version manager, and which version their `default` alias currently selects),
   and `running` (every node process, the user running it and the version it was
   loaded from, read out of `/proc`). See "Node version reporting" below.
+- Docker Engine, when installed: the version the running daemon reports (else
+  `dockerd --version`, else dpkg), the dpkg package, the `docker` unit's systemd
+  state, and running / total container counts. A host with Docker installed may
+  run its application in containers, so the other versions in the heartbeat
+  describe the host rather than necessarily the application. Counts are `null`
+  when the daemon cannot be asked — unknown, never zero. See "Docker reporting"
+  below.
 - Who has sudo access and what they may run: the privilege specifications in
   `/etc/sudoers` and every file in `/etc/sudoers.d`, plus the resolved current
   membership of any group one of those lines grants access to (a `%group` line
@@ -341,7 +348,7 @@ terminal itself (`stream_isatty`, which does not need the posix extension).
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Docker`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`
 
 ---
 
@@ -463,6 +470,34 @@ If the binary exists but cannot be asked, it falls back to `dpkg-query` on
 `version: null` means unknown, never `0` or an empty string. The whole block is
 `null` on macOS. A missing database does **not** throw — that would abort the
 heartbeat.
+
+---
+
+## Docker reporting
+
+`Entity\Heartbeat\Docker` reports whether Docker Engine is installed, which
+version it runs, and how many containers it has. It exists so observers know a
+host's reported MySQL / PHP / Node versions may not be what its containers run.
+
+- **Installed** means a `dockerd` binary (`/usr/bin/dockerd`, `/usr/sbin/dockerd`,
+  `/usr/local/bin/dockerd`) or an installed `docker-ce` / `docker.io` /
+  `moby-engine` package. A client alone is not a Docker host.
+- **Version**, best first: the running daemon via
+  `docker info --format '{{.ServerVersion}}|{{.ContainersRunning}}|{{.Containers}}'`
+  (`version_source: daemon`), then `dockerd --version` (`binary`), then dpkg
+  (`package`). Binaries are executed only when root owns every path component,
+  under `env -i` (an inherited `DOCKER_HOST` cannot redirect the client) and a 5s
+  `timeout`.
+- **Containers** come from the same `docker info` call. With no daemon the CLI
+  still prints the template as `|0|0` (exiting 1), so counts with no server
+  version are discarded as unknown — `null`, never `0`.
+
+```json
+{"present": true, "version": "27.3.1", "version_full": "27.3.1", "version_source": "daemon", "package": "docker-ce", "daemon": "active", "containers": {"running": 4, "total": 6}, "error": null}
+```
+
+Not installed is `present: false` with every other key `null`; the whole block is
+`null` on macOS. Nothing here throws.
 
 ---
 
