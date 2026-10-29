@@ -15,6 +15,8 @@ final class Heartbeat implements \JsonSerializable
     protected Entity\Heartbeat\Apt                $oApt;
     protected Entity\Heartbeat\Cron               $oCron;
     protected Entity\Heartbeat\DiskUsage          $oDiskUsage;
+    protected Entity\Heartbeat\Docker             $oDocker;
+    protected Entity\Heartbeat\Elasticsearch      $oElasticsearch;
     protected Entity\Heartbeat\Hostname           $oHostname;
     protected Entity\Heartbeat\Ip                 $oIp;
     protected Entity\Heartbeat\IpAddresses        $oIpAddresses;
@@ -41,6 +43,8 @@ final class Heartbeat implements \JsonSerializable
         $this->oApt                = new Entity\Heartbeat\Apt();
         $this->oCron               = new Entity\Heartbeat\Cron();
         $this->oDiskUsage          = new Entity\Heartbeat\DiskUsage();
+        $this->oDocker             = new Entity\Heartbeat\Docker();
+        $this->oElasticsearch      = new Entity\Heartbeat\Elasticsearch();
         $this->oHostname           = new Entity\Heartbeat\Hostname();
         $this->oIpAddresses        = new Entity\Heartbeat\IpAddresses();
         $this->oIp                 = new Entity\Heartbeat\Ip($this->oIpAddresses);
@@ -73,6 +77,8 @@ final class Heartbeat implements \JsonSerializable
             'apt'                 => $this->oApt,
             'cron'                => $this->oCron,
             'disk'                => $this->oDiskUsage,
+            'docker'              => $this->oDocker,
+            'elasticsearch'       => $this->oElasticsearch,
             'hostname'            => $this->oHostname,
             'ip'                  => $this->oIp,
             'ip_addresses'        => $this->oIpAddresses,
