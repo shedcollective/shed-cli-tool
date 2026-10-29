@@ -1426,7 +1426,7 @@ final class Create extends Command
      */
     private function shouldConfigureMySQL(): bool
     {
-        return preg_match('/(mysql(57|80)|lamp)/', $this->oImage->getLabel());
+        return preg_match('/(mysql|lamp)/', $this->oImage->getLabel());
     }
 
     // --------------------------------------------------------------------------
