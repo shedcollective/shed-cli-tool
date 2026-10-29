@@ -261,7 +261,7 @@ Provisions a new cloud server and fully configures it. This is the most complex 
 7. Waits for SSH access (polling with configurable timeout)
 8. Over SSH, configures:
    - Deploy key (adds to `~/.ssh/authorized_keys`)
-   - MySQL installation and user/database creation (if framework requires it)
+   - MySQL installation and user/database creation (images whose label contains `mysql` or `lamp`; the user gets the server default auth plugin, `caching_sha2_password` on MySQL 8+, and the image script reports a failed statement as `{"error": …}` instead of credentials)
    - Scheduled backup cron jobs (production only)
    - Apache `deploy.conf` `ServerName` / `ServerAlias` from the intended domain (lamp and webserver images; required so the catch-all default vhost does not take real-site traffic)
    - PHP `display_errors` in `/etc/php/99-shed-php.ini` (staging only; images ship with it `Off`, and each SAPI's `conf.d` links to this file, so one edit covers CLI and FPM). php-fpm is reloaded so the change is live before the final reboot
