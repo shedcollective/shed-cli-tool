@@ -15,6 +15,7 @@ final class Services implements \JsonSerializable
         'postgresql',
         'php-fpm',
         'redis-server',
+        'docker',
     ];
 
     public function get(): ?array
