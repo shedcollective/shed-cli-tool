@@ -69,7 +69,7 @@ shed-cli-tool/
 │   │   │   ├── Ssl.php, Services.php, Apt.php
 │   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
-│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php, Docker.php, Elasticsearch.php
+│   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php, Accounts.php, Docker.php, Elasticsearch.php
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -326,6 +326,15 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   (mode `0440`) and list `/etc/sudoers.d` (mode `0750`); degrades to an `error`
   key per file otherwise, the same as the cron block. Commands are redacted the
   same way a cron job's command is. See "Sudo access reporting" below.
+- The accounts on the host and the SSH keys each one authorises: every entry in
+  the user database with its groups, shell and password state (`set` / `locked`
+  / `none` — never the hash), and for every key in the files sshd reads for that
+  account its type, size, SHA256 fingerprint, comment and options. **Key material
+  never leaves the server**, only the fingerprint. sshd's effective
+  `PermitRootLogin`, `PubkeyAuthentication`, `PasswordAuthentication`,
+  `AuthorizedKeysFile`, `AuthorizedKeysCommand` and Allow/Deny lists are
+  reported alongside. Requires root; degrades to an `error` per account or file
+  otherwise. See "Account and SSH key reporting" below.
 
 Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
 
@@ -352,7 +361,7 @@ terminal itself (`stream_isatty`, which does not need the posix extension).
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Docker`, `Elasticsearch`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Docker`, `Elasticsearch`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`, `Accounts`
 
 ---
 
@@ -449,6 +458,63 @@ Drop-ins with a dot in the name or a trailing `~` are skipped, the same conventi
 A sudoers entry is just as capable of having a credential written into it as a cron command is
 (`-pSECRET`, `--password=`, `Bearer …`), so each command in the list is passed through
 `Helper\Redact::secrets()` before it leaves the server.
+
+---
+
+## Account and SSH key reporting
+
+`Entity\Heartbeat\Accounts` answers "who is on this server, and which keys let them in". Its main
+use is finding every server that still trusts a given person's key — an ex-employee's, say — by
+fingerprint or by comment.
+
+### Accounts
+
+Every entry `getent passwd` returns (falling back to `/etc/passwd`), sorted by uid and capped at
+2,000 with a `truncated` flag, keyed by name. Each carries its uid/gid, its groups (primary first,
+then supplementary, from one `getent group` read), gecos, home and shell, and `login_shell` — false
+for `nologin`, `false` and friends. **All accounts are reported, not just humans**: a key in
+`www-data`'s home is exactly the kind of thing worth seeing, and a `nologin` shell does not stop a
+key with a forced `command=`.
+
+`password` is reduced from `/etc/shadow` to `set`, `locked` (any `!`/`*` form) or `none` (an empty
+hash). The hash itself is never sent. A locked password does **not** stop key login — that is why
+the keys are reported next to it. `expires` is shadow's account expiry as `Y-m-d`, or `null` for
+never. Without root `/etc/shadow` is unreadable: both are then `null` and the block's
+`shadow_error` says why.
+
+### Keys
+
+The files read for each account are sshd's own `AuthorizedKeysFile` patterns, taken from
+`sshd -T` (`%h`, `%u`, `%U` and `%%` expanded, relative paths taken from the home), falling back to
+sshd's default `.ssh/authorized_keys .ssh/authorized_keys2` when that cannot be run. Each file is
+reported as `{keys, invalid, truncated, error}`, keyed by path. A file that does not exist is left
+out; a file that exists but could not be read, or that this declined to read, carries an `error`
+in place of its keys, so it is never confused with an empty one. Without root a 0700 `~/.ssh`
+makes its files look absent, so that case is an `error` too.
+
+Each key is `{type, bits, fingerprint, comment, options}`. The fingerprint is computed in PHP from
+the decoded blob — the same `SHA256:…` string `ssh-keygen -lf` prints — so nothing is executed per
+key. A line is only accepted as a key when its base64 decodes and the type encoded inside the blob
+matches the declared one; anything else is counted in `invalid` rather than dropped silently.
+Comments and options (`command="…"`, `environment="…"`) pass through `Helper\Redact::secrets()`
+first, the same as cron commands.
+
+### What is refused, and why
+
+The heartbeat runs as root. A file reached through a home directory must resolve to somewhere
+still inside that home, and any key file must be owned by the account or by root — the same guard
+`Node` applies to files it reads from a home, and what sshd's `StrictModes` demands before it uses
+the file at all. A symlink from `~/.ssh/authorized_keys` to `/etc/shadow` is reported as an error,
+never read.
+
+### sshd
+
+`present` is whether `/usr/sbin/sshd` exists. Alongside it, from `sshd -T`: `permit_root_login`,
+`pubkey_authentication`, `password_authentication`, `kbd_interactive_authentication`,
+`authorized_keys_files`, `authorized_keys_command` (+ `_user`), and the Allow/Deny user and group
+lists. `sshd -T` is evaluated without a connection, so `Match` blocks are not reflected. **An
+`authorized_keys_command` means the files are not the whole picture** — GCP OS Login and EC2
+Instance Connect hand sshd keys from a command, and those keys are not on disk to be reported.
 
 ---
 
