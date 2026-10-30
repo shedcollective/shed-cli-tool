@@ -12,6 +12,7 @@ use Shed\Cli\Exceptions\HeartbeatException;
  */
 final class Heartbeat implements \JsonSerializable
 {
+    protected Entity\Heartbeat\Accounts           $oAccounts;
     protected Entity\Heartbeat\Apt                $oApt;
     protected Entity\Heartbeat\Cron               $oCron;
     protected Entity\Heartbeat\DiskUsage          $oDiskUsage;
@@ -40,6 +41,7 @@ final class Heartbeat implements \JsonSerializable
      */
     public function __construct()
     {
+        $this->oAccounts           = new Entity\Heartbeat\Accounts();
         $this->oApt                = new Entity\Heartbeat\Apt();
         $this->oCron               = new Entity\Heartbeat\Cron();
         $this->oDiskUsage          = new Entity\Heartbeat\DiskUsage();
@@ -74,6 +76,7 @@ final class Heartbeat implements \JsonSerializable
     public function get(): array
     {
         return [
+            'accounts'            => $this->oAccounts,
             'apt'                 => $this->oApt,
             'cron'                => $this->oCron,
             'disk'                => $this->oDiskUsage,
