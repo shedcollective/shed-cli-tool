@@ -1101,10 +1101,8 @@ final class Node implements \JsonSerializable
         $sDir = '/proc/' . $iPid;
         $sExe = @readlink($sDir . '/exe');
 
-        //  Only looked for when container inspection is switched on, so that with it off the block
-        //  is exactly what it always was
-        $bContainers = Containers::enabled();
-        $aContainer  = $bContainers ? Containers::forProcess($iPid) : null;
+        //  Read from the process' cgroup, which costs nothing on a host without containers
+        $aContainer = Containers::forProcess($iPid);
 
         $bDeleted = false;
         $sPath    = null;
@@ -1153,7 +1151,7 @@ final class Node implements \JsonSerializable
         $aManager = $sPath !== null ? $this->getManager($sPath) : null;
         $aVersion = $this->getProcessVersion($sPath, $bDeleted, $aManager);
 
-        $aProcess = [
+        return [
             'pid'            => $iPid,
             'uid'            => $iUid,
             'user'           => $sUser,
@@ -1165,13 +1163,8 @@ final class Node implements \JsonSerializable
             'started'        => $this->getProcessStart($sDir),
             'command'        => $this->getProcessCommand($sDir),
             'error'          => $sError ?? $aVersion['error'],
+            'container'      => null,
         ];
-
-        if ($bContainers) {
-            $aProcess['container'] = null;
-        }
-
-        return $aProcess;
     }
 
     // --------------------------------------------------------------------------

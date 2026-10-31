@@ -4,7 +4,6 @@ namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command;
 use Shed\Cli\Entity;
-use Shed\Cli\Helper\Containers;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
@@ -23,12 +22,6 @@ final class Heartbeat extends Command
             ->setName('server:heartbeat')
             ->setDescription('Sends a server heartbeat')
             ->setHelp('This command gathers system information and reports it to the Shed server API.')
-            ->addOption(
-                'containers',
-                null,
-                InputOption::VALUE_NONE,
-                'Inspect running containers for this run, whatever the config says ("heartbeat": {"containers": true} turns it on permanently)'
-            )
             ->addOption(
                 'dry-run',
                 null,
@@ -76,10 +69,6 @@ final class Heartbeat extends Command
         // which is always by hand.
         if (!$bDryRun && self::shouldWait($this->oInput->isInteractive(), self::stdinIsTerminal())) {
             sleep(self::jitterSeconds(gethostname() ?: ''));
-        }
-
-        if ($this->oInput->getOption('containers')) {
-            Containers::enable(true);
         }
 
         try {

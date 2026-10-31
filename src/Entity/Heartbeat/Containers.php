@@ -22,7 +22,7 @@ use Shed\Cli\Helper\Containers as ContainerHelper;
  *
  * ## Shape
  *
- * - `null` when container inspection is switched off, on a host without Docker, and on macOS.
+ * - `null` on a host without Docker, and on macOS.
  * - `error` is set, with `items: []` and `count: null`, when Docker is there but cannot be asked
  *   (the socket is not accessible, the daemon is down). Unknown, never "no containers".
  * - Each item's `packages` has a fixed set of keys. `null` under one means the binary was not
@@ -107,7 +107,7 @@ final class Containers implements \JsonSerializable
     {
         switch (Os::getType()) {
             case Os::LINUX:
-                if (!ContainerHelper::enabled() || !ContainerHelper::dockerInstalled()) {
+                if (!ContainerHelper::dockerInstalled()) {
                     return null;
                 }
 

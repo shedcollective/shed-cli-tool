@@ -4,7 +4,6 @@ namespace Shed\Cli\Tests\Helper;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Shed\Cli\Helper\Config;
 use Shed\Cli\Helper\Containers;
 
 final class ContainersTest extends TestCase
@@ -14,7 +13,6 @@ final class ContainersTest extends TestCase
     protected function tearDown(): void
     {
         Containers::reset();
-        Config::$oConfig = null;
     }
 
     /**
@@ -133,31 +131,6 @@ final class ContainersTest extends TestCase
         $this->assertSame($sBody, Containers::untar($sTar, 4096));
         $this->assertSame('ID=deb', Containers::untar($sTar, 6));
         $this->assertNull(Containers::untar('Error response from daemon: Could not find the file', 4096));
-    }
-
-    public function test_it_is_off_unless_the_config_turns_it_on(): void
-    {
-        $this->assertFalse(Containers::enabled());
-
-        Config::$oConfig = (object) [];
-        $this->assertFalse(Containers::enabled());
-
-        Config::$oConfig = (object) ['heartbeat' => (object) ['containers' => 'yes']];
-        $this->assertFalse(Containers::enabled(), 'Only a real true switches it on');
-
-        Config::$oConfig = (object) ['heartbeat' => (object) ['containers' => true]];
-        $this->assertTrue(Containers::enabled());
-    }
-
-    public function test_the_command_line_overrides_the_config(): void
-    {
-        Config::$oConfig = (object) ['heartbeat' => (object) ['containers' => true]];
-        Containers::enable(false);
-        $this->assertFalse(Containers::enabled());
-
-        Config::$oConfig = (object) [];
-        Containers::enable(true);
-        $this->assertTrue(Containers::enabled());
     }
 
     public function test_each_pass_has_its_own_budget(): void

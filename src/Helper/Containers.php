@@ -18,10 +18,11 @@ namespace Shed\Cli\Helper;
  * `docker exec`, which runs it inside the container's own isolation, as the container's own user.
  * Nothing is written, and `docker exec` never starts a stopped container.
  *
- * ## Behind a flag
+ * ## Always on, and free without containers
  *
- * Off unless the shed config has `"heartbeat": {"containers": true}`, or `server:heartbeat` is
- * run with `--containers`. Off, the heartbeat is exactly what it was before.
+ * A process's container is read from its cgroup, so a host without containers pays nothing, and
+ * Docker is only asked anything once a container process is found or, for the `containers` block,
+ * on a host where Docker is installed.
  *
  * ## Bounded
  *
@@ -123,13 +124,6 @@ final class Containers
     ];
 
     /**
-     * An override of the config flag, set by `server:heartbeat --containers`
-     *
-     * @var bool|null
-     */
-    private static ?bool $bEnabled = null;
-
-    /**
      * The client, its error, and the running containers keyed by full id, established once per run
      *
      * @var array{client: string|null, error: string|null, count: int|null, containers: array<string, array<string, mixed>>, truncated: bool}|null
@@ -146,41 +140,10 @@ final class Containers
     // --------------------------------------------------------------------------
 
     /**
-     * Forces container inspection on or off for this run, or back to the config's say with null
-     */
-    public static function enable(?bool $bEnabled): void
-    {
-        self::$bEnabled = $bEnabled;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Whether container inspection is switched on
-     */
-    public static function enabled(): bool
-    {
-        if (self::$bEnabled !== null) {
-            return self::$bEnabled;
-        }
-
-        if (!isset(Config::$oConfig) || !is_object(Config::$oConfig)) {
-            return false;
-        }
-
-        $oHeartbeat = Config::get('heartbeat');
-
-        return is_object($oHeartbeat) && ($oHeartbeat->containers ?? null) === true;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Forgets everything established this run. For tests.
      */
     public static function reset(): void
     {
-        self::$bEnabled   = null;
         self::$aState     = null;
         self::$aDeadlines = [];
     }

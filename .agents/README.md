@@ -70,7 +70,7 @@ shed-cli-tool/
 │   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
 │   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php, Accounts.php, Docker.php, Elasticsearch.php
-│   │   │   ├── Containers.php          # Per-container runtime inventory (behind a flag)
+│   │   │   ├── Containers.php          # Per-container runtime inventory
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -318,11 +318,10 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   describe the host rather than necessarily the application. Counts are `null`
   when the daemon cannot be asked — unknown, never zero. See "Docker reporting"
   below.
-- **Behind a flag:** the runtimes inside each running Docker container (base OS, PHP, PHP-FPM,
-  Node, npm, MySQL, MariaDB, Postgres, Redis, Caddy, nginx, Apache), and node processes attributed
-  to the container they run in, with the version asked of the container. Off unless the root
-  user's `~/.shedrc/config.json` has `"heartbeat": {"containers": true}` or the command is run with
-  `--containers`. See "Container reporting" below.
+- On a Docker host, the runtimes inside each running container (base OS, PHP, PHP-FPM, Node, npm,
+  MySQL, MariaDB, Postgres, Redis, Caddy, nginx, Apache), reported **in addition to** the host's own
+  versions, and node processes attributed to the container they run in, with the version asked of
+  the container. Detected automatically. See "Container reporting" below.
 - Elasticsearch, when installed: its version (from dpkg, else the versioned
   server jar under `/usr/share/elasticsearch/lib`) and the `elasticsearch`
   unit's systemd state. Nothing is executed and the HTTP port is never queried.
@@ -348,7 +347,6 @@ Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload
 
 | Option | Description |
 |---|---|
-| `--containers` | Inspect running containers for this run, whatever the config says. |
 | `--dry-run` | Print the payload as JSON instead of sending it. Skips the jitter wait. |
 
 When stdin is not a terminal (the hourly cron), or when run with
@@ -419,8 +417,7 @@ contents of an arbitrary root-only file to the API.
 
 A process inside a container is a special case — see "Container reporting" below. Its `exe`
 link names a file in the container's filesystem, so resolving it on the host finds nothing, or
-finds the host's own node and reports *that* version. With container inspection on, such a process
-carries `manager: "container"`, a `container` object, and a version from `container-exec`.
+finds the host's own node and reports *that* version. Such a process carries `manager: "container"`, a `container` object, and a version from `container-exec`.
 
 Process arguments are where an application is identified — the binary is `node`
 on all of them — but also where a careless deploy leaves a token or a database
@@ -435,18 +432,15 @@ On a Docker host the application's real runtime lives in its containers, and the
 `mysql` and `node` blocks do not describe it. `Entity\Heartbeat\Containers` (the `containers` block)
 and the container branch of `Entity\Heartbeat\Node` fix that. Both share `Helper\Containers`.
 
-### Switched on per host
+### Always on
 
-Off by default, and off means the payload is exactly what it was before (`containers: null`, no
-`container` key on node processes). Turn it on with `--containers` for one run, or permanently in
-the **root** user's `~/.shedrc/config.json` (the heartbeat cron runs as root):
+There is no switch. Containers are detected wherever they are, and reported **beside** the host's
+own `php`, `mysql` and `node` blocks, which are unchanged. On a host without containers this costs
+nothing: a process's container is read from its cgroup, Docker is only asked anything once a
+container process turns up, and the `containers` block is `null` when Docker is not installed.
 
-```json
-{"heartbeat": {"containers": true}}
-```
-
-Try it with `shed server:heartbeat --containers --dry-run`, which prints the payload instead of
-sending it.
+See what a host would send with `shed server:heartbeat --dry-run`, which prints the payload instead
+of sending it.
 
 ### Only through the Docker API — never from the host
 
@@ -483,7 +477,7 @@ Docker containers can be asked; a containerd or Podman one is identified and its
 - `user` is `null`: a uid inside a container is named by the image's passwd, not the host's.
   `by_user` counts the process under `container:<name>` (or `container:<short id>`), so counts
   still come from `by_user`.
-- Host processes carry `container: null` when the flag is on.
+- Host processes carry `container: null`.
 - Errors are worded in container terms: `Container binary not inspected: docker socket not
   accessible …`, `Container binary has been replaced or removed since the process started`,
   `Container binary not identified …`.
@@ -502,7 +496,7 @@ Docker containers can be asked; a containerd or Podman one is identified and its
    "errors": []}]}
 ```
 
-- **`null`** when the flag is off, Docker is not installed, or on macOS.
+- **`null`** when Docker is not installed, or on macOS.
 - **`error`** (with `items: []`, `count: null`) when Docker is there but cannot be asked: the
   socket is not accessible (not root / not in the docker group), the daemon is down. Unknown, never
   "no containers".
