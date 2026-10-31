@@ -70,6 +70,7 @@ shed-cli-tool/
 │   │   │   ├── Hostname.php, Ip.php, IpAddresses.php, Os.php
 │   │   │   ├── PhpInfo.php, Security.php
 │   │   │   ├── Version.php, Cron.php, Node.php, Mysql.php, Sudoers.php, Accounts.php, Docker.php, Elasticsearch.php
+│   │   │   ├── Containers.php          # Per-container runtime inventory (behind a flag)
 │   │   ├── Option.php
 │   │   └── Provider/
 │   │       ├── Account.php, Region.php, Size.php
@@ -81,6 +82,8 @@ shed-cli-tool/
 │   │   ├── Updates.php                 # Version checking
 │   │   ├── Colors.php                  # Terminal output styling
 │   │   ├── Redact.php                  # Masks credentials in reported commands
+│   │   ├── Containers.php              # Container detection, docker exec, time budgets
+│   │   ├── Trust.php                   # Root-owned-path check before executing a binary
 │   │   └── Zip.php                     # Archive operations
 │   ├── Service/
 │   │   └── ShedApi.php                 # Shed Collective API client
@@ -315,6 +318,11 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   describe the host rather than necessarily the application. Counts are `null`
   when the daemon cannot be asked — unknown, never zero. See "Docker reporting"
   below.
+- **Behind a flag:** the runtimes inside each running Docker container (base OS, PHP, PHP-FPM,
+  Node, npm, MySQL, MariaDB, Postgres, Redis, Caddy, nginx, Apache), and node processes attributed
+  to the container they run in, with the version asked of the container. Off unless the root
+  user's `~/.shedrc/config.json` has `"heartbeat": {"containers": true}` or the command is run with
+  `--containers`. See "Container reporting" below.
 - Elasticsearch, when installed: its version (from dpkg, else the versioned
   server jar under `/usr/share/elasticsearch/lib`) and the `elasticsearch`
   unit's systemd state. Nothing is executed and the HTTP port is never queried.
@@ -337,6 +345,11 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   otherwise. See "Account and SSH key reporting" below.
 
 Sends all data to `https://api.ne.at/v1/server/heartbeat` as a heartbeat payload.
+
+| Option | Description |
+|---|---|
+| `--containers` | Inspect running containers for this run, whatever the config says. |
+| `--dry-run` | Print the payload as JSON instead of sending it. Skips the jitter wait. |
 
 When stdin is not a terminal (the hourly cron), or when run with
 `--no-interaction` / `--quiet`, the command sleeps a stable
@@ -361,7 +374,7 @@ terminal itself (`stream_isatty`, which does not need the posix extension).
 | `Entity\Provider\Image` | `label`, `slug` | OS image |
 | `Entity\Provider\Disk` | `label`, `slug` | Disk type |
 
-**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Docker`, `Elasticsearch`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`, `Accounts`
+**Heartbeat sub-entities:** `Hostname`, `Os`, `Ip`, `IpAddresses`, `Load`, `Memory`, `DiskUsage`, `Docker`, `Containers`, `Elasticsearch`, `Services`, `Ssl`, `Apt`, `PhpInfo`, `Security`, `Version`, `Cron`, `Node`, `Mysql`, `Sudoers`, `Accounts`
 
 ---
 
@@ -404,10 +417,113 @@ profiles) must resolve to somewhere still inside that home and belong to either
 that user or root, so a symlink planted in a home cannot be used to post the
 contents of an arbitrary root-only file to the API.
 
+A process inside a container is a special case — see "Container reporting" below. Its `exe`
+link names a file in the container's filesystem, so resolving it on the host finds nothing, or
+finds the host's own node and reports *that* version. With container inspection on, such a process
+carries `manager: "container"`, a `container` object, and a version from `container-exec`.
+
 Process arguments are where an application is identified — the binary is `node`
 on all of them — but also where a careless deploy leaves a token or a database
 password, so they are passed through `Helper\Redact` before they leave the
 server, exactly as cron commands are.
+
+---
+
+## Container reporting
+
+On a Docker host the application's real runtime lives in its containers, and the host's `php`,
+`mysql` and `node` blocks do not describe it. `Entity\Heartbeat\Containers` (the `containers` block)
+and the container branch of `Entity\Heartbeat\Node` fix that. Both share `Helper\Containers`.
+
+### Switched on per host
+
+Off by default, and off means the payload is exactly what it was before (`containers: null`, no
+`container` key on node processes). Turn it on with `--containers` for one run, or permanently in
+the **root** user's `~/.shedrc/config.json` (the heartbeat cron runs as root):
+
+```json
+{"heartbeat": {"containers": true}}
+```
+
+Try it with `shed server:heartbeat --containers --dry-run`, which prints the payload instead of
+sending it.
+
+### Only through the Docker API — never from the host
+
+The heartbeat runs as root, and a container's filesystem belongs to whoever built its image.
+Running a container binary from the host — through `/proc/<pid>/root`, or with `nsenter`, which
+keeps root's capabilities and skips the container's seccomp/AppArmor profile — would run that
+image's code as host root, and an absolute symlink read through `/proc/<pid>/root` resolves against
+the *host's* root. So every command goes through `docker exec` (inside the container's own
+isolation, as its own user) and files through `docker cp -L` (resolved inside the container).
+`version_source` is therefore always `container-exec`; the brief's `nsenter` and `proc-root`
+sources are deliberately not used. The client is run under `env -i` (so `DOCKER_HOST` cannot
+redirect it) and `timeout`, and only when it is root-owned (`Helper\Trust`). Output read back is
+capped at 64 KB per call.
+
+### Which container a process is in
+
+`/proc/<pid>/cgroup` (world-readable, no capability needed): `docker-<id>.scope` (cgroup v2 +
+systemd), `/docker/<id>` (cgroup v1 / cgroupfs), `cri-containerd-<id>.scope` and `/kubepods/…/<id>`
+(containerd), `libpod-<id>.scope` (Podman). Fallback: the `hostname` / `hosts` / `resolv.conf` bind
+mounts Docker makes from `/var/lib/docker/containers/<id>/`, in `/proc/<pid>/mountinfo`. Only
+Docker containers can be asked; a containerd or Podman one is identified and its error says so.
+
+### Node processes in a container
+
+```json
+{"pid": 1766, "uid": 0, "user": null, "version": "v20.11.1", "version_source": "container-exec",
+ "path": "/usr/local/bin/node", "manager": "container", "deleted": false, "started": "…",
+ "command": "node app/main.js", "error": null,
+ "container": {"id": "1ec73de80a36", "name": "www-frontend-1", "image": "node:20-alpine", "runtime": "docker"}}
+```
+
+- `path` is the container-side path. The version is `docker exec <id> <path> --version`, cached
+  per container and path.
+- `user` is `null`: a uid inside a container is named by the image's passwd, not the host's.
+  `by_user` counts the process under `container:<name>` (or `container:<short id>`), so counts
+  still come from `by_user`.
+- Host processes carry `container: null` when the flag is on.
+- Errors are worded in container terms: `Container binary not inspected: docker socket not
+  accessible …`, `Container binary has been replaced or removed since the process started`,
+  `Container binary not identified …`.
+
+### The `containers` block
+
+```json
+{"runtime": "docker", "error": null, "count": 6, "truncated": false, "items": [
+  {"id": "9b977aa0aa3d", "name": "www-backend-1", "image": "storysloth-backend:latest",
+   "image_id": "sha256:…", "created": "2026-10-30T22:10:01Z", "started_at": "2026-10-31T03:30:45Z",
+   "status": "running", "restart_count": 0, "compose": {"project": "www", "service": "backend"},
+   "os": {"id": "debian", "version": "12", "pretty_name": "Debian GNU/Linux 12 (bookworm)"},
+   "packages": {"php": {"version": "8.4.27", "raw": "PHP 8.4.27 (cli) …"}, "php_fpm": {…},
+                "node": null, "npm": null, "mysql": null, "mariadb": null, "postgres": null,
+                "redis": null, "caddy": null, "nginx": null, "apache": null},
+   "errors": []}]}
+```
+
+- **`null`** when the flag is off, Docker is not installed, or on macOS.
+- **`error`** (with `items: []`, `count: null`) when Docker is there but cannot be asked: the
+  socket is not accessible (not root / not in the docker group), the daemon is down. Unknown, never
+  "no containers".
+- **Running containers only.** `count` is every one `docker ps` listed; at most 100 are inspected.
+- **`packages` has fixed keys.** `null` under a key means that binary was not found in the
+  container; a found binary whose banner did not parse has `version: null` and keeps `raw`.
+  `packages` itself is `null` when the container was not probed, and `errors` says why.
+  MySQL and MariaDB are told apart by the banner (`mysqld` is a symlink in MariaDB images).
+- **One `docker exec` per container** runs a POSIX `sh` script (busybox-safe) that asks each
+  runtime for `--version` / `-v` and `cat`s `/etc/os-release`, of which only `ID`, `VERSION_ID` and
+  `PRETTY_NAME` are kept. Versioned Debian `php-fpm8.x` and off-PATH Debian postgres are looked for
+  where the packages put them. A container with no shell (distroless) gets each binary asked
+  directly and its os-release read with `docker cp`, and `errors` notes it.
+- **Never** the environment, a config file, or application data. `docker inspect` is asked for
+  named fields through a template, not `{{json .}}`, which would carry the environment. Banners
+  are capped at 200 characters and reduced to printable ASCII.
+- **Bounded:** 3s per exec (host-side `timeout`, and in-container `timeout` where the image has
+  it), 20s for the whole probe pass, 10s for the node-process pass. Containers are probed in name
+  order; those the budget did not reach are still listed with `packages: null`, `errors:
+  ["Not probed: the container pass ran out of time"]`, and the block's `truncated` is `true`.
+- No writes inside containers, and nothing that would start a stopped one.
 
 ---
 

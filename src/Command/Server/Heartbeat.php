@@ -4,6 +4,8 @@ namespace Shed\Cli\Command\Server;
 
 use Shed\Cli\Command;
 use Shed\Cli\Entity;
+use Shed\Cli\Helper\Containers;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * Class Heartbeat
@@ -20,7 +22,19 @@ final class Heartbeat extends Command
         $this
             ->setName('server:heartbeat')
             ->setDescription('Sends a server heartbeat')
-            ->setHelp('This command gathers system information and reports it to the Shed server API.');
+            ->setHelp('This command gathers system information and reports it to the Shed server API.')
+            ->addOption(
+                'containers',
+                null,
+                InputOption::VALUE_NONE,
+                'Inspect running containers for this run, whatever the config says ("heartbeat": {"containers": true} turns it on permanently)'
+            )
+            ->addOption(
+                'dry-run',
+                null,
+                InputOption::VALUE_NONE,
+                'Print the payload instead of sending it'
+            );
     }
 
     // --------------------------------------------------------------------------
@@ -56,13 +70,26 @@ final class Heartbeat extends Command
     {
         $this->banner('Heartbeat');
 
-        // Cron has no terminal. Skip the wait when someone runs this by hand.
-        if (self::shouldWait($this->oInput->isInteractive(), self::stdinIsTerminal())) {
+        $bDryRun = (bool) $this->oInput->getOption('dry-run');
+
+        // Cron has no terminal. Skip the wait when someone runs this by hand, and on a dry run,
+        // which is always by hand.
+        if (!$bDryRun && self::shouldWait($this->oInput->isInteractive(), self::stdinIsTerminal())) {
             sleep(self::jitterSeconds(gethostname() ?: ''));
+        }
+
+        if ($this->oInput->getOption('containers')) {
+            Containers::enable(true);
         }
 
         try {
             $oHeartbeat = new Entity\Heartbeat();
+
+            if ($bDryRun) {
+                $this->oOutput->writeln((string) json_encode($oHeartbeat, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                return self::EXIT_CODE_SUCCESS;
+            }
+
             $oHeartbeat->beat();
 
             $this->oOutput->writeln('Heartbeat successful');

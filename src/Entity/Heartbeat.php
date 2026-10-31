@@ -14,6 +14,7 @@ final class Heartbeat implements \JsonSerializable
 {
     protected Entity\Heartbeat\Accounts           $oAccounts;
     protected Entity\Heartbeat\Apt                $oApt;
+    protected Entity\Heartbeat\Containers         $oContainers;
     protected Entity\Heartbeat\Cron               $oCron;
     protected Entity\Heartbeat\DiskUsage          $oDiskUsage;
     protected Entity\Heartbeat\Docker             $oDocker;
@@ -43,6 +44,7 @@ final class Heartbeat implements \JsonSerializable
     {
         $this->oAccounts           = new Entity\Heartbeat\Accounts();
         $this->oApt                = new Entity\Heartbeat\Apt();
+        $this->oContainers         = new Entity\Heartbeat\Containers();
         $this->oCron               = new Entity\Heartbeat\Cron();
         $this->oDiskUsage          = new Entity\Heartbeat\DiskUsage();
         $this->oDocker             = new Entity\Heartbeat\Docker();
@@ -78,6 +80,7 @@ final class Heartbeat implements \JsonSerializable
         return [
             'accounts'            => $this->oAccounts,
             'apt'                 => $this->oApt,
+            'containers'          => $this->oContainers,
             'cron'                => $this->oCron,
             'disk'                => $this->oDiskUsage,
             'docker'              => $this->oDocker,
