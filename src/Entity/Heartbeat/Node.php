@@ -4,6 +4,7 @@ namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
 use Shed\Cli\Exceptions\System\CommandFailedException;
+use Shed\Cli\Helper\Containers;
 use Shed\Cli\Helper\Redact;
 use Shed\Cli\Helper\System;
 
@@ -98,8 +99,26 @@ final class Node implements \JsonSerializable
      *
      * @var string
      */
-    private const VERSION_SOURCE_BINARY = 'binary';
-    private const VERSION_SOURCE_PATH   = 'path';
+    private const VERSION_SOURCE_BINARY         = 'binary';
+    private const VERSION_SOURCE_PATH           = 'path';
+    private const VERSION_SOURCE_CONTAINER_EXEC = 'container-exec';
+
+    /**
+     * The manager reported for a process running inside a container. Whatever put node into the
+     * image, it is the image's business rather than the host's.
+     *
+     * @var string
+     */
+    private const MANAGER_CONTAINER = 'container';
+
+    /**
+     * The `by_user` key a container's processes are counted under, followed by its name (or short
+     * id). A uid inside a container is looked up in the image's passwd, not the host's, so the
+     * host's name for that uid would attribute the process to the wrong person.
+     *
+     * @var string
+     */
+    private const BY_USER_CONTAINER_PREFIX = 'container:';
 
     /**
      * The binary names node is installed under. Debian shipped it as `nodejs`
@@ -1008,7 +1027,9 @@ final class Node implements \JsonSerializable
 
             //  Counted before the cap is applied, so that the summary stays
             //  accurate even where the detail is truncated
-            $sUser    = $aProcess['user'] ?? 'uid:' . $aProcess['uid'];
+            $sUser    = isset($aProcess['container'])
+                ? self::BY_USER_CONTAINER_PREFIX . ($aProcess['container']['name'] ?? $aProcess['container']['id'])
+                : ($aProcess['user'] ?? 'uid:' . $aProcess['uid']);
             $sVersion = $aProcess['version'] ?? 'unknown';
 
             $aByUser[$sUser][$sVersion] = ($aByUser[$sUser][$sVersion] ?? 0) + 1;
@@ -1080,6 +1101,9 @@ final class Node implements \JsonSerializable
         $sDir = '/proc/' . $iPid;
         $sExe = @readlink($sDir . '/exe');
 
+        //  Read from the process' cgroup, which costs nothing on a host without containers
+        $aContainer = Containers::forProcess($iPid);
+
         $bDeleted = false;
         $sPath    = null;
         $sError   = null;
@@ -1117,6 +1141,11 @@ final class Node implements \JsonSerializable
 
         $iUid  = @fileowner($sDir);
         $iUid  = $iUid !== false ? $iUid : null;
+
+        if ($aContainer !== null) {
+            return $this->getContainerProcess($iPid, $iUid, $sDir, $sPath, $bDeleted, $aContainer, $sExe === false || $sExe === '');
+        }
+
         $sUser = $iUid !== null ? ($aUsers[$iUid]['name'] ?? null) : null;
 
         $aManager = $sPath !== null ? $this->getManager($sPath) : null;
@@ -1134,6 +1163,114 @@ final class Node implements \JsonSerializable
             'started'        => $this->getProcessStart($sDir),
             'command'        => $this->getProcessCommand($sDir),
             'error'          => $sError ?? $aVersion['error'],
+            'container'      => null,
+        ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Describes a node process that runs inside a container
+     *
+     * Its executable link, and any path in its arguments, name a file in the **container's**
+     * filesystem, so looking for it on the host finds nothing — or, worse, finds the host's own node
+     * and reports that version instead. The version is asked of the container instead, through
+     * `docker exec`, which runs the binary inside the container's own isolation; see
+     * {@see Containers} for why it is never executed from the host.
+     *
+     * `user` is null: a uid inside a container is named by the image's passwd, not the host's.
+     *
+     * @param array{id: string, runtime: string} $aContainer
+     *
+     * @return array<string, mixed>
+     */
+    private function getContainerProcess(
+        int $iPid,
+        ?int $iUid,
+        string $sDir,
+        ?string $sPath,
+        bool $bDeleted,
+        array $aContainer,
+        bool $bExeUnreadable
+    ): array {
+        $aVersion = $this->getContainerVersion($aContainer, $sPath, $bDeleted, $bExeUnreadable);
+
+        return [
+            'pid'            => $iPid,
+            'uid'            => $iUid,
+            'user'           => null,
+            'version'        => $aVersion['version'],
+            'version_source' => $aVersion['version_source'],
+            'path'           => $sPath,
+            'manager'        => self::MANAGER_CONTAINER,
+            'deleted'        => $bDeleted,
+            'started'        => $this->getProcessStart($sDir),
+            'command'        => $this->getProcessCommand($sDir),
+            'error'          => $aVersion['error'],
+            'container'      => Containers::describe($aContainer),
+        ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Asks a container's node for its version
+     *
+     * Cached per container and path, so a container running a dozen workers off one binary costs
+     * one exec.
+     *
+     * @param array{id: string, runtime: string} $aContainer
+     *
+     * @return array{version: string|null, version_source: string|null, error: string|null}
+     */
+    private function getContainerVersion(array $aContainer, ?string $sPath, bool $bDeleted, bool $bExeUnreadable): array
+    {
+        if ($sPath === null) {
+            return $this->versionError($bExeUnreadable
+                ? 'Container binary not identified: its executable could not be read, and its arguments do not name it'
+                : 'Container binary not identified');
+        }
+
+        if ($bDeleted) {
+            return $this->versionError('Container binary has been replaced or removed since the process started');
+        }
+
+        if ($aContainer['runtime'] !== Containers::RUNTIME_DOCKER) {
+            return $this->versionError('Container binary not inspected: only Docker containers can be asked, and this one runs under ' . $aContainer['runtime']);
+        }
+
+        $sKey = $aContainer['id'] . "\0" . $sPath;
+
+        if (array_key_exists($sKey, $this->aVersionCache)) {
+            return $this->aVersionCache[$sKey];
+        }
+
+        $aResult = Containers::exec($aContainer['id'], [$sPath, '--version'], Containers::BUDGET_PROCESSES);
+
+        if ($aResult['error'] !== null) {
+            return $this->aVersionCache[$sKey] = $this->versionError('Container binary not inspected: ' . lcfirst($aResult['error']));
+        }
+
+        $sVersion = '';
+        foreach ($aResult['output'] as $sLine) {
+            if (preg_match(self::VERSION, trim($sLine))) {
+                $sVersion = trim($sLine);
+                break;
+            }
+        }
+
+        if ($sVersion === '') {
+            return $this->aVersionCache[$sKey] = $this->versionError(
+                'Container binary did not report a version: ' . $sPath . ' --version gave no recognisable answer'
+            );
+        }
+
+        preg_match(self::VERSION, $sVersion, $aMatch);
+
+        return $this->aVersionCache[$sKey] = [
+            'version'        => 'v' . ltrim($aMatch[0], 'v'),
+            'version_source' => self::VERSION_SOURCE_CONTAINER_EXEC,
+            'error'          => null,
         ];
     }
 
