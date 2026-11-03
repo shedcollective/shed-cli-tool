@@ -905,8 +905,9 @@ final class Accounts implements \JsonSerializable
             return null;
         }
 
-        $iLength = unpack('N', substr($sBlob, $iOffset, 4))[1];
-        if (strlen($sBlob) < $iOffset + 4 + $iLength) {
+        $aLength = unpack('N', substr($sBlob, $iOffset, 4));
+        $iLength = $aLength[1] ?? null;
+        if (!is_int($iLength) || strlen($sBlob) < $iOffset + 4 + $iLength) {
             return null;
         }
 
