@@ -3,6 +3,7 @@
 namespace Shed\Cli\Entity\Heartbeat;
 
 use Shed\Cli\Exceptions\HeartbeatException;
+use Shed\Cli\Exceptions\System\CommandFailedException;
 use Shed\Cli\Helper\System;
 
 final class Security implements \JsonSerializable
@@ -46,9 +47,48 @@ final class Security implements \JsonSerializable
         ];
     }
 
+    /**
+     * The most recent wtmp record, or null when it cannot be read.
+     *
+     * Ubuntu 26.04 no longer ships util-linux's last. The wtmpdb package
+     * provides /usr/bin/last (a symlink to wtmpdb) and accepts the same
+     * -1 and -F flags. A host without that package has no last binary;
+     * spawning it prints "last: not found" on the shell's stderr, which
+     * PHP does not capture, and the pipeline still exits 0 because of
+     * head. Skip the command instead, and treat an empty database the
+     * same as a missing one.
+     */
     private function getLastLogin(): ?string
     {
-        return System::execString('last -1 -F | head -1') ?: null;
+        if (!System::commandExists('last')) {
+            return null;
+        }
+
+        try {
+            $line = System::execString('last -1 -F 2>/dev/null | head -1');
+        } catch (CommandFailedException) {
+            return null;
+        }
+
+        return self::parseLastLogin($line);
+    }
+
+    /**
+     * Keeps a login line and drops the footer last prints when the
+     * database is empty ("wtmpdb has no entries", "wtmp begins …").
+     */
+    public static function parseLastLogin(?string $line): ?string
+    {
+        $line = trim((string) $line);
+        if ($line === '' || str_contains($line, 'has no entries')) {
+            return null;
+        }
+
+        if (preg_match('/^(?:wtmp|wtmpdb) begins /', $line) === 1) {
+            return null;
+        }
+
+        return $line;
     }
 
     private function getOpenPorts(): array
@@ -62,4 +102,4 @@ final class Security implements \JsonSerializable
     {
         return $this->get();
     }
-} 
+}
