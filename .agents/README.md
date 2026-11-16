@@ -292,7 +292,11 @@ Collects system metrics and reports them to the Shed Collective API. Designed to
   known address with `scope` (`external` / `private`) and `source` (`interface`,
   `gcp-metadata`, `ec2-metadata`). IPv6 is listed but not chosen as `ip` while an IPv4 exists.
   Metadata probes use a 2s timeout and must not fail the heartbeat. ipinfo.io is not used.
-- Security information
+- Security information. `last_login` is the first line of `last -1 -F`. On Ubuntu 26.04
+  that binary comes from the `wtmpdb` package (`/usr/bin/last` → `wtmpdb`), and
+  `libpam-wtmpdb` is what records sessions into it. A missing `last` is `null`,
+  and so is an empty database (`wtmpdb has no entries`, `wtmp begins …`). The
+  heartbeat does not print the shell's `last: not found`.
 - Shed CLI tool version (from the server's `composer.json`)
 - Configured cron jobs for all users, plus `/etc/crontab`, `/etc/cron.d`, the
   `run-parts` directories, and the cron daemon's status. Requires root to
